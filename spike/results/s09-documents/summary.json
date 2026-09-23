@@ -1,0 +1,99 @@
+{
+  "exp": "s09-documents",
+  "updatedAt": "2026-09-23T12:10:13.863Z",
+  "sdkVersion": "0.3.280",
+  "model": "claude-haiku-4-5",
+  "costUsd": 0.0670152,
+  "checks": [
+    {
+      "name": "step1-fixtures-generated",
+      "pass": true,
+      "evidence": "make_fixtures.py exit=0; files present: sample.pptx=true, sample.xlsx=true, sample.docx=true, sample.pdf=true; sizes: sample.pptx=33927B, sample.xlsx=5437B, sample.docx=35553B, sample.pdf=1915B",
+      "ts": "2026-09-23T11:44:57.791Z"
+    },
+    {
+      "name": "step2-markitdown-installs-on-py314",
+      "pass": true,
+      "evidence": "python --version reports 3.14.0 (venv at C:\\Users\\michi\\dev\\ai-project\\spike\\experiments\\s09-documents\\.venv\\Scripts\\python.exe); pip show markitdown -> Version: 0.1.8; also installed cleanly: markitdown[pptx,docx,xlsx,pdf] extras, no pip errors observed.",
+      "ts": "2026-09-23T11:44:58.026Z"
+    },
+    {
+      "name": "step2-chosen-extractor-recovers-all-facts",
+      "pass": true,
+      "evidence": "sample.pptx: CANARY-FACT-ERP=true, CANARY-PPTX-NOTES=true | sample.xlsx: CANARY-FACT-ERP=true, CANARY-XLSX-CELL=true | sample.docx: CANARY-FACT-ERP=true, CANARY-DOCX-TABLE=true | sample.pdf: CANARY-FACT-ERP=true, CANARY-PDF-BODY=true",
+      "ts": "2026-09-23T11:45:01.350Z"
+    },
+    {
+      "name": "step2-direct-libs-baseline-recovers-all-facts",
+      "pass": true,
+      "evidence": "sample.pptx: CANARY-FACT-ERP=true, CANARY-PPTX-NOTES=true | sample.xlsx: CANARY-FACT-ERP=true, CANARY-XLSX-CELL=true | sample.docx: CANARY-FACT-ERP=true, CANARY-DOCX-TABLE=true | sample.pdf: CANARY-FACT-ERP=true, CANARY-PDF-BODY=true",
+      "ts": "2026-09-23T11:45:03.119Z"
+    },
+    {
+      "name": "step4-pptx-export-runs",
+      "pass": true,
+      "evidence": "md_to_pptx.py exit=0; C:\\Users\\michi\\dev\\ai-project\\spike\\experiments\\s09-documents\\fixtures\\out\\export_test.pptx exists=true size=29303B",
+      "ts": "2026-09-23T11:45:03.311Z"
+    },
+    {
+      "name": "step4-pptx-export-readback-has-content",
+      "pass": true,
+      "evidence": "python-pptx read-back exit=0; text contains EXPORT-CANARY-1=true EXPORT-CANARY-2=true; text=\"S9 Export Test Deck\\r\\nEXPORT-CANARY-1: this bullet must survive the round trip\\r\\nSecond bullet on slide one\\r\\nSecond Slide\\r\\nEXPORT-CANARY-2: distinct fact on slide two\\r\\nAnother bullet\\r\\n\"",
+      "ts": "2026-09-23T11:45:03.502Z"
+    },
+    {
+      "name": "step4-pdf-export-runs",
+      "pass": true,
+      "evidence": "md_to_pdf.py exit=0; C:\\Users\\michi\\dev\\ai-project\\spike\\experiments\\s09-documents\\fixtures\\out\\export_test.pdf exists=true size=33416B; used msedge at C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+      "ts": "2026-09-23T11:45:04.136Z"
+    },
+    {
+      "name": "step4-pdf-export-readback-pages-and-content",
+      "pass": true,
+      "evidence": "pypdf read-back exit=0; pages=1; text contains EXPORT-CANARY-1=true EXPORT-CANARY-2=true",
+      "ts": "2026-09-23T11:45:04.340Z"
+    },
+    {
+      "name": "step4-pdf-page-counting-confirmed-multipage",
+      "pass": true,
+      "evidence": "sample.pdf (built with 2 explicit showPage() calls in reportlab) -> pypdf reports 2 pages",
+      "ts": "2026-09-23T11:45:04.513Z"
+    },
+    {
+      "name": "step3-plugin-skill-loads",
+      "pass": true,
+      "evidence": "init.skills=[\"deep-research\",\"workbench-skills:document-extraction\",\"design\",\"design-sync\",\"dataviz\",\"update-config\",\"verify\",\"debug\",\"code-review\",\"simplify\",\"batch\",\"fewer-permission-prompts\",\"doctor\",\"loop\",\"claude-api\",\"workflow-authoring\",\"run\",\"run-skill-generator\"] (plugin loaded from C:\\Users\\michi\\dev\\ai-project\\spike\\experiments\\s09-documents\\plugin\\workbench-skills)",
+      "ts": "2026-09-23T12:10:08.748Z"
+    },
+    {
+      "name": "step3-tools-restricted-to-explicit-base-set",
+      "pass": true,
+      "evidence": "init.tools=[\"Bash\",\"Read\",\"Skill\"] (expected exactly [\"Bash\",\"Read\",\"Skill\"], per S0's finding that an explicit tools array — not the preset, not omission — is required to narrow this build's much broader default tool surface)",
+      "ts": "2026-09-23T12:10:08.756Z"
+    },
+    {
+      "name": "step3-agent-reports-facts-from-all-files",
+      "pass": true,
+      "evidence": "sample.pptx: CANARY-FACT-ERP=true, CANARY-PPTX-NOTES=true | sample.xlsx: CANARY-FACT-ERP=true, CANARY-XLSX-CELL=true | sample.docx: CANARY-FACT-ERP=true, CANARY-DOCX-TABLE=true | sample.pdf: CANARY-FACT-ERP=true, CANARY-PDF-BODY=true",
+      "ts": "2026-09-23T12:10:08.760Z"
+    },
+    {
+      "name": "step3-native-pdf-read-via-Read-tool",
+      "pass": true,
+      "evidence": "resultText contains CANARY-FACT-ERP, CANARY-PDF-BODY: true. Read tool calls: [{\"file_path\":\"C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/fixtures/out/sample.pdf\"}]",
+      "ts": "2026-09-23T12:10:08.765Z"
+    },
+    {
+      "name": "step3-bash-restricted-to-extract-script-only",
+      "pass": true,
+      "evidence": "extract.py Bash calls: [\"C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/.venv/Scripts/python.exe C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/plugin/workbench-skills/skills/document-extraction/scripts/extract.py C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/fixtures/out/sample.pptx\",\"C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/.venv/Scripts/python.exe C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/plugin/workbench-skills/skills/document-extraction/scripts/extract.py C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/fixtures/out/sample.xlsx\",\"C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/.venv/Scripts/python.exe C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/plugin/workbench-skills/skills/document-extraction/scripts/extract.py C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/fixtures/out/sample.docx\",\"C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/.venv/Scripts/python.exe C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/plugin/workbench-skills/skills/document-extraction/scripts/extract.py C:/Users/michi/dev/ai-project/spike/experiments/s09-documents/fixtures/out/sample.pdf\"] (all succeeded=true); adversarial Bash calls: [\"python -c \\\"print(1)\\\"\"] attempted=true, denied=true (via r.denials=[{\"tool_name\":\"Bash\",\"tool_use_id\":\"toolu_01H4StkfmorFBRJZn2eQeJhu\",\"tool_input\":{\"command\":\"python -c \\\"print(1)\\\"\",\"description\":\"Adversarial test: run simple Python command to check permissions\"}}], via toolResult.isError=true). ",
+      "ts": "2026-09-23T12:10:08.769Z"
+    },
+    {
+      "name": "bonus-skill-scope-isolation-probe",
+      "pass": true,
+      "evidence": "init.skills for this probe=[\"deep-research\",\"workbench-skills:document-extraction\",\"design\",\"design-sync\",\"dataviz\",\"update-config\",\"verify\",\"debug\",\"code-review\",\"simplify\",\"batch\",\"fewer-permission-prompts\",\"doctor\",\"loop\",\"claude-api\",\"workflow-authoring\",\"run\",\"run-skill-generator\"] (note: \"simplify\" IS present in init.skills despite skills:[\"workbench-skills:document-extraction\"]). Skill tool calls: [{\"skill\":\"simplify\"}]. simplifyAttempted=true, simplifyDenied=true. resultText=\"The skill was **unavailable/not found**. \\n\\nThe exact message I received was:\\n\\n> \\\"Skill simplify is not in this session's skills allowlist\\\"\\n\\nThis indicates that the \\\"simplify\\\" skill is not available in my current session - it's not in the allowlist of skills I have access to.\". denials=[]. One data point only — A1's S1 investigates skill scoping in depth.",
+      "ts": "2026-09-23T12:10:13.863Z"
+    }
+  ]
+}

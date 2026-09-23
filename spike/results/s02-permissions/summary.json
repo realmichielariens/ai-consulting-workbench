@@ -1,0 +1,171 @@
+{
+  "exp": "s02-permissions",
+  "updatedAt": "2026-09-23T12:17:29.419Z",
+  "sdkVersion": "0.3.280",
+  "model": "claude-haiku-4-5",
+  "costUsd": 0.2182397,
+  "checks": [
+    {
+      "name": "anchor-form-double-slash-drive-colon",
+      "pass": false,
+      "evidence": "rule=\"Edit(//C:/Users/michi/AppData/Local/Temp/m0-spike-XDp8yH/eng/items/WI-001/work/**)\"; insideWritten=false outsideWritten=false; diff.added=[]; isError=false; denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_01Q6mzBdJN2gyAHzowV5yEdH\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-XDp8yH\\\\eng\\\\items\\\\WI-001\\\\work\\\\inside-double-slash-drive-colon.md\",\"content\":\"battery-0\"}},{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_01WTSHdEWZPqLygkWFjnxKzN\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-XDp8yH\\\\eng\\\\items\\\\WI-002\\\\work\\\\outside-double-slash-drive-colon.md\",\"content\":\"battery-1\"}}]; cost=$0.0113",
+      "ts": "2026-09-23T12:13:24.369Z"
+    },
+    {
+      "name": "anchor-form-double-slash-gitbash",
+      "pass": true,
+      "evidence": "rule=\"Edit(//c/Users/michi/AppData/Local/Temp/m0-spike-OiggSb/eng/items/WI-001/work/**)\"; insideWritten=true outsideWritten=false; diff.added=[items/WI-001/work/inside-double-slash-gitbash.md]; isError=false; denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_01NrJhSzSToxJPUV6Cqwivdv\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-OiggSb\\\\eng\\\\items\\\\WI-002\\\\work\\\\outside-double-slash-gitbash.md\",\"content\":\"battery-1\"}}]; cost=$0.0117",
+      "ts": "2026-09-23T12:13:31.469Z"
+    },
+    {
+      "name": "anchor-form-single-slash-drive-colon",
+      "pass": false,
+      "evidence": "rule=\"Edit(/C:/Users/michi/AppData/Local/Temp/m0-spike-P5v2g3/eng/items/WI-001/work/**)\"; insideWritten=false outsideWritten=false; diff.added=[]; isError=false; denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_01SMqZtxbBcqdwke6EK9ARW4\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-P5v2g3\\\\eng\\\\items\\\\WI-001\\\\work\\\\inside-single-slash-drive-colon.md\",\"content\":\"battery-0\"}},{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_014TLWEvrFttPXS2ns9hMAtx\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-P5v2g3\\\\eng\\\\items\\\\WI-002\\\\work\\\\outside-single-slash-drive-colon.md\",\"content\":\"battery-1\"}}]; cost=$0.0132",
+      "ts": "2026-09-23T12:13:38.994Z"
+    },
+    {
+      "name": "anchor-form-double-slash-drive-nocolon-upper",
+      "pass": true,
+      "evidence": "rule=\"Edit(//C/Users/michi/AppData/Local/Temp/m0-spike-rzx6Yt/eng/items/WI-001/work/**)\"; insideWritten=true outsideWritten=false; diff.added=[items/WI-001/work/inside-double-slash-drive-nocolon-upper.md]; isError=false; denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_01Q8RJZ44s2hGKzfFt333dyW\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-rzx6Yt\\\\eng\\\\items\\\\WI-002\\\\work\\\\outside-double-slash-drive-nocolon-upper.md\",\"content\":\"battery-1\"}}]; cost=$0.0117",
+      "ts": "2026-09-23T12:13:45.905Z"
+    },
+    {
+      "name": "anchor-form-native-backslash",
+      "pass": true,
+      "evidence": "rule=\"Edit(C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-hLVAqn\\eng\\items\\WI-001\\work/**)\"; insideWritten=true outsideWritten=false; diff.added=[items/WI-001/work/inside-native-backslash.md]; isError=false; denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_01BAd6B9iit5zPVNRY4FMTv4\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-hLVAqn\\\\eng\\\\items\\\\WI-002\\\\work\\\\outside-native-backslash.md\",\"content\":\"battery-1\"}}]; cost=$0.0120",
+      "ts": "2026-09-23T12:13:53.207Z"
+    },
+    {
+      "name": "anchor-form-forward-slash-native-case",
+      "pass": true,
+      "evidence": "rule=\"Edit(C:/Users/michi/AppData/Local/Temp/m0-spike-6bKNO0/eng/items/WI-001/work/**)\"; insideWritten=true outsideWritten=false; diff.added=[items/WI-001/work/inside-forward-slash-native-case.md]; isError=false; denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_016Nz73j76zFdfd1Y1XFem3z\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-6bKNO0\\\\eng\\\\items\\\\WI-002\\\\work\\\\outside-forward-slash-native-case.md\",\"content\":\"battery-1\"}}]; cost=$0.0112",
+      "ts": "2026-09-23T12:14:00.108Z"
+    },
+    {
+      "name": "anchor-form-cwd-relative-dot",
+      "pass": true,
+      "evidence": "rule=\"Edit(./**)\"; insideWritten=true outsideWritten=false; diff.added=[items/WI-001/work/inside-cwd-relative-dot.md]; isError=false; denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_015covwR8ESPKkpUMMEtB5yW\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-jAn2sJ\\\\eng\\\\items\\\\WI-002\\\\work\\\\outside-cwd-relative-dot.md\",\"content\":\"battery-1\"}}]; cost=$0.0116",
+      "ts": "2026-09-23T12:14:06.885Z"
+    },
+    {
+      "name": "anchor-form-cwd-relative-bare",
+      "pass": true,
+      "evidence": "rule=\"Edit(**)\"; insideWritten=true outsideWritten=false; diff.added=[items/WI-001/work/inside-cwd-relative-bare.md]; isError=false; denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_01BjbmkBRmTgGsZHo52iMMke\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-82VvW2\\\\eng\\\\items\\\\WI-002\\\\work\\\\outside-cwd-relative-bare.md\",\"content\":\"battery-1\"}}]; cost=$0.0116",
+      "ts": "2026-09-23T12:14:15.518Z"
+    },
+    {
+      "name": "any-anchor-form-works",
+      "pass": true,
+      "evidence": "winners=[\"double-slash-gitbash\",\"double-slash-drive-nocolon-upper\",\"native-backslash\",\"forward-slash-native-case\",\"cwd-relative-dot\",\"cwd-relative-bare\"]; using \"forward-slash-native-case\" for the battery",
+      "ts": "2026-09-23T12:14:15.526Z"
+    },
+    {
+      "name": "write-rule-alone-does-not-govern-writes",
+      "pass": true,
+      "evidence": "allowRule=\"Write(C:/Users/michi/AppData/Local/Temp/m0-spike-K2v2vR/eng/items/WI-001/work/**)\" (NOT an Edit(...) rule); written=false (expected false — a bare Write(...) rule is not matched by file permission checks per the CLI's own validator message: \"<Write(path)> is not matched by file permission checks — only Edit(path) rules are\"); denials=[{\"tool_name\":\"Write\",\"tool_use_id\":\"toolu_01KLtxvxmAGKikVs2RhKReQ3\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-K2v2vR\\\\eng\\\\items\\\\WI-001\\\\work\\\\write-rule-only.md\",\"content\":\"should-be-blocked\"}}]; toolResults=[{\"toolUseId\":\"toolu_01KLtxvxmAGKikVs2RhKReQ3\",\"isError\":true,\"text\":\"Permission to use Write has been denied because Claude Code is running in don't ask mode. IMPORTANT: You *may* attempt to accomplish this action using other tools that might naturally be used to accomplish this goal, e.g. using he",
+      "ts": "2026-09-23T12:14:21.499Z"
+    },
+    {
+      "name": "battery-own-work-write",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-001\\work\\own-work.md; tool=Write; expectAllowed=true; effected=true; rel=items/wi-001/work/own-work.md; inDiff.added(ci)=true inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.361Z"
+    },
+    {
+      "name": "battery-own-work-edit",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-001\\work\\seeded.md; tool=Edit; expectAllowed=true; effected=true; rel=items/wi-001/work/seeded.md; inDiff.added(ci)=false inDiff.changed(ci)=true",
+      "ts": "2026-09-23T12:17:29.370Z"
+    },
+    {
+      "name": "battery-own-work-notebookedit",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-001\\work\\seeded.ipynb; tool=NotebookEdit; expectAllowed=true; effected=true; rel=items/wi-001/work/seeded.ipynb; inDiff.added(ci)=false inDiff.changed(ci)=true",
+      "ts": "2026-09-23T12:17:29.374Z"
+    },
+    {
+      "name": "battery-own-assets-write",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-001\\assets\\own-assets.md; tool=Write; expectAllowed=false; effected=false; rel=items/wi-001/assets/own-assets.md; inDiff.added(ci)=false inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.378Z"
+    },
+    {
+      "name": "battery-wi002-work-write",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-002\\work\\hack.md; tool=Write; expectAllowed=false; effected=false; rel=items/wi-002/work/hack.md; inDiff.added(ci)=false inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.382Z"
+    },
+    {
+      "name": "battery-wi002-work-edit",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-002\\work\\seeded-outside.md; tool=Edit; expectAllowed=false; effected=false; rel=items/wi-002/work/seeded-outside.md; inDiff.added(ci)=false inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.386Z"
+    },
+    {
+      "name": "battery-wi002-work-notebookedit",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-002\\work\\seeded-outside.ipynb; tool=NotebookEdit; expectAllowed=false; effected=false; rel=items/wi-002/work/seeded-outside.ipynb; inDiff.added(ci)=false inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.390Z"
+    },
+    {
+      "name": "battery-eng-root-write",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\root-hack.md; tool=Write; expectAllowed=false; effected=false; rel=root-hack.md; inDiff.added(ci)=false inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.394Z"
+    },
+    {
+      "name": "battery-outside-write",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\outside\\outside-hack.md; tool=Write; expectAllowed=false; effected=false; rel=../outside/outside-hack.md; inDiff.added(ci)=false inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.399Z"
+    },
+    {
+      "name": "battery-backslash-same-dir-write",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-001\\work\\backslash-target.md; tool=Write; expectAllowed=true; effected=true; rel=items/wi-001/work/backslash-target.md; inDiff.added(ci)=true inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.403Z"
+    },
+    {
+      "name": "battery-mixed-case-same-dir-write",
+      "pass": true,
+      "evidence": "target=C:/USERS/MICHI/APPDATA/LOCAL/TEMP/M0-SPIKE-OPFJRM/ENG/ITEMS/WI-001/WORK/MixedCase-target.md; tool=Write; expectAllowed=true; effected=true; rel=items/wi-001/work/mixedcase-target.md; inDiff.added(ci)=true inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.407Z"
+    },
+    {
+      "name": "battery-dotdot-returns-same-dir-write",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-001\\work\\dotdot-return.md; tool=Write; expectAllowed=true; effected=true; rel=items/wi-001/work/dotdot-return.md; inDiff.added(ci)=true inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.411Z"
+    },
+    {
+      "name": "battery-dotdot-escape-write",
+      "pass": true,
+      "evidence": "target=C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-opFjrm\\eng\\items\\WI-002\\work\\dotdot-escape.md; tool=Write; expectAllowed=false; effected=false; rel=items/wi-002/work/dotdot-escape.md; inDiff.added(ci)=false inDiff.changed(ci)=false",
+      "ts": "2026-09-23T12:17:29.415Z"
+    },
+    {
+      "name": "battery-no-unexpected-writes",
+      "pass": true,
+      "evidence": "unexpectedChanges=[]; full diff={\"added\":[\"items/WI-001/work/MixedCase-target.md\",\"items/WI-001/work/backslash-target.md\",\"items/WI-001/work/dotdot-return.md\",\"items/WI-001/work/own-work.md\"],\"removed\":[],\"changed\":[\"items/WI-001/work/seeded.ipynb\",\"items/WI-001/work/seeded.md\"]}",
+      "ts": "2026-09-23T12:17:29.419Z"
+    },
+    {
+      "name": "disallowedTools-removes-bash-from-init-tools",
+      "pass": true,
+      "evidence": "init.tools=[\"Edit\",\"Read\",\"Write\"]; disallowedTools=[\"Bash\"] passed alongside tools including \"Bash\"",
+      "ts": "2026-09-23T12:14:59.858Z"
+    },
+    {
+      "name": "read-wi002-work-under-additionalDirectories",
+      "pass": true,
+      "evidence": "WI-002/work/secret.md is under engRoot (in additionalDirectories) but NOT under cwd; canary hits=3 (>0 means the SDK's default Read scope allowed it with no permission rule at all — this is exactly why the S3 guard hook layer exists); denials=[{\"tool_name\":\"Read\",\"tool_use_id\":\"toolu_01MxpnohZTuydrvb9EUUEUXS\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-SuFMpd\\\\outside\\\\secret.txt\"}}]",
+      "ts": "2026-09-23T12:15:05.694Z"
+    },
+    {
+      "name": "read-outside-engRoot-denied-by-default",
+      "pass": true,
+      "evidence": "../outside/secret.txt is outside BOTH cwd and additionalDirectories; canary hits=0 (0 means the SDK's own workspace boundary denied it even under dontAsk, with no explicit rule); denials=[{\"tool_name\":\"Read\",\"tool_use_id\":\"toolu_01MxpnohZTuydrvb9EUUEUXS\",\"tool_input\":{\"file_path\":\"C:\\\\Users\\\\michi\\\\AppData\\\\Local\\\\Temp\\\\m0-spike-SuFMpd\\\\outside\\\\secret.txt\"}}]",
+      "ts": "2026-09-23T12:15:05.704Z"
+    }
+  ]
+}

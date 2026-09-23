@@ -1,0 +1,161 @@
+{
+  "exp": "s04-toolsets",
+  "updatedAt": "2026-09-23T12:22:27.615Z",
+  "sdkVersion": "0.3.280",
+  "model": "claude-haiku-4-5",
+  "costUsd": 0.6093379999999999,
+  "checks": [
+    {
+      "name": "parallel-binding-3-items-no-crosstalk",
+      "pass": true,
+      "evidence": "S4 parallel-binding: 1/1 repeats PASS\nr1: PASS — no failures",
+      "extra": {
+        "repeats": 1,
+        "capHit": false
+      },
+      "ts": "2026-09-23T12:22:27.615Z"
+    },
+    {
+      "name": "mcp-tool-names-are-mcp__work__prefixed",
+      "pass": true,
+      "evidence": "init.tools mcp__work__* entries: [\"mcp__work__get_brief\",\"mcp__work__publish_asset\",\"mcp__work__raise_question\",\"mcp__work__submit_outputs\"]",
+      "ts": "2026-09-23T12:16:09.214Z"
+    },
+    {
+      "name": "allowedTools-wildcard-mcp__work__star-works",
+      "pass": true,
+      "evidence": "toolCalls=[\"mcp__work__get_brief\"]; toolResults[0].isError=false; transcript=C:\\Users\\michi\\dev\\ai-project\\spike\\results\\raw\\s04-toolsets\\naming-wildcard-allow-2026-09-23-1216-7ee24d.jsonl",
+      "ts": "2026-09-23T12:16:09.221Z"
+    },
+    {
+      "name": "allowedTools-explicit-per-tool-names-work",
+      "pass": true,
+      "evidence": "toolCalls=[\"mcp__work__get_brief\"]; transcript=C:\\Users\\michi\\dev\\ai-project\\spike\\results\\raw\\s04-toolsets\\naming-explicit-allow-2026-09-23-1216-4b4fe1.jsonl",
+      "ts": "2026-09-23T12:16:14.486Z"
+    },
+    {
+      "name": "mcp-tool-not-in-allowedTools-is-denied-under-dontAsk",
+      "pass": true,
+      "evidence": "attemptedCall=true, deniedInResults=true, deniedInDenials=true, denials=[{\"tool_name\":\"mcp__work__get_brief\",\"tool_use_id\":\"toolu_01V4nnjsx1XMQCXYMcDBWmEW\",\"tool_input\":{}}], handlerActuallyRan=false (tool log entries: 0), transcript=C:\\Users\\michi\\dev\\ai-project\\spike\\results\\raw\\s04-toolsets\\not-allowed-denied-2026-09-23-1216-ece205.jsonl",
+      "ts": "2026-09-23T12:16:20.989Z"
+    },
+    {
+      "name": "tools-baseset-array-governs-builtins-only-not-mcp",
+      "pass": true,
+      "evidence": "options.tools=[] (built-ins disabled); init.tools=[\"mcp__work__get_brief\",\"mcp__work__publish_asset\",\"mcp__work__raise_question\",\"mcp__work__submit_outputs\"]; get_brief succeeded=true; transcript=C:\\Users\\michi\\dev\\ai-project\\spike\\results\\raw\\s04-toolsets\\tools-array-need-not-list-mcp-names-2026-09-23-1216-c081d0.jsonl",
+      "ts": "2026-09-23T12:16:26.454Z"
+    },
+    {
+      "name": "invalid-kind-rejected-then-self-corrected",
+      "pass": true,
+      "evidence": "publish_asset results: [{\"isError\":true,\"text\":\"MCP error -32602: Input validation error: Invalid arguments for tool publish_asset: [\\n  {\\n    \\\"code\\\": \\\"invalid_value\\\",\\n \"},{\"isError\":false,\"text\":\"Published notes.md to slot \\\"draft\\\" as v1.0 (kind=minor). Note: test invalid kind\"},{\"isError\":true,\"text\":\"publish_asset: source_path \\\"../../WI-002/work/secret.md\\\" must be a relative path inside work/ (no \\\"..\\\" segments, not abs\"}]",
+      "ts": "2026-09-23T12:16:44.352Z"
+    },
+    {
+      "name": "missing-required-field-rejected-then-self-corrected",
+      "pass": true,
+      "evidence": "raise_question results: [{\"isError\":true,\"text\":\"MCP error -32602: Input validation error: Invalid arguments for tool raise_question: [\\n  {\\n    \\\"expected\\\": \\\"string\\\",\\n    \\\"code\\\": \\\"invalid_type\\\",\\n    \\\"path\\\": [\\n \"},{\"isError\":false,\"text\":\"Question recorded (non-blocking). Proceed on your stated hypothesis.\"}]",
+      "ts": "2026-09-23T12:16:44.360Z"
+    },
+    {
+      "name": "path-traversal-publish-denied-not-executed",
+      "pass": true,
+      "evidence": "publish attempts: [{\"slot\":\"draft\",\"source_path\":\"notes.md\",\"kind\":\"huge\",\"note\":\"test invalid kind\"},{\"slot\":\"draft\",\"source_path\":\"notes.md\",\"kind\":\"minor\",\"note\":\"test invalid kind\"},{\"slot\":\"draft\",\"source_path\":\"../../WI-002/work/secret.md\",\"kind\":\"minor\",\"note\":\"test path escape\"}]; results: [true,false,true]",
+      "ts": "2026-09-23T12:16:44.364Z"
+    },
+    {
+      "name": "agent-completes-run-after-validation-errors",
+      "pass": true,
+      "evidence": "submit_outputs called=true; run isError=false; transcript=C:\\Users\\michi\\dev\\ai-project\\spike\\results\\raw\\s04-toolsets\\invalid-input-recovery-2026-09-23-1216-4a09d5.jsonl",
+      "ts": "2026-09-23T12:16:44.368Z"
+    },
+    {
+      "name": "end-turn-instruction-obeyed-by-haiku",
+      "pass": true,
+      "evidence": "5/5 runs made zero tool calls after submit_outputs. Detail: [{\"run\":1,\"extraCallsAfterSubmit\":0,\"totalCalls\":2,\"costUsd\":0.011408},{\"run\":2,\"extraCallsAfterSubmit\":0,\"totalCalls\":2,\"costUsd\":0.008509000000000001},{\"run\":3,\"extraCallsAfterSubmit\":0,\"totalCalls\":2,\"costUsd\":0.008149},{\"run\":4,\"extraCallsAfterSubmit\":0,\"totalCalls\":2,\"costUsd\":0.008152},{\"run\":5,\"extraCallsAfterSubmit\":0,\"totalCalls\":2,\"costUsd\":0.008157}]",
+      "extra": {
+        "results": [
+          {
+            "run": 1,
+            "extraCallsAfterSubmit": 0,
+            "totalCalls": 2,
+            "costUsd": 0.011408
+          },
+          {
+            "run": 2,
+            "extraCallsAfterSubmit": 0,
+            "totalCalls": 2,
+            "costUsd": 0.008509000000000001
+          },
+          {
+            "run": 3,
+            "extraCallsAfterSubmit": 0,
+            "totalCalls": 2,
+            "costUsd": 0.008149
+          },
+          {
+            "run": 4,
+            "extraCallsAfterSubmit": 0,
+            "totalCalls": 2,
+            "costUsd": 0.008152
+          },
+          {
+            "run": 5,
+            "extraCallsAfterSubmit": 0,
+            "totalCalls": 2,
+            "costUsd": 0.008157
+          }
+        ]
+      },
+      "ts": "2026-09-23T12:17:12.773Z"
+    },
+    {
+      "name": "tool-call-latency-measured",
+      "pass": true,
+      "evidence": "e2e=[{\"toolUseId\":\"toolu_01UMEN119A1LcWxCAugHaud2\",\"name\":\"mcp__work__publish_asset\",\"e2eMs\":9},{\"toolUseId\":\"toolu_01MKMKfM4MgCoWGSux7VdYeG\",\"name\":\"mcp__work__publish_asset\",\"e2eMs\":8},{\"toolUseId\":\"toolu_01GHtm1Wr99gochboSa6Xqok\",\"name\":\"mcp__work__submit_outputs\",\"e2eMs\":3}]; handler=[{\"tool\":\"publish_asset\",\"handlerMs\":1},{\"tool\":\"publish_asset\",\"handlerMs\":1},{\"tool\":\"submit_outputs\",\"handlerMs\":0}]",
+      "extra": {
+        "e2e": [
+          {
+            "toolUseId": "toolu_01UMEN119A1LcWxCAugHaud2",
+            "name": "mcp__work__publish_asset",
+            "e2eMs": 9
+          },
+          {
+            "toolUseId": "toolu_01MKMKfM4MgCoWGSux7VdYeG",
+            "name": "mcp__work__publish_asset",
+            "e2eMs": 8
+          },
+          {
+            "toolUseId": "toolu_01GHtm1Wr99gochboSa6Xqok",
+            "name": "mcp__work__submit_outputs",
+            "e2eMs": 3
+          }
+        ],
+        "handlerTimes": [
+          {
+            "tool": "publish_asset",
+            "handlerMs": 1
+          },
+          {
+            "tool": "publish_asset",
+            "handlerMs": 1
+          },
+          {
+            "tool": "submit_outputs",
+            "handlerMs": 0
+          }
+        ]
+      },
+      "ts": "2026-09-23T12:17:20.533Z"
+    },
+    {
+      "name": "run-ts-reproduces-parallel-binding",
+      "pass": true,
+      "evidence": "run.ts single-repeat smoke check: r0 PASS — [ok] WI-001: published versions v1.0.md, v2.0.md in C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-bsWLos\\eng\\items\\WI-001\\assets\\draft; [ok] WI-002: published versions v1.0.md, v2.0.md in C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-bsWLos\\eng\\items\\WI-002\\assets\\draft; [ok] WI-003: published versions v1.0.md, v2.0.md in C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-bsWLos\\eng\\items\\WI-003\\assets\\draft; [ok] WI-001: tool log has 3 entries, all itemId=WI-001 runId=r0-WI-001-b8787e; [ok] WI-002: tool log has 3 entries, all itemId=WI-002 runId=r0-WI-002-33df3a; [ok] WI-003: tool log has 3 entries, all itemId=WI-003 runId=r0-WI-003-a087ee; [info] cost this repeat: $0.0600 (turns: 5/5/5)",
+      "extra": {
+        "repeats": 1
+      },
+      "ts": "2026-09-23T12:17:33.414Z"
+    }
+  ]
+}

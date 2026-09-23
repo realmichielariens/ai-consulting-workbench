@@ -1,0 +1,117 @@
+{
+  "exp": "s08-sqlite",
+  "updatedAt": "2026-09-23T11:54:11.038Z",
+  "sdkVersion": "0.3.280",
+  "model": "claude-haiku-4-5",
+  "costUsd": 0,
+  "checks": [
+    {
+      "name": "better-sqlite3-v11-no-prebuild-for-node26-abi",
+      "pass": true,
+      "evidence": "npm install better-sqlite3@^11.10.0 on Node 26.3.0 (NODE_MODULE_VERSION 147, win32-x64):\nprebuild-install requested .../better-sqlite3-v11.10.0-node-v147-win32-x64.tar.gz -> HTTP 404 (no prebuilt for this ABI).\nFell back to `node-gyp rebuild`. VS2022 BuildTools WAS found (v143 toolset, Windows SDK 10.0.26100.0) — a compiler was NOT the blocker.\nCompile failed with V8 API breakage against the V8 shipped in Node 26.3.0: error C2039 'GetPrototype' is not a member of 'v8::Object', C2039 'GetIsolate' not a member of 'v8::Context', C2039 'This' not a member of 'v8::PropertyCallbackInfo<v8::Value>' (binder.lzz / better_sqlite3.lzz / database.lzz / statement.lzz). 7 errors, npm install exited 1, node_modules/better-sqlite3 rolled back (empty).\nSee experiments/s08-sqlite/npm-install-output.txt for the full log.",
+      "ts": "2026-09-23T11:54:05.287Z"
+    },
+    {
+      "name": "better-sqlite3-v13-works-via-bundled-napi-prebuild",
+      "pass": true,
+      "evidence": "npm install better-sqlite3@^13.0.3: exit 0, no node-gyp invocation in the log (v13Text has \"npm info ok\": true).\nInstalled version: 13.0.3.\nv13 switched from NAN/direct-V8 bindings to node-addon-api (N-API), which is ABI-stable across Node versions. The npm package ships prebuilt .node binaries directly under node_modules/better-sqlite3/prebuilds/ (darwin-arm64, darwin-x64, linux-*, win32-arm64, win32-x64.node) rather than fetching a per-ABI tarball from GitHub releases — so install is instant and offline-safe once the tarball itself is fetched.\nSee experiments/s08-sqlite/npm-install-output-v13.txt for the full log.",
+      "ts": "2026-09-23T11:54:05.298Z"
+    },
+    {
+      "name": "better-sqlite3-loads-and-queries-on-node26",
+      "pass": true,
+      "evidence": "require('better-sqlite3')@13.0.3, sqlite_version()=3.53.4, round-tripped row={\"id\":1,\"name\":\"hello\"}",
+      "ts": "2026-09-23T11:54:05.306Z"
+    },
+    {
+      "name": "node-sqlite-works-no-flag-no-warning-on-node26",
+      "pass": true,
+      "evidence": "import { DatabaseSync } from \"node:sqlite\" with no --experimental-sqlite flag; no ExperimentalWarning on stderr (warned=false); round-tripped row={\"id\":1,\"name\":\"hello\"}. process.versions.modules=147.",
+      "ts": "2026-09-23T11:54:05.314Z"
+    },
+    {
+      "name": "drizzle-orm-better-sqlite3-driver-exists",
+      "pass": true,
+      "evidence": "node_modules/drizzle-orm/better-sqlite3/ exists: true (drizzle-orm@0.44.7)",
+      "ts": "2026-09-23T11:54:05.321Z"
+    },
+    {
+      "name": "drizzle-orm-no-native-node-sqlite-driver",
+      "pass": true,
+      "evidence": "No node_modules/drizzle-orm/node-sqlite (or similar) directory in this drizzle-orm version — confirmed by directory listing, not by the changelog.",
+      "ts": "2026-09-23T11:54:05.329Z"
+    },
+    {
+      "name": "drizzle-sqlite-proxy-wraps-node-sqlite",
+      "pass": true,
+      "evidence": "drizzle-orm/sqlite-proxy's drizzle(callback) wrapping a hand-written ~15-line adapter over node:sqlite's DatabaseSync: insert + typed select round-tripped: [{\"sessionId\":\"px-1\",\"role\":\"work\",\"scopeKey\":\"work:PROXY-TEST\",\"leaseHolder\":\"px-1\",\"leaseUntil\":1790164505331,\"status\":\"active\"}]. This works, but is NOT first-class (async-shaped API over a sync driver, no query batching for free, no migrator wired up) — see FINDINGS for the recommendation.",
+      "ts": "2026-09-23T11:54:05.337Z"
+    },
+    {
+      "name": "fts5-better-sqlite3-ranked-query-with-snippet",
+      "pass": true,
+      "evidence": "Indexed 3 docs into a CREATE VIRTUAL TABLE ... USING fts5(...); MATCH 'cloud migration' ORDER BY bm25(asset_fts) returned 3 rows, top hit=WI-004/assets/themes/v1.0, snippet=\"...vendor consolidation, (2) [cloud] [migration] for the data...\"",
+      "ts": "2026-09-23T11:54:05.345Z"
+    },
+    {
+      "name": "fts5-node-sqlite-ranked-query-with-snippet",
+      "pass": true,
+      "evidence": "Same FTS5 setup/query against node:sqlite's DatabaseSync: indexed=3, results=3, top hit=WI-004/assets/themes/v1.0, snippet=\"...vendor consolidation, (2) [cloud] [migration] for the data...\". Identical ranking order to better-sqlite3: true",
+      "ts": "2026-09-23T11:54:05.353Z"
+    },
+    {
+      "name": "schema-subset-crud-via-drizzle",
+      "pass": true,
+      "evidence": "Inserted + selected one row each in sessions/requests/agenda_items/asset_versions/consumptions via drizzle-orm/better-sqlite3. session={\"sessionId\":\"S-1\",\"role\":\"work\",\"scopeKey\":\"work:WI-004\",\"leaseHolder\":\"S-1\",\"leaseUntil\":1790164505372,\"status\":\"active\"}",
+      "ts": "2026-09-23T11:54:05.384Z"
+    },
+    {
+      "name": "drizzle-kit-generate-produces-matching-ddl",
+      "pass": true,
+      "evidence": "npx drizzle-kit generate (drizzle.config.ts, dialect: 'sqlite') produced 0000_flat_mandarin.sql; all 6 expected CREATE TABLE statements present: true.",
+      "ts": "2026-09-23T11:54:05.392Z"
+    },
+    {
+      "name": "lease-race-exactly-one-winner-per-round",
+      "pass": true,
+      "evidence": "5 separate OS processes (own better-sqlite3 connection each, WAL + busy_timeout=5000ms) raced 200 rounds for scope_key='race:<n>' via BEGIN IMMEDIATE + INSERT...ON CONFLICT(scope_key) DO UPDATE...WHERE lease_until < now. Result: exactlyOneWinner=200/200, zeroWinners=0, multipleWinners=0. Winners spread across workers (real contention, not one worker lapping the rest): {\"w0\":31,\"w1\":35,\"w2\":44,\"w3\":47,\"w4\":43}. Sample: [{\"round\":0,\"winner\":\"w4-r0\"},{\"round\":1,\"winner\":\"w0-r1\"},{\"round\":2,\"winner\":\"w2-r2\"},{\"round\":3,\"winner\":\"w2-r3\"},{\"round\":4,\"winner\":\"w1-r4\"}]",
+      "ts": "2026-09-23T11:54:10.228Z"
+    },
+    {
+      "name": "lease-expiry-allows-takeover",
+      "pass": true,
+      "evidence": "holder-A acquires (changes=1); holder-B's immediate steal attempt on the still-valid lease is rejected (changes=0); after the 80ms lease expires, holder-C's steal succeeds (changes=1), new holder=holder-C.",
+      "ts": "2026-09-23T11:54:10.346Z"
+    },
+    {
+      "name": "lease-renewal-extends-and-blocks-steal",
+      "pass": true,
+      "evidence": "holder-A acquires a 100ms lease, then renews with a plain UPDATE (no ON CONFLICT needed — it already owns the row): lease_until 1790164450453 -> 1790164510353. A steal attempt by holder-B right after renewal is rejected (changes=0).",
+      "ts": "2026-09-23T11:54:10.355Z"
+    },
+    {
+      "name": "git-checkpoint-then-commit-then-tag-then-restore",
+      "pass": true,
+      "evidence": "Committed state.db after wal_checkpoint(TRUNCATE) as tag checkpoint/v1 (1 row), wrote a 2nd row + checkpointed + committed as checkpoint/v2 (2 rows). Checked out checkpoint/v1 (after closing the connection) and reopened: rows=[{\"seq\":1,\"data\":\"batch1\"}]. Checked back out to checkpoint/v2: rows=[{\"seq\":1,\"data\":\"batch1\"},{\"seq\":2,\"data\":\"batch2-no-checkpoint\"}]. Tags: checkpoint/v1, checkpoint/v2.",
+      "ts": "2026-09-23T11:54:10.788Z"
+    },
+    {
+      "name": "git-commit-without-checkpoint-misses-wal-data",
+      "pass": true,
+      "evidence": "After inserting a 2nd row with NO checkpoint, 'git status --porcelain' on state.db is empty (git sees no change — the row is only in state.db-wal, which is .gitignored): \"\". After wal_checkpoint(TRUNCATE), the same command shows state.db as modified: \" M state.db\\n\". Committing at the first point would have silently produced a checkpoint tag missing the 2nd row.",
+      "ts": "2026-09-23T11:54:10.797Z"
+    },
+    {
+      "name": "git-checkout-requires-closed-connection-on-windows",
+      "pass": true,
+      "evidence": "'git checkout <tag> -- state.db' while the better-sqlite3 connection is still open FAILS on Windows: \"Command failed: git checkout checkpoint/v1 -- state.db\\nerror: unable to unlink old 'state.db': Invalid argument\\n\\nerror: unable to unlink old 'state.db': Invalid argument\\n\". The failed attempt does not corrupt the file (old connection still reads both rows: [{\"seq\":1,\"data\":\"batch1\"},{\"seq\":2,\"data\":\"batch2-no-checkpoint\"}]). After db.close(), the identical checkout command succeeds: {\"ok\":true,\"output\":\"\"}.",
+      "ts": "2026-09-23T11:54:10.805Z"
+    },
+    {
+      "name": "perf-10k-insert-and-query",
+      "pass": true,
+      "evidence": "n=10000. Single-transaction insert: 15.1ms. Per-row autocommit insert: 190.8ms (12.6x slower). COUNT(*): 0.08ms. Filtered SELECT (2000 rows): 0.79ms. ORDER BY + LIMIT 50: 2.54ms.",
+      "ts": "2026-09-23T11:54:11.038Z"
+    }
+  ]
+}

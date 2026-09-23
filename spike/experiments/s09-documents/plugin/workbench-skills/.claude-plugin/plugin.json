@@ -1,0 +1,8 @@
+{
+  "name": "workbench-skills",
+  "description": "S9 spike plugin: a document-extraction skill that runs the chosen extract.py (markitdown) script, restricted to that one command via a Bash allow-rule.",
+  "version": "0.0.1",
+  "author": {
+    "name": "M0 spike"
+  }
+}

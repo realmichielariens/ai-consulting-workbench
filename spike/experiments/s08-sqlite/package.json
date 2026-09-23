@@ -1,0 +1,14 @@
+{
+  "name": "s08-sqlite",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "M0 spike S8: SQLite driver, FTS5, leases, Git round trip on Node 26 / Windows. Isolated deps; never touch spike/package.json.",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "drizzle-orm": "^0.44.6"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.6"
+  }
+}

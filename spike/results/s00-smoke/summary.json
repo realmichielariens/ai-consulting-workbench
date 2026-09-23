@@ -1,0 +1,117 @@
+{
+  "exp": "s00-smoke",
+  "updatedAt": "2026-09-23T12:05:46.708Z",
+  "sdkVersion": "0.3.280",
+  "model": "claude-haiku-4-5",
+  "costUsd": 0.0463716,
+  "checks": [
+    {
+      "name": "run1-succeeds-with-cost",
+      "pass": true,
+      "evidence": "subtype=success isError=false costUsd=0.023006250000000002 sessionId=108197ea-4a18-403b-9670-4635d8bdf901 transcript=C:\\Users\\michi\\dev\\ai-project\\spike\\results\\raw\\s00-smoke\\baseline-2026-09-23-1205-3ff534.jsonl",
+      "ts": "2026-09-23T12:05:16.501Z"
+    },
+    {
+      "name": "apiKeySource-is-ANTHROPIC_API_KEY",
+      "pass": true,
+      "evidence": "init.apiKeySource=ANTHROPIC_API_KEY",
+      "ts": "2026-09-23T12:05:16.510Z"
+    },
+    {
+      "name": "no-personal-skills-leak",
+      "pass": false,
+      "evidence": "init.skills=[\"deep-research\",\"design\",\"design-sync\",\"dataviz\",\"update-config\",\"verify\",\"debug\",\"code-review\",\"simplify\",\"batch\",\"fewer-permission-prompts\",\"doctor\",\"loop\",\"claude-api\",\"workflow-authoring\",\"run\",\"run-skill-generator\"] (user has: [\"docs\",\"docx\",\"import-memory\",\"mba-episode-debrief\",\"mba-spiral-prep\",\"morning\",\"pdf\",\"pptx\",\"skill-creator\",\"xlsx\"])",
+      "ts": "2026-09-23T12:05:16.514Z"
+    },
+    {
+      "name": "no-personal-mcp-servers-leak",
+      "pass": true,
+      "evidence": "init.mcp_servers=[] (user has: [])",
+      "ts": "2026-09-23T12:05:16.519Z"
+    },
+    {
+      "name": "no-personal-plugins-leak",
+      "pass": false,
+      "evidence": "init.plugins=[{\"name\":\"agents-md\",\"path\":\"builtin\",\"source\":\"agents-md@builtin\"},{\"name\":\"telemetry\",\"path\":\"builtin\",\"source\":\"telemetry@builtin\"}]",
+      "ts": "2026-09-23T12:05:16.523Z"
+    },
+    {
+      "name": "init-has-claude_code_version-and-cwd",
+      "pass": true,
+      "evidence": "claude_code_version=2.1.280 cwd=C:\\Users\\michi\\dev\\ai-project\\spike permissionMode=default model=claude-haiku-4-5",
+      "ts": "2026-09-23T12:05:16.528Z"
+    },
+    {
+      "name": "bundled-binary-spawned-by-default",
+      "pass": true,
+      "evidence": "pathToClaudeCodeExecutable was not set; sdk.mjs resolves the default executable relative to import.meta.url (the @anthropic-ai/claude-agent-sdk package directory) when the option is omitted, i.e. it spawns the SDK's bundled binary, not a global 'claude' on PATH. Both report the same version here (2.1.280), so version alone can't distinguish them; the code path is the evidence. See node_modules/@anthropic-ai/claude-agent-sdk/sdk.mjs (search 'pathToClaudeCodeExecutable').",
+      "ts": "2026-09-23T12:05:16.532Z"
+    },
+    {
+      "name": "bash-tool-available",
+      "pass": true,
+      "evidence": "init.tools=[\"Task\",\"Bash\",\"CronCreate\",\"CronDelete\",\"CronList\",\"DesignSync\",\"Edit\",\"EnterWorktree\",\"ExitWorktree\",\"Glob\",\"Grep\",\"ListAgents\",\"Monitor\",\"NotebookEdit\",\"PowerShell\",\"PushNotification\",\"Read\",\"ReportFindings\",\"ScheduleWakeup\",\"SendMessage\",\"Skill\",\"TaskCreate\",\"TaskGet\",\"TaskList\",\"TaskStop\",\"TaskUpdate\",\"ToolSearch\",\"WebFetch\",\"WebSearch\",\"Workflow\",\"Write\"]",
+      "ts": "2026-09-23T12:05:20.995Z"
+    },
+    {
+      "name": "git-bash-detected",
+      "pass": true,
+      "evidence": "run2 subtype=success isError=false; resultText=/bin/bash.exe. A successful Bash tool call on Windows would confirm Git Bash (or an equivalent shell) was found; this run was blocked by the API billing error before the model could call the tool, so this is unconfirmed (not failed) — re-run once credits are available.",
+      "ts": "2026-09-23T12:05:21.005Z"
+    },
+    {
+      "name": "default-transcript-under-user-claude-projects",
+      "pass": true,
+      "evidence": "searched C:\\Users\\michi\\.claude\\projects for 108197ea-4a18-403b-9670-4635d8bdf901.jsonl -> [\"C:\\\\Users\\\\michi\\\\.claude\\\\projects\\\\C--Users-michi-dev-ai-project-spike\\\\108197ea-4a18-403b-9670-4635d8bdf901.jsonl\"]",
+      "ts": "2026-09-23T12:05:21.010Z"
+    },
+    {
+      "name": "claude-config-dir-redirect-works",
+      "pass": true,
+      "evidence": "inRedirectedDir=[\"C:\\\\Users\\\\michi\\\\dev\\\\ai-project\\\\spike\\\\results\\\\raw\\\\claude-config\\\\projects\\\\C--Users-michi-dev-ai-project-spike\\\\9f2efdb8-b585-4eda-9ede-f2c26f54615c.jsonl\"] inDefaultDir=[]",
+      "ts": "2026-09-23T12:05:23.721Z"
+    },
+    {
+      "name": "claude-config-dir-redirect-init-still-clean",
+      "pass": false,
+      "evidence": "init.skills=[\"deep-research\",\"design\",\"design-sync\",\"dataviz\",\"update-config\",\"verify\",\"debug\",\"code-review\",\"simplify\",\"batch\",\"fewer-permission-prompts\",\"doctor\",\"loop\",\"claude-api\",\"workflow-authoring\",\"run\",\"run-skill-generator\"] init.mcp_servers=[]",
+      "ts": "2026-09-23T12:05:23.732Z"
+    },
+    {
+      "name": "total-cost-under-cap",
+      "pass": true,
+      "evidence": "total observed cost across baseline+bash+config-dir+tools-preset+tools-array runs = $0.0464 (cap $0.20)",
+      "ts": "2026-09-23T12:05:29.197Z"
+    },
+    {
+      "name": "tools-preset-claude_code-narrows-default-surface",
+      "pass": false,
+      "evidence": "with tools:{type:'preset',preset:'claude_code'}, remaining non-standard tools = [\"Task\",\"CronCreate\",\"CronDelete\",\"CronList\",\"DesignSync\",\"EnterWorktree\",\"ExitWorktree\",\"ListAgents\",\"Monitor\",\"PushNotification\",\"ReportFindings\",\"ScheduleWakeup\",\"SendMessage\",\"TaskCreate\",\"TaskGet\",\"TaskList\",\"TaskStop\",\"TaskUpdate\",\"ToolSearch\",\"Workflow\"]; full init.tools=[\"Task\",\"Bash\",\"CronCreate\",\"CronDelete\",\"CronList\",\"DesignSync\",\"Edit\",\"EnterWorktree\",\"ExitWorktree\",\"Glob\",\"Grep\",\"ListAgents\",\"Monitor\",\"NotebookEdit\",\"PowerShell\",\"PushNotification\",\"Read\",\"ReportFindings\",\"ScheduleWakeup\",\"SendMessage\",\"Skill\",\"TaskCreate\",\"TaskGet\",\"TaskList\",\"TaskStop\",\"TaskUpdate\",\"ToolSearch\",\"WebFetch\",\"WebSearch\",\"Workflow\",\"Write\"]",
+      "ts": "2026-09-23T12:05:26.475Z"
+    },
+    {
+      "name": "billing-blocker-not-a-harness-bug",
+      "pass": true,
+      "evidence": "at least one run completed without the billing block",
+      "ts": "2026-09-23T12:05:29.202Z"
+    },
+    {
+      "name": "tools-explicit-array-narrows-default-surface",
+      "pass": true,
+      "evidence": "with tools:[\"Read\",\"Write\",\"Edit\",\"Glob\",\"Grep\",\"Skill\"], init.tools=[\"Edit\",\"Glob\",\"Grep\",\"Read\",\"Skill\",\"Write\"] (extras=[])",
+      "ts": "2026-09-23T12:05:29.186Z"
+    },
+    {
+      "name": "main-review-no-overlap-with-user-skills",
+      "pass": true,
+      "evidence": "overlap(init.skills, ~/.claude skills) = []; init.skills are CLI-bundled (17), user skills (10) absent",
+      "ts": "2026-09-23T12:05:46.702Z"
+    },
+    {
+      "name": "main-review-plugins-are-builtin-only",
+      "pass": true,
+      "evidence": "init.plugins are all path=builtin: init.plugins=[{\"name\":\"agents-md\",\"path\":\"builtin\",\"source\":\"agents-md@builtin\"},{\"name\":\"telemetry\",\"path\":\"builtin\",\"source\":\"telemetry@builtin\"}]",
+      "ts": "2026-09-23T12:05:46.708Z"
+    }
+  ]
+}

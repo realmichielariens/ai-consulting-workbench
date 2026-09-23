@@ -1,0 +1,195 @@
+{
+  "exp": "s05-resume",
+  "updatedAt": "2026-09-23T12:52:33.560Z",
+  "sdkVersion": "0.3.280",
+  "model": "claude-haiku-4-5",
+  "costUsd": 0.5976651999999999,
+  "checks": [
+    {
+      "name": "newproc-initial-run-succeeds",
+      "pass": true,
+      "evidence": "Process 1 (pid 43620, this node process): sessionId=2f085e64-3ff7-4e5b-97d6-48e072719c6e costUsd=0.01787525 turns=3 toolCalls=[Write,mcp__s5__raise_question] Write(draft.md) calls=1 raise_question calls=1",
+      "ts": "2026-09-23T12:52:19.286Z"
+    },
+    {
+      "name": "newproc-initial-drafts-and-raises-question",
+      "pass": true,
+      "evidence": "Write calls=1 raise_question calls=1",
+      "ts": "2026-09-23T12:52:19.297Z"
+    },
+    {
+      "name": "newproc-draft-file-exists-on-disk",
+      "pass": true,
+      "evidence": "fs.existsSync(C:\\Users\\michi\\AppData\\Local\\Temp\\m0-spike-C1cqyU\\eng\\items\\WI-001\\work\\draft.md)=true",
+      "ts": "2026-09-23T12:52:19.302Z"
+    },
+    {
+      "name": "newproc-resume-succeeds",
+      "pass": true,
+      "evidence": "ok=true isError=false subtype=success",
+      "ts": "2026-09-23T12:52:30.086Z"
+    },
+    {
+      "name": "newproc-resume-same-session-id",
+      "pass": true,
+      "evidence": "initial sessionId=2f085e64-3ff7-4e5b-97d6-48e072719c6e child sessionId=2f085e64-3ff7-4e5b-97d6-48e072719c6e",
+      "ts": "2026-09-23T12:52:30.092Z"
+    },
+    {
+      "name": "newproc-resume-recalls-memory-word-without-rereading",
+      "pass": true,
+      "evidence": "resultText=\"Done. I've appended a new sentence to draft.md emphasizing that the CFO's budget ceiling is an absolute hard constraint that eliminates any vendor proposals exceeding it.\n\nMEMORY_WORD_RECALL: QUARTZ-1605\" expected substring=\"MEMORY_WORD_RECALL: QUARTZ-1605\"",
+      "ts": "2026-09-23T12:52:30.096Z"
+    },
+    {
+      "name": "newproc-resume-continues-via-edit-not-rewrite",
+      "pass": true,
+      "evidence": "toolCallNames=[Read,Edit] (want >=1 Edit, 0 Write)",
+      "ts": "2026-09-23T12:52:30.101Z"
+    },
+    {
+      "name": "newproc-resume-cost-and-cache",
+      "pass": true,
+      "evidence": "costUsd=0.025187649999999995 usage={\"input_tokens\":26,\"cache_creation_input_tokens\":1292,\"cache_read_input_tokens\":16714,\"output_tokens\":800,\"output_tokens_details\":{\"thinking_tokens\":421},\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0},\"service_tier\":\"standard\",\"cache_creation\":{\"ephemeral_1h_input_tokens\":0,\"ephemeral_5m_input_tokens\":1292},\"inference_geo\":\"not_available\",\"iterations\":[{\"input_tokens\":8,\"output_tokens\":129,\"cache_read_input_tokens\":6011,\"cache_creation_input_tokens\":484,\"cache_creation\":{\"ephemeral_5m_input_tokens\":484,\"ephemeral_1h_input_tokens\":0},\"type\":\"message\"}],\"speed\":\"standard\"} (cache_read_input_tokens=16714)",
+      "ts": "2026-09-23T12:52:30.107Z"
+    },
+    {
+      "name": "newproc-no-orphan-claude-processes",
+      "pass": true,
+      "evidence": "spawned resume-child.ts pid=42992 stillAlive(+1.5s)=false live descendants=[]",
+      "ts": "2026-09-23T12:52:32.130Z"
+    },
+    {
+      "name": "newproc-resume-depends-on-matching-CLAUDE_CONFIG_DIR",
+      "pass": true,
+      "evidence": "With CLAUDE_CONFIG_DIR unset in the child (falls back to ~/.claude, which does not hold this transcript): {\"ok\":true,\"childPid\":20648,\"parentSessionIdRequested\":\"2f085e64-3ff7-4e5b-97d6-48e072719c6e\",\"sessionId\":\"2f085e64-3ff7-4e5b-97d6-48e072719c6e\",\"isError\":true,\"subtype\":\"error_during_execution\",\"costUsd\":0,\"turns\":0,\"usage\":{\"output_tokens_details\":{\"thinking_tokens\":0},\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":0,\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0},\"service_tier\":\"standard\",\"cache_creation\":{\"ephemeral_1h_input_tokens\":0,\"ephemeral_5m_input_tokens\":0},\"inference_geo\":\"\",\"iterations\":[],\"speed\":\"standard\"},\"toolCallNames\":[],\"raisedQuestions\":[],\"transcriptPath\":\"C:\\\\Users\\\\michi\\\\dev\\\\ai-project\\\\spike\\\\results\\\\raw\\\\s05-resume\\\\newproc-resume-wrong-configdir-2026-09-23-1252-8f6bdb.jsonl\",\"timedOut\":false}",
+      "ts": "2026-09-23T12:52:33.560Z"
+    },
+    {
+      "name": "streaming-message1-answered",
+      "pass": true,
+      "evidence": "result={\"duration_api_ms\":2420,\"stop_reason\":\"end_turn\",\"session_id\":\"250a8588-e166-4bee-9b0e-f6473b4bd0af\",\"total_cost_usd\":0.005404,\"usage\":{\"input_tokens\":3838,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":116,\"output_tokens_details\":{\"thinking_tokens\":106},\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0},\"service_tier\":\"standard\",\"cache_creation\":{\"ephemeral_1h_input_tokens\":0,\"ephemeral_5m_input_tokens\":0},\"inference_geo\":\"not_available\",\"iterations\":[{\"input_tokens\":3838,\"output_tokens\":116,\"cache_read_input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"type\":\"message\"}],\"speed\":\"standard\"},\"modelUsage\":{\"claude-haiku-4-5-20251001\":{\"inputTokens\":926,\"outputTokens\":12,\"cacheReadInputTokens\":0,\"cacheCreationInputTokens\":0,\"webSearchRequests\":0,\"costUSD\":0.000986,\"contextWindow\":200000,\"maxOutputTokens\":32000,\"thinkingTokens\":0,\"canonicalModel\":\"claude-haiku-4-5\",\"provider\":\"firstParty\",\"costBasis\":\"list\"},\"claude-haiku-4-5\":{\"inputTokens\":3838,\"outputTokens\":116,\"cacheReadInputTokens\":0,\"cacheCreationInputTokens\":0,\"webSearchRequests\":0,\"costUSD\":0.004418,\"contextWindow\":200000,\"maxOutputTokens\":32000,\"thinkingTokens\":106,\"canonicalModel\":\"claude-haiku-4-5\",\"provider\":\"firstParty\",\"costBasis\":\"list\"}},\"permission_denials\":[],\"terminal_reason\":\"completed\",\"fast_mode_state\":\"off\",\"fast_mode_disabled_reason\":\"sdk_opt_in_required\",\"subagent_stats\":{\"spawned\":0,\"requested\":{\"background\":0,\"foreground\":0,\"unset\":0},\"started_in_background\":0,\"max_depth\":0,\"spawned_by_subagents\":0,\"completed\":0,\"failed\":0,\"killed\":{\"parent\":0,\"user\":0,\"system\":0},\"refused\":{\"depth_limit\":0,\"concurrency_limit\":0,\"budget\":0},\"by_type\":{}},\"is_error\":false,\"num_turns\":1,\"subtype\":\"success\",\"api_error_status\":null,\"result\":\"PONG1\",\"ttft_ms\":1890,\"type\":\"result\",\"duration_ms\":1928,\"uuid\":\"38e2cea7-06ef-4d81-8711-5c4fd4d8e747\",\"ttft_stream_ms\":1161,\"time_to_request_ms\":467,\"first_content_frame_ms\":1161,\"user_message_uuid\":\"7673515e-8b86-451e-9e69-78d4d8641b7b\",\"user_message_uuids\":[\"7673515e-8b86-451e-9e69-78d4d8641b7b\"],\"request_sent_wall_ms\":1790166306442,\"queued_turn_count\":0,\"result_index\":0}",
+      "ts": "2026-09-23T12:25:07.906Z"
+    },
+    {
+      "name": "streaming-message2-after-10s-same-session",
+      "pass": true,
+      "evidence": "r1.session_id=250a8588-e166-4bee-9b0e-f6473b4bd0af r2.session_id=250a8588-e166-4bee-9b0e-f6473b4bd0af r2.is_error=false",
+      "ts": "2026-09-23T12:25:18.647Z"
+    },
+    {
+      "name": "streaming-mid-turn-push-behavior-documented",
+      "pass": true,
+      "evidence": "mid-turn push behavior observed: merged-into-current-turn. r3(msg3[,+msg4])={is_error:false,subtype:success,result:**Final content of c.txt: ABC**\n\n---\n\nTo answer your separate question: 72} r4(separate, if any)=none",
+      "ts": "2026-09-23T12:25:46.255Z"
+    },
+    {
+      "name": "streaming-interrupt-resolves",
+      "pass": true,
+      "evidence": "interrupt() resolved with: {\"still_queued\":[]}",
+      "ts": "2026-09-23T12:25:50.262Z"
+    },
+    {
+      "name": "streaming-interrupt-emits-result",
+      "pass": true,
+      "evidence": "result frame after interrupt(): {\"is_error\":true,\"subtype\":\"error_during_execution\"}",
+      "ts": "2026-09-23T12:25:50.268Z"
+    },
+    {
+      "name": "streaming-session-continues-after-interrupt",
+      "pass": true,
+      "evidence": "message6 after interrupt: {\"is_error\":false,\"subtype\":\"success\",\"result\":\"PONG6\"}",
+      "ts": "2026-09-23T12:25:51.192Z"
+    },
+    {
+      "name": "streaming-no-orphan-claude-process-after-end",
+      "pass": true,
+      "evidence": "live claude.exe descendants of this process 1.5s after stream end: []",
+      "ts": "2026-09-23T12:25:54.156Z"
+    },
+    {
+      "name": "streaming-resume-after-exit-in-new-process-recalls-message1",
+      "pass": true,
+      "evidence": "child result={\"ok\":true,\"childPid\":41476,\"parentSessionIdRequested\":\"250a8588-e166-4bee-9b0e-f6473b4bd0af\",\"sessionId\":\"250a8588-e166-4bee-9b0e-f6473b4bd0af\",\"isError\":false,\"subtype\":\"success\",\"resultText\":\"STREAM_MEMORY_RECALL: CEDAR-5055\",\"costUsd\":0.03102515,\"turns\":1,\"usage\":{\"input_tokens\":10,\"cache_creation_input_tokens\":117,\"cache_read_input_tokens\":6518,\"output_tokens\":116,\"output_tokens_details\":{\"thinking_tokens\":97},\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0},\"service_tier\":\"standard\",\"cache_creation\":{\"ephemeral_1h_input_tokens\":0,\"ephemeral_5m_input_tokens\":117},\"inference_geo\":\"not_available\",\"iterations\":[{\"input_tokens\":10,\"output_tokens\":116,\"cache_read_input_tokens\":6518,\"cache_creation_input_tokens\":117,\"cache_creation\":{\"ephemeral_5m_input_tokens\":117,\"ephemeral_1h_input_tokens\":0},\"type\":\"message\"}],\"speed\":\"standard\"},\"toolCallNames\":[],\"raisedQuestions\":[],\"transcriptPath\":\"C:\\\\Users\\\\michi\\\\dev\\\\ai-project\\\\spike\\\\results\\\\raw\\\\s05-resume\\\\streaming-resume-newproc-2026-09-23-1225-4da9b6.jsonl\",\"timedOut\":false} expected substring=\"STREAM_MEMORY_RECALL: CEDAR-5055\"",
+      "ts": "2026-09-23T12:25:57.808Z"
+    },
+    {
+      "name": "sysprompt-both-arms-complete-task-with-read-only",
+      "pass": true,
+      "evidence": "custom tool sets=[[\"Read\"],[\"Read\"],[\"Read\"]] default tool sets=[[\"Read\"],[\"Read\"],[\"Read\"]]",
+      "ts": "2026-09-23T12:26:32.704Z"
+    },
+    {
+      "name": "sysprompt-token-cost-comparison",
+      "pass": true,
+      "evidence": "avg over 3 runs/arm — custom: costUsd=0.007255 input_tokens=4066.0 cache_creation_input_tokens=0.0; default: costUsd=0.006666 input_tokens=3668.7 cache_creation_input_tokens=0.0. Per-run raw: custom=[{\"costUsd\":0.007495,\"inputTokens\":4068,\"cacheCreation\":0,\"cacheRead\":0,\"toolNames\":[\"Read\"],\"isError\":false},{\"costUsd\":0.007226,\"inputTokens\":4054,\"cacheCreation\":0,\"cacheRead\":0,\"toolNames\":[\"Read\"],\"isError\":false},{\"costUsd\":0.007043000000000001,\"inputTokens\":4076,\"cacheCreation\":0,\"cacheRead\":0,\"toolNames\":[\"Read\"],\"isError\":false}] default=[{\"costUsd\":0.006764000000000001,\"inputTokens\":3662,\"cacheCreation\":0,\"cacheRead\":0,\"toolNames\":[\"Read\"],\"isError\":false},{\"costUsd\":0.006535000000000001,\"inputTokens\":3673,\"cacheCreation\":0,\"cacheRead\":0,\"toolNames\":[\"Read\"],\"isError\":false},{\"costUsd\":0.006698,\"inputTokens\":3671,\"cacheCreation\":0,\"cacheRead\":0,\"toolNames\":[\"Read\"],\"isError\":false}]",
+      "ts": "2026-09-23T12:26:32.711Z"
+    },
+    {
+      "name": "fork-initial-run-succeeds",
+      "pass": true,
+      "evidence": "sessionId=c9554fe1-5fb0-41ad-ac75-16dca20e4bf7",
+      "ts": "2026-09-23T12:26:35.786Z"
+    },
+    {
+      "name": "fork-resume-gives-new-session-id",
+      "pass": true,
+      "evidence": "initial sessionId=c9554fe1-5fb0-41ad-ac75-16dca20e4bf7 forked sessionId=dd09f945-542a-4681-a88c-d0fb891458d6 isError=false",
+      "ts": "2026-09-23T12:26:38.053Z"
+    },
+    {
+      "name": "fork-original-session-still-resumable-after-fork",
+      "pass": true,
+      "evidence": "resumedOriginal sessionId=c9554fe1-5fb0-41ad-ac75-16dca20e4bf7 isError=false resultText=ORIGINAL-STILL-OK",
+      "ts": "2026-09-23T12:26:40.418Z"
+    },
+    {
+      "name": "sameproc-initial-drafts-and-raises-question",
+      "pass": true,
+      "evidence": "isError=false Write calls=1 raise_question calls=1 sessionId=fbd523fa-2450-42b4-88b4-6abb55dfe161",
+      "ts": "2026-09-23T12:27:23.273Z"
+    },
+    {
+      "name": "sameproc-resume-succeeds",
+      "pass": true,
+      "evidence": "isError=false subtype=success",
+      "ts": "2026-09-23T12:27:30.350Z"
+    },
+    {
+      "name": "sameproc-resume-same-session-id",
+      "pass": true,
+      "evidence": "initial=fbd523fa-2450-42b4-88b4-6abb55dfe161 resumed=fbd523fa-2450-42b4-88b4-6abb55dfe161",
+      "ts": "2026-09-23T12:27:30.359Z"
+    },
+    {
+      "name": "sameproc-resume-recalls-memory-word",
+      "pass": true,
+      "evidence": "resultText=\"Done. I've appended a sentence to draft.md reflecting that the CFO's budget ceiling is a hard constraint.\n\nMEMORY_WORD_RECALL: QUARTZ-9998\" expected substring=\"MEMORY_WORD_RECALL: QUARTZ-9998\"",
+      "ts": "2026-09-23T12:27:30.363Z"
+    },
+    {
+      "name": "sameproc-resume-continues-via-edit-not-rewrite",
+      "pass": true,
+      "evidence": "toolCalls=[Edit] (want >=1 Edit, 0 Write)",
+      "ts": "2026-09-23T12:27:30.370Z"
+    },
+    {
+      "name": "sameproc-resume-cost-and-cache-tokens",
+      "pass": true,
+      "evidence": "initial costUsd=0.0164078 resumed costUsd=0.0214755 resumed usage={\"input_tokens\":18,\"cache_creation_input_tokens\":910,\"cache_read_input_tokens\":10222,\"output_tokens\":578,\"output_tokens_details\":{\"thinking_tokens\":318},\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0},\"service_tier\":\"standard\",\"cache_creation\":{\"ephemeral_1h_input_tokens\":0,\"ephemeral_5m_input_tokens\":910},\"inference_geo\":\"not_available\",\"iterations\":[{\"input_tokens\":8,\"output_tokens\":107,\"cache_read_input_tokens\":5274,\"cache_creation_input_tokens\":584,\"cache_creation\":{\"ephemeral_5m_input_tokens\":584,\"ephemeral_1h_input_tokens\":0},\"type\":\"message\"}],\"speed\":\"standard\"} (cache_read_input_tokens=10222)",
+      "ts": "2026-09-23T12:27:30.374Z"
+    },
+    {
+      "name": "sameproc-draft-continued-not-recreated",
+      "pass": true,
+      "evidence": "hasAppendedContent(\"hard constraint\")=true length=1017 (>400 expected if original draft survived) draft.md final content:\n# Vendor Selection Criteria for Warehouse Management System\n\nThe evaluation of potential warehouse management system vendors should prioritize functional fit, including inventory tracking, order fulfillment automation, and real-time reporting capabilities that align with Acme's operational scale and complexity. System integration ability with existing ERP and logistics platforms is critical to minimize implementation disruption and long-term maintenance costs. Vendor selection criteria should also assess scalability to handle future growth, total cost of ownership over a 5-year period, and the vendor's financial stability and track record of successful implementations in similar industries. Finally, we should evaluate support services, user training quality, and the system's ease of use to ensure successful adoption across warehouse operations teams. Any proposed vendor solution must remain within the CFO's established budget ceiling, which will be treated as a hard constraint that cannot be exceeded.\n",
+      "ts": "2026-09-23T12:27:30.378Z"
+    },
+    {
+      "name": "s05-overall",
+      "pass": true,
+      "evidence": "per-step results: {\"step1\":{\"pass\":true,\"costUsd\":0.0403629},\"step2\":{\"pass\":true,\"costUsd\":0},\"step3and4\":{\"pass\":true,\"costUsd\":0.06066225},\"step5\":{\"pass\":true,\"costUsd\":0.041761},\"step6\":{\"pass\":true,\"costUsd\":0.020555999999999998}}",
+      "ts": "2026-09-23T12:26:40.428Z"
+    }
+  ]
+}

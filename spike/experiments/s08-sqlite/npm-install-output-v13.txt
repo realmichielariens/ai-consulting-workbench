@@ -1,0 +1,150 @@
+npm verbose cli C:\nvm4w\nodejs\node.exe C:\nvm4w\nodejs\node_modules\npm\bin\npm-cli.js
+npm info using npm@11.16.0
+npm info using node@v26.3.0
+npm verbose title npm install
+npm verbose argv "install" "--loglevel" "verbose"
+npm verbose logfile logs-max:10 dir:C:\Users\michi\AppData\Local\npm-cache\_logs\2026-09-23T11_39_50_265Z-
+npm verbose logfile C:\Users\michi\AppData\Local\npm-cache\_logs\2026-09-23T11_39_50_265Z-debug-0.log
+npm http cache https://registry.npmjs.org/better-sqlite3 8ms (cache hit)
+npm http cache https://registry.npmjs.org/drizzle-orm 66ms (cache hit)
+npm http cache https://registry.npmjs.org/@aws-sdk%2fclient-rds-data 8ms (cache hit)
+npm http cache https://registry.npmjs.org/@cloudflare%2fworkers-types 8ms (cache hit)
+npm http cache https://registry.npmjs.org/@electric-sql%2fpglite 4ms (cache hit)
+npm http cache https://registry.npmjs.org/@libsql%2fclient 4ms (cache hit)
+npm http cache https://registry.npmjs.org/@libsql%2fclient-wasm 3ms (cache hit)
+npm http cache https://registry.npmjs.org/@neondatabase%2fserverless 3ms (cache hit)
+npm http cache https://registry.npmjs.org/@op-engineering%2fop-sqlite 40ms (cache hit)
+npm http cache https://registry.npmjs.org/@sqlite.org%2fsqlite-wasm 3ms (cache hit)
+npm http cache https://registry.npmjs.org/react 9ms (cache hit)
+npm http cache https://registry.npmjs.org/react-native 18ms (cache hit)
+npm http cache https://registry.npmjs.org/@types%2freact 8ms (cache hit)
+npm http cache https://registry.npmjs.org/@opentelemetry%2fapi 2ms (cache hit)
+npm http cache https://registry.npmjs.org/@planetscale%2fdatabase 2ms (cache hit)
+npm http cache https://registry.npmjs.org/@prisma%2fclient 66ms (cache hit)
+npm http cache https://registry.npmjs.org/prisma 44ms (cache hit)
+npm http cache https://registry.npmjs.org/typescript 17ms (cache hit)
+npm http cache https://registry.npmjs.org/@tidbcloud%2fserverless 9ms (cache hit)
+npm http cache https://registry.npmjs.org/@types%2fbetter-sqlite3 2ms (cache hit)
+npm http cache https://registry.npmjs.org/@types%2fpg 2ms (cache hit)
+npm http cache https://registry.npmjs.org/@types%2fsql.js 2ms (cache hit)
+npm http cache https://registry.npmjs.org/@upstash%2fredis 6ms (cache hit)
+npm http cache https://registry.npmjs.org/@vercel%2fpostgres 2ms (cache hit)
+npm http cache https://registry.npmjs.org/@xata.io%2fclient 16ms (cache hit)
+npm http cache https://registry.npmjs.org/bun-types 5ms (cache hit)
+npm http cache https://registry.npmjs.org/expo-sqlite 3ms (cache hit)
+npm http cache https://registry.npmjs.org/expo 6ms (cache hit)
+npm http cache https://registry.npmjs.org/@expo%2fmetro-runtime 3ms (cache hit)
+npm http cache https://registry.npmjs.org/react-dom 11ms (cache hit)
+npm http cache https://registry.npmjs.org/react-native-web 8ms (cache hit)
+npm http cache https://registry.npmjs.org/react-native-webview 3ms (cache hit)
+npm http cache https://registry.npmjs.org/gel 3ms (cache hit)
+npm http cache https://registry.npmjs.org/knex 4ms (cache hit)
+npm http cache https://registry.npmjs.org/pg-query-stream 3ms (cache hit)
+npm http cache https://registry.npmjs.org/pg 3ms (cache hit)
+npm http cache https://registry.npmjs.org/pg-native 2ms (cache hit)
+npm http cache https://registry.npmjs.org/kysely 3ms (cache hit)
+npm http cache https://registry.npmjs.org/mysql2 3ms (cache hit)
+npm http cache https://registry.npmjs.org/@types%2fnode 13ms (cache hit)
+npm http cache https://registry.npmjs.org/postgres 4ms (cache hit)
+npm http cache https://registry.npmjs.org/sql.js 2ms (cache hit)
+npm http cache https://registry.npmjs.org/sqlite3 2ms (cache hit)
+npm http cache https://registry.npmjs.org/drizzle-kit 5ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild-kit%2fesm-loader 3ms (cache hit)
+npm http cache https://registry.npmjs.org/tsx 4ms (cache hit)
+npm http cache https://registry.npmjs.org/@drizzle-team%2fbrocli 6ms (cache hit)
+npm http cache https://registry.npmjs.org/esbuild 8ms (cache hit)
+npm http fetch GET 200 https://registry.npmjs.org/node-addon-api 137ms (cache miss)
+npm http cache https://registry.npmjs.org/get-tsconfig 14ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fsunos-x64 16ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-arm 17ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fwin32-x64 18ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-x64 19ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild-kit%2fcore-utils 20ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fnetbsd-x64 19ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fandroid-x64 21ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-ia32 21ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2faix-ppc64 23ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fdarwin-x64 23ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fandroid-arm 24ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fwin32-ia32 27ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2ffreebsd-x64 28ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-arm64 29ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-ppc64 26ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fnetbsd-arm64 21ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-s390x 26ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fopenbsd-x64 26ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fwin32-arm64 26ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-riscv64 20ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fdarwin-arm64 26ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fopenbsd-arm64 21ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2ffreebsd-arm64 24ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fandroid-arm64 26ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-loong64 25ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2flinux-mips64el 23ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild%2fopenharmony-arm64 20ms (cache hit)
+npm http cache https://registry.npmjs.org/fsevents 19ms (cache hit)
+npm http cache https://registry.npmjs.org/esbuild 22ms (cache hit)
+npm http cache https://registry.npmjs.org/source-map-support 3ms (cache hit)
+npm http cache https://registry.npmjs.org/esbuild 5ms (cache hit)
+npm http cache https://registry.npmjs.org/resolve-pkg-maps 8ms (cache hit)
+npm http cache https://registry.npmjs.org/source-map 8ms (cache hit)
+npm http cache https://registry.npmjs.org/buffer-from 9ms (cache hit)
+npm http cache @esbuild/win32-x64@https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.25.12.tgz 0ms (cache hit)
+npm http cache source-map@https://registry.npmjs.org/source-map/-/source-map-0.6.1.tgz 0ms (cache hit)
+npm http cache buffer-from@https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz 0ms (cache hit)
+npm http cache source-map-support@https://registry.npmjs.org/source-map-support/-/source-map-support-0.5.21.tgz 0ms (cache hit)
+npm http cache get-tsconfig@https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.14.3.tgz 0ms (cache hit)
+npm http cache @esbuild-kit/esm-loader@https://registry.npmjs.org/@esbuild-kit/esm-loader/-/esm-loader-2.6.5.tgz 0ms (cache hit)
+npm http cache resolve-pkg-maps@https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz 0ms (cache hit)
+npm http cache @drizzle-team/brocli@https://registry.npmjs.org/@drizzle-team/brocli/-/brocli-0.10.2.tgz 0ms (cache hit)
+npm http cache @esbuild-kit/core-utils@https://registry.npmjs.org/@esbuild-kit/core-utils/-/core-utils-3.3.2.tgz 0ms (cache hit)
+npm http cache esbuild@https://registry.npmjs.org/esbuild/-/esbuild-0.25.12.tgz 0ms (cache hit)
+npm http cache tsx@https://registry.npmjs.org/tsx/-/tsx-4.23.15.tgz 0ms (cache hit)
+npm http cache drizzle-orm@https://registry.npmjs.org/drizzle-orm/-/drizzle-orm-0.44.7.tgz 0ms (cache hit)
+npm http cache drizzle-kit@https://registry.npmjs.org/drizzle-kit/-/drizzle-kit-0.31.11.tgz 0ms (cache hit)
+npm http cache better-sqlite3@https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-13.0.3.tgz 0ms (cache hit)
+npm http cache node-addon-api@https://registry.npmjs.org/node-addon-api/-/node-addon-api-8.9.2.tgz 0ms (cache hit)
+npm http cache @esbuild/win32-x64@https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.18.20.tgz 0ms (cache hit)
+npm http cache esbuild@https://registry.npmjs.org/esbuild/-/esbuild-0.18.20.tgz 0ms (cache hit)
+npm http cache esbuild@https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz 0ms (cache hit)
+npm http cache @esbuild/win32-x64@https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.28.2.tgz 0ms (cache hit)
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.hirok.io
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.hirok.io
+npm http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 179ms
+npm http cache https://registry.npmjs.org/esbuild 8ms (cache hit)
+npm http cache https://registry.npmjs.org/drizzle-orm 12ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild-kit%2fcore-utils 4ms (cache hit)
+npm http cache https://registry.npmjs.org/@esbuild-kit%2fesm-loader 3ms (cache hit)
+npm http cache https://registry.npmjs.org/drizzle-kit 6ms (cache hit)
+npm http fetch GET 200 https://registry.npmjs.org/node-addon-api/-/node-addon-api-8.9.2.tgz 299ms (cache miss)
+npm http fetch GET 200 https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-13.0.3.tgz 510ms (cache miss)
+npm info run esbuild@0.25.12 postinstall node_modules/esbuild node install.js
+npm info run esbuild@0.18.20 postinstall node_modules/@esbuild-kit/core-utils/node_modules/esbuild node install.js
+npm info run esbuild@0.28.2 postinstall node_modules/tsx/node_modules/esbuild node install.js
+npm info run esbuild@0.28.2 postinstall { code: 0, signal: null }
+npm info run esbuild@0.25.12 postinstall { code: 0, signal: null }
+npm info run esbuild@0.18.20 postinstall { code: 0, signal: null }
+
+added 19 packages, and audited 20 packages in 6s
+
+2 packages are looking for funding
+  run `npm fund` for details
+
+5 vulnerabilities (4 moderate, 1 high)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+npm warn allow-scripts 3 packages have install scripts not yet covered by allowScripts:
+npm warn allow-scripts   esbuild@0.25.12 (postinstall: node install.js)
+npm warn allow-scripts   esbuild@0.18.20 (postinstall: node install.js)
+npm warn allow-scripts   esbuild@0.28.2 (postinstall: node install.js)
+npm warn allow-scripts
+npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+npm verbose cwd C:\Users\michi\dev\ai-project\spike\experiments\s08-sqlite
+npm verbose os Windows_NT 10.0.26200
+npm verbose node v26.3.0
+npm verbose npm  v11.16.0
+npm verbose exit 0
+npm info ok
