@@ -1,39 +1,44 @@
-// Example of a component test in this package (per the boot page P0b built).
-// Real coverage of the process view, inbox, etc. is W6's job.
+// Smoke test: the app boots on the start page and lists seeds (J1.1). The
+// api module is mocked here so this test needs neither a real server nor
+// VITE_API_MOCK; deeper coverage of each screen lives next to its component.
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+vi.mock("./api/index.js", () => ({
+  api: {
+    listSeeds: vi.fn().mockResolvedValue([{ id: "acme-discovery", title: "Acme — IT Strategy Discovery", description: "Discovery seed.", engagementName: "Acme Manufacturing — IT Strategy", itemCount: 3 }]),
+    listEngagements: vi.fn().mockResolvedValue([]),
+  },
+  qk: {
+    seeds: () => ["seeds"],
+    engagements: () => ["engagements"],
+  },
+  useEngagementSocket: vi.fn(),
+}));
+
 import { App } from "./App.js";
 
-class FakeWebSocket {
-  onopen: (() => void) | null = null;
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onerror: (() => void) | null = null;
-  onclose: (() => void) | null = null;
-  constructor(public url: string) {}
-  close(): void {}
-  send(): void {}
-}
-
 beforeEach(() => {
-  vi.stubGlobal("WebSocket", FakeWebSocket);
-  // Never resolves: keeps the health check in "loading" so the boot status
-  // stays deterministic for this smoke test (no real server running here).
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(() => new Promise(() => {})),
-  );
+  window.history.pushState(null, "", "/");
 });
 
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
+  vi.clearAllMocks();
 });
 
 describe("App", () => {
-  test("renders the heading and an initial boot status", () => {
-    render(<App />);
+  test("boots on the start page and lists the seed", async () => {
+    const qc = new QueryClient();
+    render(
+      <QueryClientProvider client={qc}>
+        <App />
+      </QueryClientProvider>,
+    );
     expect(screen.getByText("Agentic Project Workbench")).toBeTruthy();
-    expect(screen.getByTestId("boot-status").textContent).toMatch(/connecting/);
+    await waitFor(() => expect(screen.getByTestId("seed-card")).toBeTruthy());
+    expect(screen.getByText("Acme — IT Strategy Discovery")).toBeTruthy();
   });
 });

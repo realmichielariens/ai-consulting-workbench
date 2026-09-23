@@ -1,39 +1,48 @@
-// Placeholder server (P0b — SCAFFOLD). W5 replaces this with Fastify + the
-// event bus, services, scheduler and reconciliation (ARCHITECTURE.md §12).
-// This placeholder only proves the workspace boots end to end: GET
-// /api/health and a WebSocket that sends `hello` on connect, exactly as
-// packages/core/src/api.ts defines them, so apps/web has something real to
-// talk to during SCAFFOLD's boot check and W6's early development.
+// Workbench server (I1-PLAN.md §6 W5): Fastify + WebSocket implementing
+// packages/core/src/api.ts exactly. Routes are thin; the services and views
+// modules hold everything else. WORKBENCH_RUNTIME=fake switches the agent
+// runtime to the scripted fake agent (packages/agents); otherwise every
+// engagement runs on the real Claude Agent SDK runtime.
 
 import Fastify from "fastify";
 import websocket from "@fastify/websocket";
-import { loadConfig, repoRoot } from "@workbench/core/node";
-import { routes, WS_PATH, type WsServerMessage } from "@workbench/core";
+import multipart from "@fastify/multipart";
+import { createServerContext, openEngagement, type RuntimeKind } from "./engagementContext.js";
+import { reconcileEngagement } from "./startup.js";
+import { listEngagementIds } from "./services.js";
+import { registerRoutes } from "./routes.js";
 
-const root = repoRoot(import.meta.dirname);
-const config = loadConfig(root);
+const runtimeKind: RuntimeKind = process.env.WORKBENCH_RUNTIME === "fake" ? "fake" : "real";
+const server = createServerContext(runtimeKind);
 
-const runtime: "real" | "fake" = process.env.WORKBENCH_RUNTIME === "fake" ? "fake" : "real";
+// Eagerly open + reconcile every engagement that already exists on disk
+// (R1/R2): a lazily-opened *context* per engagement, but reconciliation must
+// run before any request can see stale leases or orphaned children.
+for (const id of listEngagementIds(server)) {
+  reconcileEngagement(openEngagement(server, id));
+}
 
 const app = Fastify({ logger: true });
 await app.register(websocket);
+await app.register(multipart);
+registerRoutes(app, server);
 
-app.get(routes.health.path, async () => {
-  return routes.health.response.parse({ ok: true, runtime });
-});
-
-// WS_PATH = "/api/engagements/:eid/ws" — Fastify's ":param" syntax matches
-// the contract's path directly.
-app.get(WS_PATH, { websocket: true }, (socket, request) => {
-  const { eid } = request.params as { eid: string };
-  const hello: WsServerMessage = { type: "hello", engagementId: eid, lastSeq: 0 };
-  socket.send(JSON.stringify(hello));
-});
-
-const address = await app.listen({ port: config.server.port, host: "127.0.0.1" });
-app.log.info(`workbench server (placeholder, runtime=${runtime}) listening on ${address}`);
+const address = await app.listen({ port: server.config.server.port, host: "127.0.0.1" });
+app.log.info(`workbench server (runtime=${runtimeKind}) listening on ${address}`);
+app.log.info(`workspace home: ${server.workspace.home}`);
 
 async function shutdown(): Promise<void> {
+  app.log.info("shutting down: interrupting active runs");
+  for (const ctx of server.engagements.values()) {
+    for (const [, active] of ctx.activeRuns) {
+      try {
+        await active.handle.interrupt();
+      } catch {
+        /* best effort */
+      }
+    }
+  }
+  for (const ctx of server.engagements.values()) ctx.dbCtx.close();
   await app.close();
   process.exit(0);
 }

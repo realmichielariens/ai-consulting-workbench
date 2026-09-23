@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mock": "cross-env VITE_API_MOCK=1 vite",
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.json"
   },

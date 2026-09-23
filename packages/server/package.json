@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "demo:headless": "tsx src/dev/demo-headless.ts"
   },
   "dependencies": {
     "@fastify/multipart": "^10.1.2",
