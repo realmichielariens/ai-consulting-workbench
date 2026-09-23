@@ -7,7 +7,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "seed:try": "tsx src/seed-try.ts"
   },
   "dependencies": {
     "@workbench/core": "workspace:*",

@@ -8,7 +8,8 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "test:stress": "tsx scripts/lease-race.ts"
   },
   "dependencies": {
     "@workbench/core": "workspace:*",

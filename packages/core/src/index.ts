@@ -8,3 +8,4 @@ export * from "./ports.js";
 export * from "./termination.js";
 export * from "./seed.js";
 export * from "./api.js";
+export * from "./rules/index.js";

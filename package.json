@@ -9,7 +9,10 @@
   "scripts": {
     "dev": "concurrently -n server,web -c blue,green \"pnpm --filter @workbench/server run dev\" \"pnpm --filter @workbench/web run dev\"",
     "dev:fake": "cross-env WORKBENCH_RUNTIME=fake pnpm run dev",
+    "agents:try": "pnpm --filter @workbench/agents run agents:try --",
     "typecheck": "pnpm -r run typecheck",
+    "core:transitions": "pnpm --filter @workbench/core run print-transitions",
+    "seed:try": "pnpm --filter @workbench/store run seed:try",
     "test": "vitest run",
     "e2e": "playwright test --config=e2e/playwright.config.ts"
   },
