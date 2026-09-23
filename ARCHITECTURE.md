@@ -30,7 +30,7 @@
 
 | # | Decision | Rationale |
 |---|---|---|
-| A1 | **TypeScript end to end** (Node 22 LTS server and React UI) | One language and shared Zod schemas across UI, server and agent tools. The Agent SDK has a first-class TypeScript version. |
+| A1 | **TypeScript end to end** (Node 26 server and React UI) | One language and shared Zod schemas across UI, server and agent tools. The Agent SDK has a first-class TypeScript version. |
 | A2 | **Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`) as the agent runtime | It provides built-in file tools, sessions and resume, hooks, permission rules, in-process MCP tools, skills and plugins, and subagents. It runs locally. |
 | A3 | **The Approach Agent is a role with shared state, not one conversation.** It runs as several short or medium SDK sessions: *conversation* sessions (led by the human), a *triage* lane (led by the system) and *task* sessions. All of them work from the same plan, **agenda** and decision log. | This handles inputs that don't arrive one at a time, follows the human's priorities, keeps contexts small (which matters on smaller models), and survives lost sessions. |
 | A4 | **Work Agents run as one SDK session per work item run** | Independent lifecycles, working directories, permissions and resume per item. |
@@ -386,7 +386,7 @@ Several kinds of SDK sessions all use the same role prompt and tools:
 
 - `cwd` = engagement root (read everything published); `additionalDirectories` = `library/`;
 - writes scoped to `items/ENG/work/**`;
-- tools: `Read`, `Glob`, `Grep`, `Write`/`Edit` (scoped), `Skill`, `Agent` (subagents allowed, §8.3), plus the `mcp__plan__*`, `mcp__agenda__*` and `mcp__library__*` toolsets;
+- tools: `Read`, `Glob`, `Grep`, `Write`/`Edit` (scoped), `Skill`, `Task` (subagents allowed, §8.3), plus the `mcp__plan__*`, `mcp__agenda__*` and `mcp__library__*` toolsets;
 - no `Bash`;
 - `permissionMode: "dontAsk"`;
 - `model` from the profile.
@@ -763,7 +763,7 @@ sequenceDiagram
 | Agents don't follow the protocol (they keep working after a blocking question, or forget to submit) | The engine decides termination from tool calls. One nudge, then a `run_issue` topic. |
 | Files and DB drift apart | A single write path through the server. Startup reconciliation rebuilds the definition index from files. The checkpoint commit includes both. |
 | `Bash` bypasses the file guards | `Bash` is enabled only for specific items. Post-run Git audit with revert. |
-| Guards don't apply inside subagents | Spike item 3. Fallback: restrict subagents to predefined read-only definitions. |
+| Guards don't apply inside subagents | Resolved in M0 (S3): hooks fire inside subagents and denials hold. The guard also denies the state-changing toolsets when `agent_id` is present (§8.3). |
 | Readability of the canvas with deep nesting | Two view modes, depth and focus controls, an early UI spike |
 | Agent SDK version drift | Pin the version. A single adapter module (`packages/agents/sdk.ts`) owns every SDK call. |
 
@@ -798,6 +798,8 @@ sequenceDiagram
 ---
 
 ## 18. Milestones
+
+The milestones below are **capability areas**. They are delivered as vertical slices (iterations I1–I7), each ending in a working app with defined user journeys and a human test session. See [ITERATIONS.md](ITERATIONS.md) §11 for which iteration delivers which part of each milestone.
 
 | # | Milestone | Content | Demo-able outcome |
 |---|---|---|---|

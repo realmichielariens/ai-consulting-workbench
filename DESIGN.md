@@ -633,11 +633,10 @@ The Timeline shows plan v1 → v6, every asset version (minor and material), bot
 
 ## 14. Next Steps
 
-1. **Architecture design** has started in [ARCHITECTURE.md](ARCHITECTURE.md).
-2. Validate the SDK assumptions with a technical spike (ARCHITECTURE.md §13).
-3. Initialize the repository and folder structure.
-4. Build the POC in the milestone order from ARCHITECTURE.md.
-5. Prepare demo content: a fictional Acme context, intake documents (PPTX/XLSX) and pre-written interview notes.
+1. **Architecture design**: done, see [ARCHITECTURE.md](ARCHITECTURE.md).
+2. Validate the SDK assumptions with a technical spike: done (ARCHITECTURE.md §17, [spike/M0-FINDINGS.md](spike/M0-FINDINGS.md)).
+3. Build the POC in vertical iterations, each with defined user journeys and a human test session: see [ITERATIONS.md](ITERATIONS.md).
+4. Prepare demo content: a fictional Acme context, intake documents (PPTX/XLSX) and pre-written interview notes. This is built up per iteration, starting with the I1 seed.
 
 ---
 
