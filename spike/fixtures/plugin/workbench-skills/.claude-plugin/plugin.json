@@ -1,0 +1,8 @@
+{
+  "name": "workbench-skills",
+  "description": "M0 spike marker-skills plugin: alpha/beta/gamma emit unique tokens so experiments can verify plugin skill loading, per-query scoping, and a skill's ability to find and run its own bundled script.",
+  "version": "0.0.1",
+  "author": {
+    "name": "M0 spike"
+  }
+}

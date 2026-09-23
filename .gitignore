@@ -1,0 +1,7 @@
+node_modules/
+.env
+*.env.local
+spike/results/raw/
+spike/**/.venv/
+workspace/
+*.log
