@@ -1,6 +1,7 @@
+// Browser-safe entry. Node-only helpers (disk layout, path normalization, env,
+// config loading) are in "@workbench/core/node".
 export * from "./domain.js";
 export * from "./config.js";
-export * from "./layout.js";
 export * from "./activity.js";
 export * from "./events.js";
 export * from "./ports.js";

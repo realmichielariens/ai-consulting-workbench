@@ -1,0 +1,22 @@
+{
+  "name": "@workbench/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fastify/multipart": "^10.1.2",
+    "@fastify/websocket": "^11.3.1",
+    "@workbench/agents": "workspace:*",
+    "@workbench/core": "workspace:*",
+    "@workbench/db": "workspace:*",
+    "@workbench/store": "workspace:*",
+    "fastify": "^5.12.5"
+  }
+}

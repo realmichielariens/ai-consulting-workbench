@@ -1,0 +1,14 @@
+# Workbench configuration (ARCHITECTURE.md §4)
+home: ./workspace
+profile: test                     # test | demo
+profiles:
+  test:
+    models: { approach: claude-haiku-4-5, work: claude-haiku-4-5, assist: claude-haiku-4-5 }
+    limits: { maxTurnsPerRun: 40, maxConcurrentRuns: 3 }
+  demo:
+    models: { approach: claude-opus-5-5, work: claude-opus-5-5, assist: claude-opus-5-5 }
+    limits: { maxTurnsPerRun: 80, maxConcurrentRuns: 3 }
+skillsPlugin: ./workbench-skills
+promptsDir: ./packages/agents/prompts
+server: { port: 4317, webPort: 5317 }
+dev: { totalCapUsd: 16 }

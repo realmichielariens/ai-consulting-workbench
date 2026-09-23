@@ -18,7 +18,7 @@ A local, single-user POC in which a human runs an engagement (for example an IT 
 |---|---|
 | `packages/core/src/domain.ts` | Ids, items, statuses, assets and versions, runs, requests, settings |
 | `packages/core/src/config.ts` | `workbench.config.yaml` shape and defaults |
-| `packages/core/src/layout.ts` | Workspace and engagement disk layout. Build every path through these helpers. |
+| `packages/core/src/layout.ts` | Workspace and engagement disk layout. Build every path through these helpers. Node-only: import it from `@workbench/core/node`, together with `paths.ts`, `env.ts` and `config-loader.ts`. The browser-safe entry `@workbench/core` exports everything else. |
 | `packages/core/src/activity.ts` | The readable activity item (live run stream) |
 | `packages/core/src/events.ts` | Domain events |
 | `packages/core/src/ports.ts` | `WorkPort` (work tools → server) and `AgentRuntime` (server → real or fake agent) |

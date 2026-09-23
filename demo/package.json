@@ -1,0 +1,13 @@
+{
+  "name": "@workbench/demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate-seed": "node --import tsx scripts/validate-seed.ts"
+  },
+  "dependencies": {
+    "@workbench/core": "workspace:*",
+    "yaml": "^2.8.1",
+    "zod": "^4.6.5"
+  }
+}

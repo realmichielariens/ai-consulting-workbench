@@ -30,9 +30,9 @@ export const WorkbenchConfig = z
     server: z
       .object({
         port: z.number().int().default(4317),
-        webPort: z.number().int().default(5173),
+        webPort: z.number().int().default(5317),
       })
-      .default({ port: 4317, webPort: 5173 }),
+      .default({ port: 4317, webPort: 5317 }),
     dev: z
       .object({
         /** Total API spend the dev cost guard allows across the ledger (I1 plan §9). */
@@ -56,7 +56,7 @@ profiles:
     limits: { maxTurnsPerRun: 80, maxConcurrentRuns: 3 }
 skillsPlugin: ./workbench-skills
 promptsDir: ./packages/agents/prompts
-server: { port: 4317, webPort: 5173 }
+server: { port: 4317, webPort: 5317 }
 dev: { totalCapUsd: 16 }
 `;
 
