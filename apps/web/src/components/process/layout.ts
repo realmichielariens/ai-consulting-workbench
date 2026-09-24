@@ -1,6 +1,7 @@
 // ELK layered layout for the process view v0 (DESIGN.md §10.2, J1.2): tasks
-// nested inside their phase (compound nodes), data objects as top-level
-// siblings, edges derived producer -> slot -> consumers.
+// nested inside their phase (compound nodes). A data object sits in its
+// producer's phase so a phase reads left to right (WI-002 -> guide -> WI-003);
+// engagement assets stay top-level. Edges: producer -> slot -> consumers.
 
 import ELK from "elkjs/lib/elk.bundled.js";
 import type { PlanView } from "@workbench/core";
@@ -51,18 +52,23 @@ export async function layoutPlan(plan: PlanView): Promise<LayoutResult> {
 
   for (const comp of composites) {
     const kids = tasks.filter((t) => t.parent === comp.id);
+    const kidSlots = plan.slots.filter((s) => kids.some((t) => t.id === s.owner));
     children.push({
       id: comp.id,
       layoutOptions: { "elk.padding": "[top=36,left=16,bottom=16,right=16]" },
-      children: kids.map((t) => ({ id: t.id, width: TASK_W, height: TASK_H })),
+      children: [
+        ...kids.map((t) => ({ id: t.id, width: TASK_W, height: TASK_H })),
+        ...kidSlots.map((s) => ({ id: s.ref, width: DATA_W, height: DATA_H })),
+      ],
     });
   }
   // Tasks with no composite parent shown in the plan (defensive; I1's seed has none).
   for (const t of tasks) {
     if (!composites.some((c) => c.id === t.parent)) children.push({ id: t.id, width: TASK_W, height: TASK_H });
   }
+  const nestedSlots = new Set(children.flatMap((c) => (c.children ?? []).map((k) => k.id)));
   for (const slot of plan.slots) {
-    children.push({ id: slot.ref, width: DATA_W, height: DATA_H });
+    if (!nestedSlots.has(slot.ref)) children.push({ id: slot.ref, width: DATA_W, height: DATA_H });
   }
 
   const edges: LaidOutEdge[] = [];
@@ -93,7 +99,8 @@ export async function layoutPlan(plan: PlanView): Promise<LayoutResult> {
     const isComposite = composites.some((c) => c.id === comp.id);
     nodes.push({ id: comp.id, kind: isComposite ? "composite" : plan.slots.some((s) => s.ref === comp.id) ? "data" : "task", x: comp.x ?? 0, y: comp.y ?? 0, width: comp.width ?? DATA_W, height: comp.height ?? DATA_H });
     for (const kid of comp.children ?? []) {
-      nodes.push({ id: kid.id, kind: "task", x: kid.x ?? 0, y: kid.y ?? 0, width: kid.width ?? TASK_W, height: kid.height ?? TASK_H, parentId: comp.id });
+      const isSlot = plan.slots.some((s) => s.ref === kid.id);
+      nodes.push({ id: kid.id, kind: isSlot ? "data" : "task", x: kid.x ?? 0, y: kid.y ?? 0, width: kid.width ?? (isSlot ? DATA_W : TASK_W), height: kid.height ?? (isSlot ? DATA_H : TASK_H), parentId: comp.id });
     }
   }
 

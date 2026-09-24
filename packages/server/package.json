@@ -7,7 +7,7 @@
     ".": "./src/main.ts"
   },
   "scripts": {
-    "dev": "tsx watch src/main.ts",
+    "dev": "node --import tsx src/main.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "demo:headless": "tsx src/dev/demo-headless.ts"

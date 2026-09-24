@@ -2,6 +2,19 @@
 
 A local, single-user POC in which a human runs an engagement (for example an IT strategy) with AI agents, built on the Claude Agent SDK. See [DESIGN.md](DESIGN.md) and [ARCHITECTURE.md](ARCHITECTURE.md) for what it does and how it's built, and [CLAUDE.md](CLAUDE.md) for the conventions every package follows.
 
+## Try the I1 demo
+
+1. `pnpm install`, then `pnpm dev:fake` and open <http://localhost:5317>. The scripted fake agent costs nothing.
+2. **Start**: pick *Acme — Discovery*, keep the name, click **Create**. The process view shows the plan, and WI-002 starts by itself.
+3. **Watch**: click WI-002 to see its live activity. After a few seconds, it asks a blocking question with a hypothesis, which appears in the **Inbox**.
+4. **Answer**: choose **Approve**, **Amend** or **Replace**. The agent resumes.
+5. **Review**: the interview guide arrives for review. **Request changes** once, then **Approve** the next version. WI-003 becomes ready.
+6. **Human work**: in the WI-003 Inbox card, upload the four files from `demo/interview-notes/` into their slots, then click **Mark done**. WI-004 starts.
+7. **Finish**: approve the themes review. Click data objects to read the versions, and use **Open folder** to see the engagement's files and `git log` on disk.
+8. **Real agents**: stop with Ctrl-C and run `pnpm dev`. The same flow runs on Claude Haiku 4.5 at roughly $0.05–0.10 per agent run; the header shows the running cost. Real agents may decide without asking a question.
+
+Use **Feedback** (top bar) to note anything as you go; notes go to `workspace/feedback.jsonl`. To start clean, delete `workspace/engagements/`.
+
 ## Getting started
 
 **Prerequisites**: Node.js ≥26, pnpm 11.5.1 (`packageManager` is pinned; use [Corepack](https://nodejs.org/api/corepack.html) or install that exact version).

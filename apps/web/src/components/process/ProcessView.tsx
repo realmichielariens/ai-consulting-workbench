@@ -5,7 +5,7 @@
 // changes without a jarring jump: fitView only runs on the very first mount.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ReactFlow, Background, Controls, type Edge, type Node, type NodeProps } from "@xyflow/react";
+import { ReactFlow, Background, Controls, Handle, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useQuery } from "@tanstack/react-query";
 import type { EngagementId, ItemNode, PlanView, SlotNode } from "@workbench/core";
@@ -43,6 +43,8 @@ function TaskNode({ data }: NodeProps<Node<FlowNodeData, "task">>) {
   const icon = item.executor === "agent" ? "\u{1F916}" : "\u{1F464}";
   const hasGate = item.gate.length > 0;
   return (
+    <>
+    <Ports />
     <button
       type="button"
       className={`pv-task ${statusClass(item.status)}`}
@@ -68,6 +70,7 @@ function TaskNode({ data }: NodeProps<Node<FlowNodeData, "task">>) {
         {item.resumable && " · resumable"}
       </div>
     </button>
+    </>
   );
 }
 
@@ -82,6 +85,8 @@ function DataNode({ data }: NodeProps<Node<FlowNodeData, "data">>) {
   const { slot } = data;
   const filled = slot.latest != null;
   return (
+    <>
+    <Ports />
     <button
       type="button"
       className={`pv-data ${filled ? "pv-data-filled" : "pv-data-empty"}`}
@@ -96,6 +101,17 @@ function DataNode({ data }: NodeProps<Node<FlowNodeData, "data">>) {
       <span className="pv-data-name">{slot.name}</span>
       <span className="pv-data-version">{filled ? `v${slot.latest!.version}` : "not yet published"}</span>
     </button>
+    </>
+  );
+}
+
+/** React Flow only draws edges between handles; the view is read-only, so they stay invisible. */
+function Ports() {
+  return (
+    <>
+      <Handle type="target" position={Position.Left} className="pv-port" isConnectable={false} />
+      <Handle type="source" position={Position.Right} className="pv-port" isConnectable={false} />
+    </>
   );
 }
 
@@ -132,9 +148,13 @@ export function ProcessView({ eid }: { eid: EngagementId }) {
       if (n.kind === "task") return { ...base, type: "task", data: { plan: plan.data!, kind: "task", item: itemsById.get(n.id)! } };
       return { ...base, type: "data", data: { plan: plan.data!, kind: "data", slot: slotsByRef.get(n.id)! } };
     });
-    const rfEdges: Edge[] = layout.edges.map((e) => ({ id: e.id, source: e.source, target: e.target, type: "smoothstep" }));
+    const rfEdges: Edge[] = layout.edges.map((e) => ({ id: e.id, source: e.source, target: e.target, type: "smoothstep", style: { stroke: "var(--pv-edge, #8a94a6)", strokeWidth: 1.5 } }));
     return { nodes: rfNodes, edges: rfEdges };
   }, [layout, plan.data]);
+
+  // Remount React Flow on every new layout: re-measuring a fresh graph is the
+  // robust way to keep nodes and edges visible across live updates.
+  const layoutKey = useMemo(() => Math.random().toString(36).slice(2), [layout]);
 
   if (plan.status === "pending" || !layout) return <p>Loading process view…</p>;
   if (plan.status === "error") return <p role="alert">Could not load the plan: {(plan.error as Error).message}</p>;
@@ -142,14 +162,15 @@ export function ProcessView({ eid }: { eid: EngagementId }) {
   return (
     <div className="process-view" data-testid="process-view">
       <ReactFlow
+        key={layoutKey}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        fitView={!laidOutOnce.current || undefined}
+        fitView
+        fitViewOptions={{ padding: 0.08 }}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable
-        proOptions={{ hideAttribution: true }}
       >
         <Background />
         <Controls showInteractive={false} />
