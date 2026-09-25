@@ -3,7 +3,16 @@
 import { describe, expect, test } from "vitest";
 import path from "node:path";
 import type { BriefView } from "@workbench/core";
-import { promptHash, renderRunPrompt, renderSystemPrompt, resolvePlacement } from "./prompts.js";
+import {
+  promptHash,
+  renderApproachQuestionPrompt,
+  renderApproachSuggestionPrompt,
+  renderApproachSystemPrompt,
+  renderApproachTurnPrompt,
+  renderRunPrompt,
+  renderSystemPrompt,
+  resolvePlacement,
+} from "./prompts.js";
 
 const promptsDir = path.resolve(import.meta.dirname, "../prompts");
 const item = { id: "WI-002", title: "Prepare interview guide" };
@@ -85,6 +94,44 @@ describe("renderRunPrompt", () => {
     expect(text).toContain("(none)");
   });
 
+  test("resume-answer with no answeredBy (plain human answer) says nothing about the Approach Agent", () => {
+    const text = renderRunPrompt(promptsDir, item, null, engagementRoot, {
+      reason: "resume-answer",
+      requestId: "RQ-0001",
+      question: "q",
+      mode: "approve",
+      answer: "a",
+    });
+    assertNoLeftoverTokens(text);
+    expect(text).not.toContain("Approach Agent");
+  });
+
+  test("resume-answer with answeredBy 'approach:<session>' attributes the answer to the Approach Agent, never presented as the human's (J2.3)", () => {
+    const text = renderRunPrompt(promptsDir, item, null, engagementRoot, {
+      reason: "resume-answer",
+      requestId: "RQ-0001",
+      question: "q",
+      mode: "approve",
+      answer: "a",
+      answeredBy: "approach:sess-123",
+    });
+    assertNoLeftoverTokens(text);
+    expect(text).toContain("The Approach Agent answered this question on the human's behalf.");
+  });
+
+  test("resume-answer with answeredBy 'human' says nothing about the Approach Agent", () => {
+    const text = renderRunPrompt(promptsDir, item, null, engagementRoot, {
+      reason: "resume-answer",
+      requestId: "RQ-0001",
+      question: "q",
+      mode: "approve",
+      answer: "a",
+      answeredBy: "human",
+    });
+    assertNoLeftoverTokens(text);
+    expect(text).not.toContain("Approach Agent");
+  });
+
   test("stale-rerun is out of scope for I1 and throws", () => {
     expect(() =>
       renderRunPrompt(promptsDir, item, null, engagementRoot, { reason: "stale-rerun", diffSummary: "x" }),
@@ -111,4 +158,82 @@ test("resolvePlacement defaults to A and reads WORKBENCH_PROMPT_PLACEMENT", () =
   expect(resolvePlacement({})).toBe("A");
   expect(resolvePlacement({ WORKBENCH_PROMPT_PLACEMENT: "B" })).toBe("B");
   expect(resolvePlacement({ WORKBENCH_PROMPT_PLACEMENT: "nonsense" })).toBe("A");
+});
+
+describe("Approach Agent prompts (I2)", () => {
+  test("renderApproachSystemPrompt renders approach-conversation.md with the engagement id", () => {
+    const text = renderApproachSystemPrompt(promptsDir, "acme-discovery-1");
+    assertNoLeftoverTokens(text);
+    expect(text).toContain("acme-discovery-1");
+    expect(text).toContain("plan` toolset");
+  });
+
+  test("renderApproachTurnPrompt: non-empty situation is prefixed, with the human-says separator", () => {
+    const text = renderApproachTurnPrompt("Engagement: acme-1. Plan: (blank).", "We're kicking off an engagement.");
+    expect(text).toBe("Engagement: acme-1. Plan: (blank).\n\n---\nThe human says:\nWe're kicking off an engagement.");
+  });
+
+  test("renderApproachTurnPrompt: empty situation is just the message", () => {
+    const text = renderApproachTurnPrompt("", "Hello.");
+    expect(text).toBe("Hello.");
+  });
+
+  test("renderApproachQuestionPrompt renders the item, question, hypothesis and alternatives", () => {
+    const text = renderApproachQuestionPrompt(promptsDir, {
+      situation: "Since your last turn: nothing new.",
+      itemId: "WI-002",
+      itemTitle: "Prepare interview guide",
+      itemBrief: "Prepare the interview guide.",
+      question: "Vision or history for the CIO section?",
+      hypothesis: "Lean into vision.",
+      alternatives: ["Lean into history instead."],
+    });
+    assertNoLeftoverTokens(text);
+    expect(text).toContain("WI-002");
+    expect(text).toContain("Vision or history for the CIO section?");
+    expect(text).toContain("Lean into vision.");
+    expect(text).toContain("- Lean into history instead.");
+  });
+
+  test("renderApproachQuestionPrompt: no alternatives renders (none)", () => {
+    const text = renderApproachQuestionPrompt(promptsDir, {
+      situation: "",
+      itemId: "WI-004",
+      itemTitle: "Consolidate interview themes",
+      itemBrief: "Synthesize.",
+      question: "q",
+      hypothesis: "h",
+      alternatives: [],
+    });
+    assertNoLeftoverTokens(text);
+    expect(text).toContain("(none)");
+  });
+
+  test("renderApproachSuggestionPrompt renders the summary and the suggested ops as YAML", () => {
+    const text = renderApproachSuggestionPrompt(promptsDir, {
+      situation: "",
+      itemId: "WI-004",
+      itemTitle: "Consolidate interview themes",
+      itemBrief: "Synthesize.",
+      summary: "Budget appetite was never discussed with the CFO.",
+      suggestedOps: [{ op: "cancel_item", itemId: "WI-900", reason: "test" }],
+    });
+    assertNoLeftoverTokens(text);
+    expect(text).toContain("Budget appetite was never discussed with the CFO.");
+    expect(text).toContain("cancel_item");
+    expect(text).toContain("WI-900");
+  });
+
+  test("renderApproachSuggestionPrompt: empty suggestedOps renders (none)", () => {
+    const text = renderApproachSuggestionPrompt(promptsDir, {
+      situation: "",
+      itemId: "WI-004",
+      itemTitle: "Consolidate interview themes",
+      itemBrief: "Synthesize.",
+      summary: "A vague idea.",
+      suggestedOps: [],
+    });
+    assertNoLeftoverTokens(text);
+    expect(text).toContain("(none)");
+  });
 });

@@ -36,6 +36,7 @@ import { readItemMd } from "@workbench/store";
 import { checkpointCommit } from "./checkpoint.js";
 import { conflict } from "./errors.js";
 import { emitEvent, pushActivity, type EngagementContext } from "./engagementContext.js";
+import { currentModelProfile } from "./profileService.js";
 import { syncPlanState } from "./scheduler.js";
 import { createWorkPortImpl } from "./workPort.js";
 
@@ -77,6 +78,7 @@ export async function launchRun(
   const itemRow = itemsRepo.getItem(ctx.dbCtx, itemId);
   if (!itemRow) throw conflict(`no such item: ${itemId}`);
   const def = readItemMd(ctx.paths.itemMd(itemId));
+  const profile = currentModelProfile(ctx.server); // J2.8: every new run reads the workspace's current profile at launch
 
   const scopeKey = scopeKeyOf(itemId);
   const runId = nextRunId(ctx.dbCtx);
@@ -114,11 +116,11 @@ export async function launchRun(
     sessionId: resumeSessionId,
     reason,
     runtime: ctx.runtime.kind,
-    model: ctx.profile.models.work,
+    model: profile.models.work,
     promptHash: null,
     startedAt: nowIso,
   });
-  emitEvent(ctx, { type: "RunStarted", actor, payload: { runId, itemId, reason, model: ctx.profile.models.work } });
+  emitEvent(ctx, { type: "RunStarted", actor, payload: { runId, itemId, reason, model: profile.models.work } });
 
   const workPort = createWorkPortImpl(ctx, itemId, runId);
   const observer = buildObserver(ctx, itemId, runId, scopeKey);
@@ -134,8 +136,8 @@ export async function launchRun(
     workspace: ctx.workspace,
     workPort,
     observer,
-    model: ctx.profile.models.work,
-    maxTurns: ctx.profile.limits.maxTurnsPerRun,
+    model: profile.models.work,
+    maxTurns: profile.limits.maxTurnsPerRun,
     settings: ctx.meta.settings,
   });
 
@@ -299,6 +301,9 @@ async function onRunEnd(ctx: EngagementContext, itemId: ItemId, runId: RunId, sc
   });
 
   syncPlanState(ctx);
+  // I2: a blocking question raised during this run can only start its Approach
+  // Agent task once this run has fully ended (I2-PLAN §4.1); pump now that it has.
+  ctx.pumpApproachTasks?.();
 }
 
 // ---------------------------------------------------------------------------

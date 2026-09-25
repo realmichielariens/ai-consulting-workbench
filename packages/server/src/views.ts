@@ -6,6 +6,7 @@ import fs from "node:fs";
 import {
   ActivityItem,
   computeItemActions,
+  type Allowed,
   type AssetContentView,
   type AssetVersion,
   type AssetVersionsView,
@@ -15,19 +16,27 @@ import {
   type ItemActionState,
   type ItemDetailView,
   type ItemId,
+  type JournalView,
+  type Notification,
   type Request,
   type Run,
   type RunActivityView,
   type RunId,
   type SlotName,
+  type Thread,
+  type ThreadId,
+  type ThreadSummary,
+  type ThreadView,
   type Version,
   type WorklogView,
 } from "@workbench/core";
-import { assetVersionsRepo, gateStepsRepo, inboxRepo, itemsRepo, requestsRepo, runsRepo } from "@workbench/db";
-import { readItemMd, readVersion, readVersionText } from "@workbench/store";
+import { assetVersionsRepo, gateStepsRepo, inboxRepo, itemsRepo, notificationsRepo, proposalsRepo, requestsRepo, runsRepo, threadsRepo } from "@workbench/db";
+import { readItemMd, readJournal, readVersion, readVersionText } from "@workbench/store";
 import { notFound } from "./errors.js";
 import { buildPlanView } from "./checkpoint.js";
 import type { EngagementContext } from "./engagementContext.js";
+import { getProposalView } from "./proposalService.js";
+import { ensureThread } from "./threadService.js";
 
 function isResumable(ctx: EngagementContext, row: { id: ItemId; executor: string | null; status: string | null; lastSessionId: string | null }): boolean {
   return row.executor === "agent" && row.status === "ready" && row.lastSessionId != null && !ctx.activeRuns.has(row.id);
@@ -139,7 +148,28 @@ export function getInboxView(ctx: EngagementContext): InboxView {
       markDone: computeItemActions(itemActionState(ctx, row.id)).markDone,
     });
   }
+  for (const proposal of proposalsRepo.listPending(ctx.dbCtx)) {
+    entries.push({ kind: "proposal", proposal: getProposalView(ctx, proposal.id) });
+  }
+  for (const notification of notificationsRepo.listUndismissed(ctx.dbCtx)) {
+    const request = notification.requestId ? requestsRepo.getRequest(ctx.dbCtx, notification.requestId) : null;
+    const item = notification.itemId ? itemRef(ctx, notification.itemId) : null;
+    entries.push({ kind: "fyi", notification, request, item, override: overrideAllowedFor(ctx, request) });
+  }
   return { entries };
+}
+
+/** Whether the Inbox should offer "Override" on an FYI about a question the Approach Agent answered (J2.3). */
+function overrideAllowedFor(ctx: EngagementContext, request: Request | null): Allowed {
+  if (!request || request.type !== "question") return { allowed: false, reason: null };
+  if (request.response?.kind !== "answer" || !request.response.by.startsWith("approach:")) return { allowed: false, reason: null };
+  const row = itemsRepo.getItem(ctx.dbCtx, request.itemId);
+  if (!row) return { allowed: false, reason: null };
+  if (ctx.activeRuns.has(request.itemId)) return { allowed: false, reason: `${request.itemId} is currently running.` };
+  if (row.status !== "ready" && row.status !== "at_gate") {
+    return { allowed: false, reason: `${request.itemId} is ${row.status ?? "unknown"}, not ready or at gate.` };
+  }
+  return { allowed: true, reason: null };
 }
 
 export function getEngagementView(ctx: EngagementContext): EngagementView {
@@ -157,6 +187,7 @@ export function getEngagementView(ctx: EngagementContext): EngagementView {
     runtime: ctx.runtime.kind,
     profile: ctx.server.config.profile,
     workModel: ctx.profile.models.work,
+    approachModel: ctx.profile.models.approach,
     inboxCount: inbox.entries.length,
   };
 }
@@ -220,4 +251,44 @@ export function getRunActivityView(ctx: EngagementContext, runId: RunId): RunAct
 // services.ts share the same "current open step" reading).
 export function getOpenGateStep(ctx: EngagementContext, itemId: ItemId) {
   return gateStepsRepo.getOpenStep(ctx.dbCtx, itemId);
+}
+
+// ---------------------------------------------------------------------------
+// I2 — J2.1/J2.6/J2.7: the conversation
+// ---------------------------------------------------------------------------
+
+function toThreadSummary(ctx: EngagementContext, thread: Thread): ThreadSummary {
+  const active = [...ctx.approachRuns.values()].find((r) => r.kind === "conversation" && r.threadId === thread.id);
+  return {
+    id: thread.id,
+    subject: thread.subject,
+    createdAt: thread.createdAt,
+    messageCount: threadsRepo.countMessages(ctx.dbCtx, thread.id),
+    activeRunId: active?.runId ?? null,
+  };
+}
+
+export function listThreadSummaries(ctx: EngagementContext): ThreadSummary[] {
+  return threadsRepo.listThreads(ctx.dbCtx).map((t) => toThreadSummary(ctx, t));
+}
+
+export function getThreadView(ctx: EngagementContext, tid: ThreadId): ThreadView {
+  const thread = tid === "T-0001" ? ensureThread(ctx) : threadsRepo.getThread(ctx.dbCtx, tid);
+  if (!thread) throw notFound(`no such thread: ${tid}`);
+  const messages = threadsRepo.listMessages(ctx.dbCtx, thread.id);
+  const active = [...ctx.approachRuns.values()].find((r) => r.kind === "conversation" && r.threadId === thread.id);
+  const activeRun = active ? runsRepo.getRun(ctx.dbCtx, active.runId) : null;
+  return { thread: toThreadSummary(ctx, thread), messages, activeRun: activeRun ? toRun(activeRun) : null };
+}
+
+// ---------------------------------------------------------------------------
+// I2 — FYIs and the approach journal (D4)
+// ---------------------------------------------------------------------------
+
+export function listNotificationsView(ctx: EngagementContext): Notification[] {
+  return notificationsRepo.listNotifications(ctx.dbCtx);
+}
+
+export function getJournalView(ctx: EngagementContext): JournalView {
+  return { markdown: readJournal(ctx.paths) };
 }

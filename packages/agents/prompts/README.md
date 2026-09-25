@@ -21,6 +21,31 @@ rather than inventing a name in the code.
 `reason: "stale-rerun"` is out of scope for I1 (it arrives in I4 with
 staleness); there is no prompt file for it yet.
 
+## Approach Agent prompts (I2)
+
+| File | Used for | Becomes |
+|---|---|---|
+| `approach-conversation.md` | Every Approach Agent run (turn or task session) | The system prompt, rendered with the engagement id. Role, locus of control, the `plan` toolset, how to talk with the human. |
+| `approach-question.md` | A "question" task session (`ApproachTaskRequest`, `kind: "question"`) | The run prompt: the situation, the asking item's id/title/brief, and its question/hypothesis/alternatives. |
+| `approach-suggestion.md` | A "suggestion" task session (`kind: "suggestion"`) | The run prompt: the situation, the suggesting item's id/title/brief, and its summary/suggested operations (as YAML). |
+
+A conversation turn's user prompt is not templated: it is `situation +
+"\n\n---\nThe human says:\n" + message` (or just `message` if `situation` is
+empty), built directly by package B's runtime (`renderApproachTurnPrompt`,
+`prompts.ts`).
+
+### Approach Agent variables
+
+| Variable | File(s) | Type | Content |
+|---|---|---|---|
+| `{{engagementId}}` | `approach-conversation.md` | string | The engagement id |
+| `{{situation}}` | `approach-question.md`, `approach-suggestion.md` | string (block) | The full situation briefing (`ApproachTaskRequest.situation`) |
+| `{{itemId}}` / `{{itemTitle}}` / `{{itemBrief}}` | `approach-question.md`, `approach-suggestion.md` | string | The asking/suggesting item's id, title and brief |
+| `{{question}}` / `{{hypothesis}}` | `approach-question.md` | string | The Work Agent's question and its own best-answer hypothesis |
+| `{{alternatives}}` | `approach-question.md` | string (block) | One `- ` line per alternative the Work Agent considered, or `(none)` |
+| `{{summary}}` | `approach-suggestion.md` | string | The Work Agent's suggestion summary |
+| `{{suggestedOps}}` | `approach-suggestion.md` | string (block) | The Work Agent's `suggestedOps`, rendered as YAML, or `(none)` |
+
 ## Protocol placement (A vs B)
 
 The workbench protocol (`protocol.md`) can be delivered to the agent two
@@ -74,6 +99,7 @@ as-is, don't re-indent or re-wrap them.
 | `{{reviewComments}}` | `run-changes-requested.md` | string (block) | The reviewer's comments, verbatim |
 | `{{reviewedVersions}}` | `run-changes-requested.md` | string (block) | One line per reviewed slot: `- {slot} v{version}` |
 | `{{resumeNote}}` | `run-resume.md` | string | A free-text note about why the run is resuming (e.g. "The server restarted while you were working."), or `(none)` |
+| `{{answeredByLine}}` | `run-resume-answer.md` | string | (I2) `"The Approach Agent answered this question on the human's behalf."` when `RunInput.answeredBy` starts with `"approach:"` (J2.3: always attributed), else `""` |
 
 `run-resume-answer.md` and `run-changes-requested.md` deliberately do **not**
 repeat `{{brief}}`, `{{inputs}}` etc.: these are resumes of the *same*

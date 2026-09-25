@@ -194,6 +194,14 @@ async function runFakeScript(
           tool: { name: "mcp__work__raise_question", input: step.question },
         });
         if (step.question.blocking) break; // same protocol as the real agent: end the turn right after a blocking question
+      } else if ("suggest" in step) {
+        const result = await workPort.proposePlanChange(step.suggest);
+        push({
+          kind: "tool",
+          summary: `Suggested a plan change: ${truncate(step.suggest.summary, 140)}`,
+          detail: result.instruction,
+          tool: { name: "mcp__work__propose_plan_change", input: step.suggest },
+        });
       } else if ("progress" in step) {
         await workPort.reportProgress({ status: step.progress });
         push({ kind: "progress", summary: `Progress: ${step.progress}`, tool: { name: "mcp__work__report_progress", input: { status: step.progress } } });

@@ -102,6 +102,26 @@ export function appendWorklog(paths: EngagementPaths, itemId: ItemId, input: Wor
 }
 
 // ---------------------------------------------------------------------------
+// approach-journal.md (I2, D4): the Approach Agent's own append-only journal,
+// separate from any one item's worklog since it is not scoped to an item.
+// ---------------------------------------------------------------------------
+
+export function appendJournal(paths: EngagementPaths, input: WorklogEntryInput): void {
+  const file = path.join(paths.itemWork("ENG"), "approach-journal.md");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  if (!fs.existsSync(file)) {
+    fs.writeFileSync(file, "# Approach Agent journal\n\n", "utf8");
+  }
+  const section = `### ${formatLocalTime(input.at)} — ${input.actor}\n\n${input.entry.trim()}\n\n`;
+  fs.appendFileSync(file, section, "utf8");
+}
+
+export function readJournal(paths: EngagementPaths): string {
+  const file = path.join(paths.itemWork("ENG"), "approach-journal.md");
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+}
+
+// ---------------------------------------------------------------------------
 // Immutable version files
 // ---------------------------------------------------------------------------
 

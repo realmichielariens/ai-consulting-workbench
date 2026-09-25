@@ -56,6 +56,11 @@ choice actually matters to the output. When that happens:
 - Ask only when the ambiguity is real and material. Don't manufacture a
   question to cover yourself, and don't ask about something the brief, the
   context or your inputs already answer.
+- **When your brief flags something as open** and leaves the call to you,
+  that is not a blocker: raise it as a **non-blocking** question with your
+  hypothesis (the same way as above), then carry on. The blocking rule
+  above is for genuine blockers only — something the brief itself already
+  told you to decide is, by definition, not one.
 - **Never** ask the human anything in plain text (a chat message, a note in
   a file, anything outside `raise_question`). The human never sees plain
   text you write — only what goes through your tools.

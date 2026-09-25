@@ -9,17 +9,20 @@ import {
   type ActivityItem,
   type Actor,
   type AgentRuntime,
+  type ApproachRuntime,
   type CompletionReport,
   type EngagementId,
   type EngagementMeta,
   type ItemId,
+  type RequestId,
   type RunHandle,
   type RunId,
   type SlotVersionRef,
+  type ThreadId,
   type WorkbenchEvent,
   type WsServerMessage,
 } from "@workbench/core";
-import { createFakeRuntime, createSdkRuntime } from "@workbench/agents";
+import { createFakeApproachRuntime, createFakeRuntime, createSdkApproachRuntime, createSdkRuntime } from "@workbench/agents";
 import {
   engagementPaths,
   loadConfig,
@@ -67,6 +70,8 @@ export interface EngagementContext {
   /** Serializes checkpoint commits (git operations): several runs can publish concurrently, but only one git commit runs at a time. */
   writeQueue: WriteQueue;
   runtime: AgentRuntime;
+  /** I2: the Approach Agent runtime (stubs until package B lands). Kept out of `activeRuns`/autostart concurrency. */
+  approachRuntime: ApproachRuntime;
   profile: ModelProfile;
   /** Reloaded after every write (editItem bumps planVersion, settings changes, …). */
   meta: EngagementMeta;
@@ -74,6 +79,17 @@ export interface EngagementContext {
   activeRuns: Map<ItemId, { runId: RunId; handle: RunHandle }>;
   /** submit_outputs's report, held until the run ends and finishRun/gate-open can use it. */
   pendingReports: Map<RunId, { report: CompletionReport; submittedVersions: SlotVersionRef[] }>;
+  /**
+   * I2: Approach Agent runs (conversation turns and task sessions), recorded
+   * with itemId "ENG" but tracked separately from `activeRuns` — they never
+   * count toward the Work Agent autostart concurrency limit. Keyed by runId
+   * because several kinds of Approach run can exist in the registry's
+   * lifetime, even though only one of each kind is ever active at once
+   * (enforced by the "aa-thread:*" / "aa-task:*" leases, not by this map).
+   */
+  approachRuns: Map<RunId, { runId: RunId; handle: RunHandle; kind: "conversation" | "question" | "suggestion"; threadId: ThreadId | null; requestId: RequestId | null }>;
+  /** FIFO queue of routed questions/suggestions waiting for the one-at-a-time Approach task session (I2-PLAN §4.1). */
+  approachTaskQueue: { kind: "question" | "suggestion"; requestId: RequestId }[];
   wsClients: Set<WsClient>;
   /**
    * Bound once by runService.ts right after the context is created (breaks
@@ -81,6 +97,8 @@ export interface EngagementContext {
    * without importing runService.ts, which itself imports workPort.ts).
    */
   startAgentRun?: (itemId: ItemId) => void;
+  /** I2: bound by approachRunner.ts — runService.ts/questionRouting.ts pump the one-at-a-time task queue without importing approachRunner.ts. */
+  pumpApproachTasks?: () => void;
 }
 
 export function createServerContext(runtimeKind: RuntimeKind): ServerContext {
@@ -98,6 +116,19 @@ export function createServerContext(runtimeKind: RuntimeKind): ServerContext {
 function buildRuntime(server: ServerContext): AgentRuntime {
   if (server.runtimeKind === "fake") return createFakeRuntime({});
   return createSdkRuntime(
+    {
+      promptsDir: server.config.resolved.promptsDir,
+      skillsPluginPath: server.config.resolved.skillsPlugin,
+      devCapUsd: server.config.dev.totalCapUsd,
+      repoRoot: server.repoRoot,
+    },
+    server.workspace,
+  );
+}
+
+function buildApproachRuntime(server: ServerContext): ApproachRuntime {
+  if (server.runtimeKind === "fake") return createFakeApproachRuntime({});
+  return createSdkApproachRuntime(
     {
       promptsDir: server.config.resolved.promptsDir,
       skillsPluginPath: server.config.resolved.skillsPlugin,
@@ -127,10 +158,13 @@ export function openEngagement(server: ServerContext, id: EngagementId): Engagem
     dbCtx,
     writeQueue: createWriteQueue(),
     runtime: buildRuntime(server),
+    approachRuntime: buildApproachRuntime(server),
     profile: activeProfile(server.config),
     meta,
     activeRuns: new Map(),
     pendingReports: new Map(),
+    approachRuns: new Map(),
+    approachTaskQueue: [],
     wsClients: new Set(),
   };
   server.engagements.set(id, ctx);
@@ -158,8 +192,8 @@ export function pushEvent(ctx: EngagementContext, event: WorkbenchEvent): void {
   broadcast(ctx, { type: "event", event });
 }
 
-export function pushActivity(ctx: EngagementContext, runId: RunId, itemId: ItemId, item: ActivityItem): void {
-  broadcast(ctx, { type: "activity", runId, itemId, item });
+export function pushActivity(ctx: EngagementContext, runId: RunId, itemId: ItemId, item: ActivityItem, threadId?: ThreadId): void {
+  broadcast(ctx, threadId ? { type: "activity", runId, itemId, threadId, item } : { type: "activity", runId, itemId, item });
 }
 
 /** Persists an event (events table, `seq` assigned by the DB) and fans it out. Returns the full envelope. */

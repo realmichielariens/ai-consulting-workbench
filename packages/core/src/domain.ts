@@ -44,6 +44,18 @@ export type RunId = z.infer<typeof RunId>;
 export const RequestId = z.string().regex(/^RQ-\d{4,}$/);
 export type RequestId = z.infer<typeof RequestId>;
 
+/** Server-assigned, zero-padded (I2): proposals, conversation threads, chat messages, notifications, agenda rows. */
+export const ProposalId = z.string().regex(/^P-\d{4,}$/);
+export type ProposalId = z.infer<typeof ProposalId>;
+export const ThreadId = z.string().regex(/^T-\d{4,}$/);
+export type ThreadId = z.infer<typeof ThreadId>;
+export const MessageId = z.string().regex(/^M-\d{4,}$/);
+export type MessageId = z.infer<typeof MessageId>;
+export const NotificationId = z.string().regex(/^N-\d{4,}$/);
+export type NotificationId = z.infer<typeof NotificationId>;
+export const AgendaId = z.string().regex(/^A-\d{4,}$/);
+export type AgendaId = z.infer<typeof AgendaId>;
+
 export const IsoTime = z.iso.datetime({ offset: true });
 export type IsoTime = z.infer<typeof IsoTime>;
 
@@ -172,6 +184,8 @@ export const itemKindOf = (def: Pick<ItemDef, "id" | "executor">): ItemKind =>
 export const ReadinessBlocker = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("missing_input"), slot: SlotRef, producer: ItemId }),
   z.object({ kind: z.literal("sequencing"), item: ItemId, status: ItemStatus.nullable() }),
+  /** I2 decision D1: the input is published, but its producer has a gate and is not done yet. */
+  z.object({ kind: z.literal("input_not_approved"), slot: SlotRef, producer: ItemId, status: ItemStatus.nullable() }),
   z.object({ kind: z.literal("no_executor") }),
 ]);
 export type ReadinessBlocker = z.infer<typeof ReadinessBlocker>;
@@ -185,6 +199,136 @@ export const Rollup = z.object({
   worst: ItemStatus.nullable(),
 });
 export type Rollup = z.infer<typeof Rollup>;
+
+// ---------------------------------------------------------------------------
+// Plan operations (I2, I2-PLAN §4.3). Validated and applied by the pure rules in
+// rules/planOps.ts. The shapes avoid z.preprocess (GateChain) so they convert
+// cleanly to the JSON Schema of the `propose_ops` MCP tool.
+// ---------------------------------------------------------------------------
+
+/** A new item in an add_item op: the full definition, with an explicit gate array. */
+export const PlanItemDef = ItemDef.extend({
+  gate: z.array(GateStep).default([]),
+});
+export type PlanItemDef = z.infer<typeof PlanItemDef>;
+
+export const PlanOp = z.discriminatedUnion("op", [
+  /** The id is chosen by the proposer and must be unused; the parent must be a composite, ENG or null. A new leaf starts waiting. */
+  z.object({ op: z.literal("add_item"), def: PlanItemDef }),
+  /** Leaves: only while waiting or ready. Composites and ENG (no status): always. */
+  z.object({
+    op: z.literal("update_brief"),
+    itemId: ItemId,
+    title: z.string().min(1).optional(),
+    brief: z.string().min(1).optional(),
+    acceptance: z.array(z.string()).optional(),
+  }),
+  /** Replaces the item's inputs. Only while waiting or ready; every slot must exist (or be added in the same proposal). */
+  z.object({ op: z.literal("rewire"), itemId: ItemId, inputs: z.array(InputRef) }),
+  z.object({ op: z.literal("add_slot"), itemId: ItemId, output: OutputSlot }),
+  /** Not allowed while the slot has versions or consumers. */
+  z.object({ op: z.literal("remove_slot"), itemId: ItemId, slot: SlotName }),
+  /** I2: [] or [{type: "human-review"}]. */
+  z.object({ op: z.literal("set_gate"), itemId: ItemId, gate: z.array(GateStep) }),
+  /** Only while waiting or ready, and not while another (non-cancelled) item consumes its outputs. */
+  z.object({ op: z.literal("cancel_item"), itemId: ItemId, reason: z.string().min(1) }),
+]);
+export type PlanOp = z.infer<typeof PlanOp>;
+export type PlanOpKind = PlanOp["op"];
+
+export const ProposalOrigin = z.enum(["conversation", "suggestion"]);
+export type ProposalOrigin = z.infer<typeof ProposalOrigin>;
+
+export const ProposalStatus = z.enum(["pending", "approved", "rejected", "superseded"]);
+export type ProposalStatus = z.infer<typeof ProposalStatus>;
+
+/** A set of plan operations the human approves or rejects as a whole (J2.2). Never shown unless it validated. */
+export const Proposal = z.object({
+  id: ProposalId,
+  origin: ProposalOrigin,
+  /** J2.5: the Work Agent item whose suggestion led to this proposal ("suggested by WI-004"). */
+  suggestedBy: ItemId.nullable(),
+  /** The suggestion request (type "proposal") this answers, for origin "suggestion". */
+  requestId: RequestId.nullable(),
+  /** The conversation thread it was proposed in, for origin "conversation". */
+  threadId: ThreadId.nullable(),
+  author: Actor,
+  status: ProposalStatus,
+  /** planVersion when proposed. Approval is rejected if the plan has moved since (I2; re-validation arrives in I5). */
+  basePlanVersion: z.number().int().positive(),
+  rationale: z.string().min(1),
+  ops: z.array(PlanOp).min(1),
+  createdAt: IsoTime,
+  resolvedAt: IsoTime.nullable(),
+  appliedPlanVersion: z.number().int().positive().nullable(),
+  rejectReason: z.string().nullable(),
+  /** For status "superseded": the proposal that replaced it. */
+  supersededBy: ProposalId.nullable(),
+});
+export type Proposal = z.infer<typeof Proposal>;
+
+// ---------------------------------------------------------------------------
+// Conversation with the Approach Agent (I2: one general thread, T-0001)
+// ---------------------------------------------------------------------------
+
+export const Thread = z.object({
+  id: ThreadId,
+  subject: z.string(),
+  createdAt: IsoTime,
+  /** The Approach Agent session this thread resumes; null before the first turn. */
+  sessionId: z.string().nullable(),
+  /** Event seq at the end of the last turn: the next turn's "Since your last turn:" starts after it. */
+  lastSeenSeq: z.number().int().nonnegative(),
+});
+export type Thread = z.infer<typeof Thread>;
+
+export const ChatRole = z.enum(["human", "approach", "system"]);
+export type ChatRole = z.infer<typeof ChatRole>;
+
+export const ChatMessage = z.object({
+  id: MessageId,
+  threadId: ThreadId,
+  role: ChatRole,
+  /** Markdown. */
+  body: z.string(),
+  at: IsoTime,
+  /** The Approach Agent run that produced it (role approach/system). */
+  runId: RunId.nullable(),
+  /** Set on the system message announcing a proposal: the UI renders the proposal card inline. */
+  proposalId: ProposalId.nullable(),
+  /** Set on "Published ENG/context v1.0": the UI renders a link to the asset viewer. */
+  asset: z.object({ slot: SlotRef, version: Version }).nullable(),
+});
+export type ChatMessage = z.infer<typeof ChatMessage>;
+
+/** An FYI entry in the Inbox (notify_human, an Approach Agent answer), dismissible. */
+export const Notification = z.object({
+  id: NotificationId,
+  from: Actor,
+  text: z.string().min(1),
+  itemId: ItemId.nullable(),
+  /** Set when the FYI is about a question the Approach Agent answered: the Inbox offers Override. */
+  requestId: RequestId.nullable(),
+  createdAt: IsoTime,
+  dismissedAt: IsoTime.nullable(),
+});
+export type Notification = z.infer<typeof Notification>;
+
+/** Minimal agenda row (I2): a routed question gets one; the board and its behaviour arrive in I5. */
+export const AgendaItem = z.object({
+  id: AgendaId,
+  kind: z.enum(["question", "proposal", "decision", "review", "impact", "request", "follow_up", "risk", "run_issue"]),
+  title: z.string(),
+  status: z.enum(["open", "in_progress", "waiting", "closed", "dropped"]),
+  links: z.object({
+    items: z.array(ItemId).default([]),
+    requests: z.array(RequestId).default([]),
+    proposals: z.array(ProposalId).default([]),
+  }),
+  createdAt: IsoTime,
+  resolution: z.string().nullable(),
+});
+export type AgendaItem = z.infer<typeof AgendaItem>;
 
 // ---------------------------------------------------------------------------
 // Assets and versions (DESIGN.md §5.2)
@@ -218,8 +362,21 @@ export type SlotVersionRef = z.infer<typeof SlotVersionRef>;
  * start / resume-answer / changes-requested / stale-rerun follow A§8.2.
  * "resume" continues an interrupted session (R1, R5) or retries after a run issue (R3).
  */
-export const RunReason = z.enum(["start", "resume-answer", "changes-requested", "resume", "stale-rerun"]);
+export const RunReason = z.enum([
+  "start",
+  "resume-answer",
+  "changes-requested",
+  "resume",
+  "stale-rerun",
+  // Approach Agent runs (I2), recorded with itemId "ENG":
+  "aa-turn", //       one conversation turn (a human message), resumes the thread's session
+  "aa-question", //   a task session for one routed question
+  "aa-suggestion", // a task session for one Work Agent plan-change suggestion
+]);
 export type RunReason = z.infer<typeof RunReason>;
+
+export const APPROACH_RUN_REASONS: readonly RunReason[] = ["aa-turn", "aa-question", "aa-suggestion"];
+export const isApproachRun = (reason: RunReason): boolean => APPROACH_RUN_REASONS.includes(reason);
 
 /**
  * submitted   → outputs submitted (gate or done)
@@ -228,8 +385,9 @@ export type RunReason = z.infer<typeof RunReason>;
  * max_turns   → hit maxTurns (→ run issue)
  * error       → SDK/process error (→ run issue)
  * interrupted → stopped by the human, a restart or a crash (→ resumable)
+ * completed   → Approach Agent runs only: the turn or task session ended normally
  */
-export const RunOutcome = z.enum(["submitted", "blocked", "no_submit", "max_turns", "error", "interrupted"]);
+export const RunOutcome = z.enum(["submitted", "blocked", "no_submit", "max_turns", "error", "interrupted", "completed"]);
 export type RunOutcome = z.infer<typeof RunOutcome>;
 
 export const Run = z.object({
@@ -306,6 +464,13 @@ export const RunIssuePayload = z.object({
 });
 export type RunIssuePayload = z.infer<typeof RunIssuePayload>;
 
+/** A Work Agent's plan-change suggestion (propose_plan_change, J2.5). Always routed to the Approach Agent. */
+export const SuggestionPayload = z.object({
+  summary: z.string().min(1),
+  suggestedOps: z.array(PlanOp).default([]),
+});
+export type SuggestionPayload = z.infer<typeof SuggestionPayload>;
+
 export const AnswerMode = z.enum(["approve", "amend", "replace"]);
 export type AnswerMode = z.infer<typeof AnswerMode>;
 
@@ -313,17 +478,38 @@ export const GateVerdict = z.enum(["approved", "changes_requested"]);
 export type GateVerdict = z.infer<typeof GateVerdict>;
 
 export const RequestResponse = z.discriminatedUnion("kind", [
+  /** `by` is "human" or "approach:<session>" (J2.3: always attributed). An override replaces the response with the human's. */
   z.object({ kind: z.literal("answer"), mode: AnswerMode, text: z.string().min(1), by: Actor, at: IsoTime }),
   z.object({ kind: z.literal("verdict"), verdict: GateVerdict, comments: z.string().default(""), by: Actor, at: IsoTime }),
   z.object({ kind: z.literal("issue"), action: z.enum(["retry", "stop"]), by: Actor, at: IsoTime }),
+  /** A suggestion (type "proposal") was turned into a proposal, or declined with a recorded reason. */
+  z.object({
+    kind: z.literal("suggestion"),
+    outcome: z.enum(["proposed", "declined"]),
+    proposalId: ProposalId.nullable(),
+    reason: z.string().default(""),
+    by: Actor,
+    at: IsoTime,
+  }),
 ]);
 export type RequestResponse = z.infer<typeof RequestResponse>;
+
+/** J2.4: the Approach Agent's own view, attached when it hands a question to the human. */
+export const Escalation = z.object({ view: z.string().min(1), by: Actor, at: IsoTime });
+export type Escalation = z.infer<typeof Escalation>;
 
 const requestBase = {
   id: RequestId,
   from: Actor,
-  /** "approach" addresses the Approach Agent role (I2); I1 always routes to "human". */
+  /**
+   * Current addressee. "approach" = the Approach Agent role. A question routed aa-first
+   * starts at "approach" and moves to "human" when escalated.
+   */
   to: z.union([Actor, z.literal("approach")]),
+  /** Where the request was first routed; unchanged by escalation (the Inbox shows "escalated by the Approach Agent"). */
+  routedTo: z.enum(["approach", "human"]).default("human"),
+  /** Set when the Approach Agent escalated this question. */
+  escalation: Escalation.nullable().default(null),
   itemId: ItemId,
   runId: RunId.nullable(),
   status: RequestStatus,
@@ -337,6 +523,8 @@ export const Request = z.discriminatedUnion("type", [
   z.object({ ...requestBase, type: z.literal("question"), payload: QuestionPayload }),
   z.object({ ...requestBase, type: z.literal("gate_request"), payload: GateRequestPayload }),
   z.object({ ...requestBase, type: z.literal("run_issue"), payload: RunIssuePayload }),
+  /** A Work Agent suggestion (propose_plan_change), to "approach". Resolved by propose_ops or decline_suggestion. */
+  z.object({ ...requestBase, type: z.literal("proposal"), payload: SuggestionPayload }),
 ]);
 export type Request = z.infer<typeof Request>;
 
@@ -345,9 +533,11 @@ export type Request = z.infer<typeof Request>;
 // ---------------------------------------------------------------------------
 
 export const Settings = z.object({
-  /** I1 supports "always-human" only; "aa-first" arrives with the Approach Agent (I2). */
-  questionHandling: z.enum(["aa-first", "always-human"]).default("always-human"),
+  /** D§8.1 default (I2 decision D3): questions go to the Approach Agent first. */
+  questionHandling: z.enum(["aa-first", "always-human"]).default("aa-first"),
   itemStart: z.enum(["manual", "auto"]).default("auto"),
+  /** I2 supports "propose" only: every plan change is a proposal the human approves. */
+  planChanges: z.enum(["propose"]).default("propose"),
   readPolicy: z.enum(["declared-only", "project", "project-with-tracking"]).default("project-with-tracking"),
 });
 export type Settings = z.infer<typeof Settings>;

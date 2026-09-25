@@ -74,6 +74,54 @@ describe("computeReadiness", () => {
     expect(r?.blockers).toHaveLength(2);
   });
 
+  it("D1: a published input from a gated producer that is not done blocks as input_not_approved", () => {
+    const plan: ReadinessPlan = {
+      items: [
+        { id: "WI-002", executor: "agent", status: "at_gate", hasGate: true, inputs: [], sequencing: [] },
+        { id: "WI-004", executor: "agent", status: "waiting", inputs: [{ slot: "WI-002/interview-guide", required: true }], sequencing: [] },
+      ],
+      publishedSlots: new Set(["WI-002/interview-guide"]),
+    };
+    const r = computeReadiness(plan).get("WI-004");
+    expect(r).toEqual({
+      ready: false,
+      blockers: [{ kind: "input_not_approved", slot: "WI-002/interview-guide", producer: "WI-002", status: "at_gate" }],
+    });
+  });
+
+  it("D1: a published input from a gated producer that is done does not block", () => {
+    const plan: ReadinessPlan = {
+      items: [
+        { id: "WI-002", executor: "agent", status: "done", hasGate: true, inputs: [], sequencing: [] },
+        { id: "WI-004", executor: "agent", status: "waiting", inputs: [{ slot: "WI-002/interview-guide", required: true }], sequencing: [] },
+      ],
+      publishedSlots: new Set(["WI-002/interview-guide"]),
+    };
+    expect(computeReadiness(plan).get("WI-004")).toEqual({ ready: true, blockers: [] });
+  });
+
+  it("D1: a published input from an ungated producer never blocks, even mid-progress", () => {
+    const plan: ReadinessPlan = {
+      items: [
+        { id: "WI-003", executor: "human", status: "in_progress", hasGate: false, inputs: [], sequencing: [] },
+        { id: "WI-004", executor: "agent", status: "waiting", inputs: [{ slot: "WI-003/notes-cfo", required: true }], sequencing: [] },
+      ],
+      publishedSlots: new Set(["WI-003/notes-cfo"]),
+    };
+    expect(computeReadiness(plan).get("WI-004")).toEqual({ ready: true, blockers: [] });
+  });
+
+  it("D1: a published input from a composite or ENG producer is always enough", () => {
+    const plan: ReadinessPlan = {
+      items: [
+        { id: "ENG", executor: null, status: null, inputs: [], sequencing: [] },
+        { id: "WI-004", executor: "agent", status: "waiting", inputs: [{ slot: "ENG/context", required: true }], sequencing: [] },
+      ],
+      publishedSlots: new Set(["ENG/context"]),
+    };
+    expect(computeReadiness(plan).get("WI-004")).toEqual({ ready: true, blockers: [] });
+  });
+
   it("skips composites and ENG (no readiness of their own)", () => {
     const plan: ReadinessPlan = {
       items: [{ id: "PH-1", executor: null, status: null, inputs: [], sequencing: [] }],

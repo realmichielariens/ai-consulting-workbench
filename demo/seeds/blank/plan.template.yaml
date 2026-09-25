@@ -1,0 +1,22 @@
+# PlanTemplate (packages/core/src/seed.ts). Only ENG, with the two engagement
+# slots the Approach Agent fills during the kick-off (J2.1). No assets.
+items:
+  - id: ENG
+    title: New engagement
+    parent: null
+    order: 0
+    executor: null
+    outputs:
+      - slot: context
+        format: md
+        scope: project
+        description: Client, goals, scope, constraints and timeline for the engagement
+        required: true
+      - slot: stakeholders
+        format: md
+        scope: project
+        description: Who is who at the client, and who is being interviewed
+        required: true
+    brief: |
+      Not yet described. The Approach Agent shapes this engagement with the
+      human in the conversation, then proposes the plan.

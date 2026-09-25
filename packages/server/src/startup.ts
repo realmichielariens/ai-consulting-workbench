@@ -9,6 +9,7 @@ import fs from "node:fs";
 import { applyItemEvent, ItemDef, type ItemId } from "@workbench/core";
 import { itemsRepo, leasesRepo, runsRepo } from "@workbench/db";
 import { readItemMd } from "@workbench/store";
+import { wireApproachHooks } from "./approachRunner.js";
 import { emitEvent, type EngagementContext } from "./engagementContext.js";
 import { wireAutostart } from "./runService.js";
 import { syncPlanState } from "./scheduler.js";
@@ -92,6 +93,7 @@ function clearStaleLeases(ctx: EngagementContext): void {
 /** Runs once when an engagement context is opened (createEngagement, or eagerly at process start for existing engagements). */
 export function reconcileEngagement(ctx: EngagementContext): void {
   wireAutostart(ctx);
+  wireApproachHooks(ctx);
   reconcileDefinitions(ctx);
   orphanCleanup(ctx);
   clearStaleLeases(ctx);

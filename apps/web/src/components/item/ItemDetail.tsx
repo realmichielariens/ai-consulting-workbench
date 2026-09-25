@@ -213,6 +213,11 @@ export function ItemDetail({ eid, itemId }: { eid: EngagementId; itemId: ItemId 
                 {openRequests.map((r) => (
                   <li key={r.id}>
                     {r.type} — {r.id}
+                    {r.type === "question" && r.to === "approach" && (
+                      <p className="helper-text" data-testid="question-routed-note">
+                        Question sent to the Approach Agent
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

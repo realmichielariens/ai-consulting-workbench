@@ -47,6 +47,8 @@ type PendingToolUse = { name: string; input: unknown };
 
 /** WORK_TOOL_PREFIX matches the MCP tool names sdk.ts registers under mcpServers.work (workToolset.ts). */
 const WORK_TOOL_PREFIX = "mcp__work__";
+/** PLAN_TOOL_PREFIX matches the MCP tool names registered under mcpServers.plan (planToolset.ts, I2). */
+const PLAN_TOOL_PREFIX = "mcp__plan__";
 
 export class ActivityBuilder {
   private idx = 0;
@@ -208,6 +210,58 @@ export class ActivityBuilder {
           return this.push({ kind: "tool", summary: "Appended a worklog entry", detail: resultText, tool, agentId });
         case "get_brief":
           return this.push({ kind: "tool", summary: "Re-read the brief", tool, agentId });
+        case "propose_plan_change": {
+          const summary = typeof i.summary === "string" ? i.summary : "";
+          return this.push({ kind: "tool", summary: `Suggested a plan change: ${truncate(summary, 140)}`, detail: resultText, tool, agentId });
+        }
+        default:
+          return this.push({ kind: "tool", summary: `Called ${name}`, detail: resultText, tool, agentId });
+      }
+    }
+
+    if (name.startsWith(PLAN_TOOL_PREFIX)) {
+      const planTool = name.slice(PLAN_TOOL_PREFIX.length);
+      switch (planTool) {
+        case "propose_ops": {
+          if (isError) return this.push({ kind: "tool", summary: `Propose ops failed: ${truncate(resultText, 160)}`, detail: resultText, tool, agentId });
+          const ops = Array.isArray(i.ops) ? i.ops.length : undefined;
+          const m = /^Proposed (\S+):/.exec(resultText);
+          const proposalId = m?.[1] ?? "a proposal";
+          const opsPart = ops != null ? ` (${ops} operation${ops === 1 ? "" : "s"})` : "";
+          return this.push({ kind: "tool", summary: `Proposed ${proposalId}${opsPart}`, detail: resultText, tool, agentId });
+        }
+        case "publish_engagement_asset": {
+          if (isError) return this.push({ kind: "tool", summary: `Publish failed: ${truncate(resultText, 160)}`, detail: resultText, tool, agentId });
+          const m = /^Published (\S+) v(\S+) at /.exec(resultText);
+          const slot = m?.[1] ?? String(i.slot ?? "?");
+          const version = m?.[2] ?? "?";
+          const kind = typeof i.kind === "string" ? i.kind : "?";
+          return this.push({ kind: "publish", summary: `Published ${slot} v${version} (${kind})`, detail: resultText, tool, agentId });
+        }
+        case "answer_request": {
+          const requestId = typeof i.requestId === "string" ? i.requestId : "the question";
+          return this.push({ kind: "tool", summary: isError ? `Answer failed: ${truncate(resultText, 160)}` : `Answered ${requestId}`, detail: resultText, tool, agentId });
+        }
+        case "escalate": {
+          const requestId = typeof i.requestId === "string" ? i.requestId : "the question";
+          return this.push({ kind: "tool", summary: isError ? `Escalate failed: ${truncate(resultText, 160)}` : `Escalated ${requestId}`, detail: resultText, tool, agentId });
+        }
+        case "decline_suggestion": {
+          const requestId = typeof i.requestId === "string" ? i.requestId : "the suggestion";
+          return this.push({ kind: "tool", summary: isError ? `Decline failed: ${truncate(resultText, 160)}` : `Declined ${requestId}`, detail: resultText, tool, agentId });
+        }
+        case "journal_append":
+          return this.push({ kind: "tool", summary: "Appended a journal entry", detail: resultText, tool, agentId });
+        case "notify_human": {
+          const text = typeof i.text === "string" ? i.text : "";
+          return this.push({ kind: "tool", summary: `Notified the human: ${truncate(text, 140)}`, detail: resultText, tool, agentId });
+        }
+        case "get_plan":
+          return this.push({ kind: "tool", summary: "Read the plan", tool, agentId });
+        case "get_item": {
+          const itemId = typeof i.itemId === "string" ? i.itemId : "?";
+          return this.push({ kind: "tool", summary: `Read ${itemId}`, tool, agentId });
+        }
         default:
           return this.push({ kind: "tool", summary: `Called ${name}`, detail: resultText, tool, agentId });
       }

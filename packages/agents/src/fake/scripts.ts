@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
-import { PublishAssetInput, RaiseQuestionInput, RunOutcome, SubmitOutputsInput } from "@workbench/core";
+import { ProposePlanChangeInput, PublishAssetInput, RaiseQuestionInput, RunOutcome, SubmitOutputsInput } from "@workbench/core";
 
 export const FakeStep = z.union([
   z.object({ text: z.string() }).strict(),
@@ -19,6 +19,8 @@ export const FakeStep = z.union([
   z.object({ question: RaiseQuestionInput }).strict(),
   z.object({ progress: z.string().min(1) }).strict(),
   z.object({ submit: SubmitOutputsInput }).strict(),
+  /** propose_plan_change (J2.5): non-blocking, the script keeps going after it. */
+  z.object({ suggest: ProposePlanChangeInput }).strict(),
   /** Emits a denial activity for a demo (R4); does not call any real guard. */
   z.object({ deny: z.object({ tool: z.string(), reason: z.string() }).strict() }).strict(),
   /** Forces the run's outcome and stops the script there (R3 demos). */

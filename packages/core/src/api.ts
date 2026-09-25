@@ -37,6 +37,12 @@ import {
   SlotRef,
   Version,
   Executor,
+  ChatMessage,
+  Notification,
+  NotificationId,
+  Proposal,
+  ProposalId,
+  ThreadId,
 } from "./domain.js";
 import { WorkbenchEvent } from "./events.js";
 
@@ -74,6 +80,8 @@ export const EngagementView = EngagementSummary.extend({
   runtime: z.enum(["real", "fake"]),
   profile: z.string(),
   workModel: z.string(),
+  /** I2: the model new Approach Agent sessions use (J2.8). */
+  approachModel: z.string(),
   inboxCount: z.number().int(),
 });
 export type EngagementView = z.infer<typeof EngagementView>;
@@ -125,6 +133,17 @@ export const PlanView = z.object({
 });
 export type PlanView = z.infer<typeof PlanView>;
 
+/** A pending proposal applied to a copy of the plan (J2.2 "Preview in process view"). Nothing is written. */
+export const PlanPreviewView = PlanView.extend({
+  proposalId: ProposalId,
+  /** The plan version the preview would become. */
+  basePlanVersion: z.number().int(),
+  added: z.array(ItemId),
+  changed: z.array(ItemId),
+  cancelled: z.array(ItemId),
+});
+export type PlanPreviewView = z.infer<typeof PlanPreviewView>;
+
 export const ItemActions = z.object({
   start: Allowed,
   stop: Allowed,
@@ -161,10 +180,59 @@ export const ItemDetailView = z.object({
 });
 export type ItemDetailView = z.infer<typeof ItemDetailView>;
 
+// ---------------------------------------------------------------------------
+// I2 views: proposals, conversation, notifications, profile, journal
+// ---------------------------------------------------------------------------
+
+export const ProposalView = z.object({
+  proposal: Proposal,
+  /** One readable line per op, in order, e.g. "Add WI-004 Consolidate themes under PH-2, inputs: …, output: themes (md)". */
+  readableOps: z.array(z.string()),
+  /** Title of proposal.suggestedBy, for "suggested by WI-004 Consolidate themes". */
+  suggestedByTitle: z.string().nullable(),
+  actions: z.object({ approve: Allowed, reject: Allowed }),
+});
+export type ProposalView = z.infer<typeof ProposalView>;
+
+export const ThreadSummary = z.object({
+  id: ThreadId,
+  subject: z.string(),
+  createdAt: IsoTime,
+  messageCount: z.number().int(),
+  /** The running turn, if any. While set, posting a message returns 409 and the UI queues it (D5). */
+  activeRunId: RunId.nullable(),
+});
+export type ThreadSummary = z.infer<typeof ThreadSummary>;
+
+export const ThreadView = z.object({
+  thread: ThreadSummary,
+  /** Oldest first. */
+  messages: z.array(ChatMessage),
+  /** The running turn (stream its activity with getRunActivity + WS). */
+  activeRun: Run.nullable(),
+});
+export type ThreadView = z.infer<typeof ThreadView>;
+
+export const PostMessageResult = z.object({ messageId: z.string(), runId: RunId });
+export type PostMessageResult = z.infer<typeof PostMessageResult>;
+
+export const ProfileView = z.object({
+  active: z.string(),
+  available: z.array(z.string()),
+  models: z.object({ approach: z.string(), work: z.string() }),
+});
+export type ProfileView = z.infer<typeof ProfileView>;
+
+export const JournalView = z.object({ markdown: z.string() });
+export type JournalView = z.infer<typeof JournalView>;
+
 const ItemRef = z.object({ id: ItemId, title: z.string() });
 
 export const InboxEntry = z.discriminatedUnion("kind", [
-  /** J1.4: approve / amend / replace. */
+  /**
+   * J1.4: approve / amend / replace. Under aa-first only escalated questions reach the Inbox;
+   * request.escalation then holds the Approach Agent's view (J2.4).
+   */
   z.object({ kind: z.literal("question"), request: Request, item: ItemRef }),
   /** J1.5: approve / request changes, for the exact versions in request.payload.submitted. */
   z.object({ kind: z.literal("review"), request: Request, item: ItemRef }),
@@ -179,6 +247,19 @@ export const InboxEntry = z.discriminatedUnion("kind", [
   }),
   /** R3: retry / stop. */
   z.object({ kind: z.literal("run_issue"), request: Request, item: ItemRef }),
+  /** J2.2 / J2.5: a pending proposal: approve / reject with a reason / preview. */
+  z.object({ kind: z.literal("proposal"), proposal: ProposalView }),
+  /**
+   * J2.3: an FYI (dismissible). When it is about a question the Approach Agent answered,
+   * `request` is that question (response.by = "approach:…") and `override` says whether the human can override now.
+   */
+  z.object({
+    kind: z.literal("fyi"),
+    notification: Notification,
+    request: Request.nullable(),
+    item: ItemRef.nullable(),
+    override: Allowed,
+  }),
 ]);
 export type InboxEntry = z.infer<typeof InboxEntry>;
 
@@ -232,6 +313,9 @@ export interface RouteDef {
 }
 
 const E = z.object({ eid: EngagementId });
+const ET = E.extend({ tid: ThreadId });
+const EP = E.extend({ pid: ProposalId });
+const EN = E.extend({ nid: NotificationId });
 const EI = E.extend({ itemId: ItemId });
 const ER = E.extend({ rid: RequestId });
 const Ok = z.object({ ok: z.literal(true) });
@@ -245,7 +329,8 @@ export const routes = {
   createEngagement: {
     method: "POST",
     path: "/api/engagements",
-    body: z.object({ seedId: z.string(), name: z.string().min(1) }),
+    /** seedId "blank" = "Start with the Approach Agent" (J2.1): only the ENG item, no assets. */
+    body: z.object({ seedId: z.string(), name: z.string().min(1), settings: Settings.partial().optional() }),
     response: EngagementSummary,
   },
   getEngagement: { method: "GET", path: "/api/engagements/:eid", params: E, response: EngagementView },
@@ -344,6 +429,58 @@ export const routes = {
     body: z.object({ note: z.string().min(1), view: z.string(), itemId: ItemId.nullable() }),
     response: Ok,
   },
+
+  // I2 — J2.1, J2.6, J2.7: the conversation (one thread, T-0001, created with the engagement)
+  listThreads: { method: "GET", path: "/api/engagements/:eid/threads", params: E, response: z.array(ThreadSummary) },
+  getThread: { method: "GET", path: "/api/engagements/:eid/threads/:tid", params: ET, response: ThreadView },
+  /** 202: the turn started. 409 conflict while a turn is running (the UI queues, D5). */
+  postMessage: {
+    method: "POST",
+    path: "/api/engagements/:eid/threads/:tid/messages",
+    params: ET,
+    body: z.object({ text: z.string().min(1) }),
+    response: PostMessageResult,
+  },
+
+  // I2 — J2.2, J2.5: proposals
+  listProposals: { method: "GET", path: "/api/engagements/:eid/proposals", params: E, response: z.array(ProposalView) },
+  getProposal: { method: "GET", path: "/api/engagements/:eid/proposals/:pid", params: EP, response: ProposalView },
+  previewProposal: { method: "GET", path: "/api/engagements/:eid/proposals/:pid/preview", params: EP, response: PlanPreviewView },
+  approveProposal: { method: "POST", path: "/api/engagements/:eid/proposals/:pid/approve", params: EP, response: ProposalView },
+  rejectProposal: {
+    method: "POST",
+    path: "/api/engagements/:eid/proposals/:pid/reject",
+    params: EP,
+    body: z.object({ reason: z.string().min(1) }),
+    response: ProposalView,
+  },
+
+  // I2 — J2.3: override an answer given by the Approach Agent (only while the item is not running)
+  overrideAnswer: {
+    method: "POST",
+    path: "/api/engagements/:eid/requests/:rid/override",
+    params: ER,
+    body: z.object({ mode: AnswerMode, text: z.string().min(1) }),
+    response: Request,
+  },
+
+  // I2 — FYIs
+  listNotifications: { method: "GET", path: "/api/engagements/:eid/notifications", params: E, response: z.array(Notification) },
+  dismissNotification: { method: "POST", path: "/api/engagements/:eid/notifications/:nid/dismiss", params: EN, response: Ok },
+
+  // I2 — J2.8: settings (per engagement) and model profile (workspace-wide, new sessions only)
+  patchSettings: {
+    method: "PATCH",
+    path: "/api/engagements/:eid/settings",
+    params: E,
+    body: Settings.partial(),
+    response: EngagementView,
+  },
+  getProfile: { method: "GET", path: "/api/profile", response: ProfileView },
+  patchProfile: { method: "PATCH", path: "/api/profile", body: z.object({ profile: z.string().min(1) }), response: ProfileView },
+
+  // I2 — D4: the approach journal (ENG/work/approach-journal.md), read-only
+  getJournal: { method: "GET", path: "/api/engagements/:eid/journal", params: E, response: JournalView },
 } as const satisfies Record<string, RouteDef>;
 
 export type RouteName = keyof typeof routes;
@@ -367,7 +504,7 @@ export const WsServerMessage = z.discriminatedUnion("type", [
   /** First message after connect. The UI refetches its queries, then applies events with seq > lastSeq. */
   z.object({ type: z.literal("hello"), engagementId: EngagementId, lastSeq: z.number().int() }),
   z.object({ type: z.literal("event"), event: WorkbenchEvent }),
-  /** Live run activity (not persisted as an event). */
-  z.object({ type: z.literal("activity"), runId: RunId, itemId: ItemId, item: ActivityItem }),
+  /** Live run activity (not persisted as an event). Approach Agent runs: itemId "ENG"; conversation turns also carry threadId. */
+  z.object({ type: z.literal("activity"), runId: RunId, itemId: ItemId, threadId: ThreadId.optional(), item: ActivityItem }),
 ]);
 export type WsServerMessage = z.infer<typeof WsServerMessage>;

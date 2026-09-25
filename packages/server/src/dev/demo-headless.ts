@@ -55,9 +55,15 @@ async function main(): Promise<void> {
   const log = (msg: string) => console.log(`[demo:headless] ${msg}`);
 
   // --- J1.1: create the engagement -----------------------------------------
+  // This script plays the I1 walk (the human answers WI-002's question
+  // directly). The acme-discovery seed's own default is aa-first (I2
+  // decision D3), but package B's Approach Agent runtime is still a stub
+  // (I2-PLAN §4.1) — override back to always-human here so this script
+  // keeps exercising the I1 path without depending on it.
   const summary = await post<{ id: string; name: string }>("/api/engagements", {
     seedId: "acme-discovery",
     name: "Acme Manufacturing — IT Strategy (headless demo)",
+    settings: { questionHandling: "always-human" },
   });
   const eid = summary.id;
   log(`created engagement ${eid}`);

@@ -8,7 +8,8 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "agents:try": "tsx src/dev/try.ts"
+    "agents:try": "tsx src/dev/try.ts",
+    "agents:try-approach": "tsx src/dev/try-approach.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.280",

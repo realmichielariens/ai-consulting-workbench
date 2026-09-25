@@ -155,6 +155,40 @@ start:
       as a contradiction rather than averaged into a soft statement, per
       the brief. The CFO interview's budget-appetite gap is carried
       forward as theme 7 rather than silently dropped.
+  - suggest:
+      summary: >-
+        Budget appetite was never discussed with the CFO: her interview was
+        cut short before covering how she'd want a program like this funded
+        or staged (capital vs. operating, what number would make her
+        uncomfortable). Suggesting a short follow-up interview to close that
+        gap before the roadmap needs to size initiatives with confidence.
+      suggestedOps:
+        - op: add_item
+          def:
+            id: WI-003e
+            title: CFO follow-up interview
+            parent: PH-1
+            order: 3
+            executor: human
+            inputs:
+              - slot: ENG/stakeholders
+                required: true
+            outputs:
+              - slot: notes-cfo-followup
+                format: md
+                scope: project
+                description: Notes from a short CFO follow-up on budget appetite and program funding/staging
+                required: true
+            gate: []
+            autostart: true
+            acceptance:
+              - Covers how the CFO would want a program like this funded or staged (capital vs. operating mix, what number would make her uncomfortable)
+            brief: |
+              A short follow-up conversation with Grace Whitfield (CFO), to
+              close the budget-appetite gap flagged in WI-004's themes: her
+              first interview was cut short before reaching how she'd want a
+              program like this funded or staged. Publish notes as
+              notes-cfo-followup, same format as the other interview notes.
   - submit:
       summary: >-
         Published 8 cross-cutting themes (v1.0) from the four CxO

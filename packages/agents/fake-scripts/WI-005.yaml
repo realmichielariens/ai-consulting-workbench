@@ -1,0 +1,108 @@
+# Fake script for WI-005 "Short benchmarking scan" (I2, added by the
+# conversation fake script's "benchmark" match — see
+# fake-scripts/approach/conversation.yaml). start: reads ENG/context, then
+# raises a BLOCKING question about which peer set to benchmark against, with
+# a hypothesis, since that materially changes what "comparable" means here.
+start:
+  - text: >-
+      Reading ENG/context before deciding what "comparable" should mean for
+      this scan.
+  - read: ENG/context
+  - worklog: >-
+      Before drafting, I need to settle the peer set: Acme is a mid-size
+      industrial manufacturer with long-term OEM supply contracts, so
+      "comparable" could mean same-size manufacturers regardless of
+      industry, or same-industry (agricultural/construction equipment
+      component supply) regardless of size. That choice changes which
+      precedents are actually useful here, so I'm raising it rather than
+      guessing.
+  - question:
+      question: >-
+        For the benchmarking scan: should "comparable" mean other mid-size
+        industrial manufacturers generally (matched on scale and on facing
+        a similar ERP end-of-support / plant-workaround situation), or
+        specifically other suppliers in the agricultural/construction
+        equipment supply chain (matched on industry and OEM contract
+        structure)? The two produce different precedent sets.
+      hypothesis: >-
+        Match on scale and situation (mid-size manufacturer modernizing a
+        14-year-old customized ERP under an OEM real-time-visibility ask),
+        not narrowly on industry. Reasoning: the IT modernization patterns
+        (ERP end-of-support, plant-level workarounds, a new product line
+        straining current systems) are common across industrial
+        manufacturers and are what the roadmap actually needs precedent
+        for; narrowing to agricultural/construction equipment specifically
+        would shrink the usable precedent set for little added relevance.
+      alternatives:
+        - >-
+          Match narrowly on industry (agricultural/construction equipment
+          component suppliers) instead, on the reasoning that OEM contract
+          dynamics and supply-chain expectations are industry-specific and
+          a same-industry peer's response to the OEM ask is more directly
+          comparable.
+      blocking: true
+
+# resume-answer: incorporate the human's/Approach Agent's answer, publish, submit.
+resume-answer:
+  - text: Incorporating the answer on the peer set into the scan.
+  - write:
+      path: benchmark.md
+      content: |
+        # Short Benchmarking Scan — Comparable IT Modernization Approaches
+
+        Scoped per the answered question: peers matched on scale and
+        situation (mid-size industrial manufacturers modernizing a
+        long-customized ERP under real-time-visibility or similar OEM
+        pressure), not narrowed to agricultural/construction equipment
+        specifically.
+
+        ## 1. Mid-size discrete manufacturer, automotive-tier-1 supply chain
+
+        Ran a phased ERP replacement over three years after a similar
+        end-of-support deadline, explicitly sequencing plant-by-plant
+        rather than a single cutover, after an earlier big-bang attempt at
+        a sister site caused a multi-week shipment disruption. Kept
+        plant-level scheduling workarounds in place (formalized as an
+        interim "bridge" tool) until the new system's scheduling module was
+        proven at one site first.
+
+        ## 2. Mid-size industrial components manufacturer, OEM-concentrated revenue
+
+        Faced a similar OEM real-time-visibility condition tied to contract
+        renewal. Built a lightweight reporting layer on top of the existing
+        (unreplaced) ERP to satisfy the OEM ask within the renewal window,
+        deferring the full ERP modernization decision by roughly eighteen
+        months. Useful precedent for decoupling the urgent OEM ask from the
+        larger multi-year systems question, similar to the tension in
+        Acme's own interviews between the CEO's urgency and the COO/CIO's
+        sequencing caution.
+
+        ## Open issue
+
+        This is a short scan (two precedents), not an exhaustive study; both
+        are drawn from public case material rather than direct outreach, so
+        specifics (cost, exact timelines) should be treated as directional.
+  - publish:
+      slot: benchmark
+      sourcePath: benchmark.md
+      kind: material
+      note: Initial benchmarking scan, two comparable-scale precedents, scoped per the answered question.
+  - worklog: >-
+      Scoped the peer set per the answered question (scale/situation, not
+      narrow industry match) and found two usable precedents: a phased,
+      plant-sequenced ERP replacement after a prior big-bang failure, and a
+      lightweight reporting layer used to satisfy an OEM real-time-
+      visibility ask without waiting on the full ERP decision. Flagged as a
+      short scan, not an exhaustive study, since it draws on two public
+      precedents rather than direct outreach.
+  - submit:
+      summary: >-
+        Published a short benchmarking scan (v1.0) with two precedents from
+        comparable mid-size manufacturers, scoped per the answered question
+        to match on scale and situation rather than narrow industry.
+      selfCheck:
+        - criterion: Cites at least two comparable organizations or credible sources
+          met: "yes"
+          note: Two precedents cited, each with a specific comparable circumstance (phased ERP replacement after a prior failure; a reporting layer for an OEM visibility ask).
+      openIssues:
+        - This is a short scan (two precedents) drawn from public case material, not direct outreach — treat specifics as directional, not verified figures.

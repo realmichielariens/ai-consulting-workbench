@@ -154,7 +154,7 @@ describe("engagement.yaml", () => {
       name: "Acme Manufacturing — IT Strategy",
       createdAt: "2026-09-23T10:00:00.000Z",
       seed: { id: "acme-discovery", title: "Acme — IT Strategy Discovery" },
-      settings: { questionHandling: "always-human" as const, itemStart: "auto" as const, readPolicy: "project-with-tracking" as const },
+      settings: { questionHandling: "always-human" as const, itemStart: "auto" as const, planChanges: "propose" as const, readPolicy: "project-with-tracking" as const },
       planVersion: 1,
     };
     writeEngagementYaml(paths, meta);

@@ -1,0 +1,8 @@
+# SeedManifest (packages/core/src/seed.ts). "Start with the Approach Agent" (J2.1):
+# the start page offers this as its own button, not as a seed card.
+id: blank
+title: Blank engagement
+description: >-
+  Only the engagement root. Describe the engagement to the Approach Agent; it
+  writes the context and stakeholders and proposes the plan.
+engagementName: New engagement

@@ -3,8 +3,8 @@
 //
 // Conventions: timestamps are epoch ms (INTEGER), JSON columns are TEXT holding
 // JSON validated by the Zod schemas in @workbench/core, booleans are INTEGER 0/1.
-// Tables for later iterations (agenda, proposals, threads, decisions, FTS) are
-// added by migrations in those iterations.
+// I2 adds proposals, threads, chat_messages, notifications and a minimal
+// agenda_items (bottom of this file). Decisions and FTS arrive in later iterations.
 
 import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
@@ -152,6 +152,10 @@ export const requests = sqliteTable(
     response: text("response"),
     agendaId: text("agenda_id"),
     threadId: text("thread_id"),
+    /** I2: where the request was first routed (approach | human); `to_actor` is the current addressee. */
+    routedTo: text("routed_to").notNull().default("human"),
+    /** I2: JSON Escalation, set when the Approach Agent escalated a question. */
+    escalation: text("escalation"),
     createdAt: integer("created_at").notNull(),
     resolvedAt: integer("resolved_at"),
   },
@@ -215,3 +219,84 @@ export const events = sqliteTable(
   },
   (t) => [index("events_type").on(t.type)],
 );
+
+// ---------------------------------------------------------------------------
+// I2: proposals, the conversation, notifications, a minimal agenda
+// ---------------------------------------------------------------------------
+
+/** Plan-change proposals (domain.ts Proposal). Optimistic concurrency via base_plan_version (A§7.4). */
+export const proposals = sqliteTable(
+  "proposals",
+  {
+    id: text("id").primaryKey(), // P-0001
+    origin: text("origin").notNull(), // conversation | suggestion
+    suggestedBy: text("suggested_by"),
+    requestId: text("request_id"),
+    threadId: text("thread_id"),
+    author: text("author").notNull(),
+    status: text("status").notNull(), // pending | approved | rejected | superseded
+    basePlanVersion: integer("base_plan_version").notNull(),
+    rationale: text("rationale").notNull(),
+    /** JSON PlanOp[] */
+    ops: text("ops").notNull(),
+    appliedPlanVersion: integer("applied_plan_version"),
+    rejectReason: text("reject_reason"),
+    supersededBy: text("superseded_by"),
+    createdAt: integer("created_at").notNull(),
+    resolvedAt: integer("resolved_at"),
+  },
+  (t) => [index("proposals_status").on(t.status)],
+);
+
+/** Conversation threads with the Approach Agent. I2 has one, T-0001. */
+export const threads = sqliteTable("threads", {
+  id: text("id").primaryKey(), // T-0001
+  subject: text("subject").notNull(),
+  sessionId: text("session_id"),
+  /** Event seq at the end of the last turn ("Since your last turn:"). */
+  lastSeenSeq: integer("last_seen_seq").notNull().default(0),
+  createdAt: integer("created_at").notNull(),
+});
+
+export const chatMessages = sqliteTable(
+  "chat_messages",
+  {
+    id: text("id").primaryKey(), // M-0001
+    threadId: text("thread_id").notNull(),
+    role: text("role").notNull(), // human | approach | system
+    body: text("body").notNull(),
+    runId: text("run_id"),
+    proposalId: text("proposal_id"),
+    /** JSON {slot, version} */
+    asset: text("asset"),
+    at: integer("at").notNull(),
+  },
+  (t) => [index("chat_messages_thread").on(t.threadId, t.at)],
+);
+
+/** FYI entries in the Inbox (notify_human, answers given by the Approach Agent). */
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(), // N-0001
+    fromActor: text("from_actor").notNull(),
+    text: text("text").notNull(),
+    itemId: text("item_id"),
+    requestId: text("request_id"),
+    createdAt: integer("created_at").notNull(),
+    dismissedAt: integer("dismissed_at"),
+  },
+  (t) => [index("notifications_open").on(t.dismissedAt)],
+);
+
+/** Minimal agenda (I2): a routed question gets a row; behaviour and the board arrive in I5. */
+export const agendaItems = sqliteTable("agenda_items", {
+  id: text("id").primaryKey(), // A-0001
+  kind: text("kind").notNull(),
+  title: text("title").notNull(),
+  status: text("status").notNull(),
+  /** JSON {items, requests, proposals} */
+  links: text("links").notNull(),
+  resolution: text("resolution"),
+  createdAt: integer("created_at").notNull(),
+});

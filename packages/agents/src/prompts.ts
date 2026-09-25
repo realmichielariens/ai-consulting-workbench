@@ -7,7 +7,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import type { AnswerMode, BriefView, RunInput, RunReason } from "@workbench/core";
+import { stringify as stringifyYaml } from "yaml";
+import type { AnswerMode, BriefView, PlanOp, RunInput, RunReason } from "@workbench/core";
 
 export type PromptPlacement = "A" | "B";
 
@@ -127,12 +128,18 @@ export function renderRunPrompt(
       return render("run-start.md", readTemplate(promptsDir, "run-start.md"), commonVars(item, brief, engagementRoot));
     }
     case "resume-answer": {
+      // J2.3: an Approach Agent answer is always attributed, never presented as if it were the human's.
+      const answeredByLine =
+        input.answeredBy && input.answeredBy.startsWith("approach:")
+          ? "The Approach Agent answered this question on the human's behalf."
+          : "";
       const vars: Record<string, string> = {
         itemId: item.id,
         itemTitle: item.title,
         question: input.question,
         answer: input.answer,
         answerMode: input.mode satisfies AnswerMode,
+        answeredByLine,
       };
       return render("run-resume-answer.md", readTemplate(promptsDir, "run-resume-answer.md"), vars);
     }
@@ -167,9 +174,67 @@ export function promptHash(systemPrompt: string, runPrompt: string): string {
   return crypto.createHash("sha256").update(systemPrompt).update("\u0000").update(runPrompt).digest("hex");
 }
 
-export const RUN_REASON_TEMPLATE: Record<Exclude<RunReason, "stale-rerun">, string> = {
+export const RUN_REASON_TEMPLATE: Record<Exclude<RunReason, "stale-rerun" | "aa-turn" | "aa-question" | "aa-suggestion">, string> = {
   start: "run-start.md",
   "resume-answer": "run-resume-answer.md",
   "changes-requested": "run-changes-requested.md",
   resume: "run-resume.md",
 };
+
+// ---------------------------------------------------------------------------
+// Approach Agent prompts (I2-PLAN §4.1): approach-conversation.md is the
+// system prompt for every Approach Agent run (turn or task session);
+// approach-question.md / approach-suggestion.md are the run prompts for a
+// task session. There is no run prompt file for a conversation turn — its
+// user prompt is just the situation plus the human's message, built directly
+// by the caller (approachRuntime.ts), not templated.
+
+/** approach-conversation.md, the system prompt for every Approach Agent run. */
+export function renderApproachSystemPrompt(promptsDir: string, engagementId: string): string {
+  return render("approach-conversation.md", readTemplate(promptsDir, "approach-conversation.md"), { engagementId });
+}
+
+/** The user prompt for a conversation turn: the situation (if any) plus the human's message, verbatim. */
+export function renderApproachTurnPrompt(situation: string, message: string): string {
+  return situation ? `${situation}\n\n---\nThe human says:\n${message}` : message;
+}
+
+interface ApproachTaskItemVars {
+  situation: string;
+  itemId: string;
+  itemTitle: string;
+  itemBrief: string;
+}
+
+/** approach-question.md, the run prompt for a "question" task session. */
+export function renderApproachQuestionPrompt(
+  promptsDir: string,
+  vars: ApproachTaskItemVars & { question: string; hypothesis: string; alternatives: string[] },
+): string {
+  const rendered: Record<string, string> = {
+    situation: vars.situation,
+    itemId: vars.itemId,
+    itemTitle: vars.itemTitle,
+    itemBrief: vars.itemBrief,
+    question: vars.question,
+    hypothesis: vars.hypothesis,
+    alternatives: bulletBlock(vars.alternatives),
+  };
+  return render("approach-question.md", readTemplate(promptsDir, "approach-question.md"), rendered);
+}
+
+/** approach-suggestion.md, the run prompt for a "suggestion" task session. suggestedOps renders as YAML, or "(none)". */
+export function renderApproachSuggestionPrompt(
+  promptsDir: string,
+  vars: ApproachTaskItemVars & { summary: string; suggestedOps: PlanOp[] },
+): string {
+  const rendered: Record<string, string> = {
+    situation: vars.situation,
+    itemId: vars.itemId,
+    itemTitle: vars.itemTitle,
+    itemBrief: vars.itemBrief,
+    summary: vars.summary,
+    suggestedOps: vars.suggestedOps.length > 0 ? stringifyYaml(vars.suggestedOps).trimEnd() : "(none)",
+  };
+  return render("approach-suggestion.md", readTemplate(promptsDir, "approach-suggestion.md"), rendered);
+}

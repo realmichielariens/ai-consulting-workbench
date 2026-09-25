@@ -18,6 +18,8 @@ export interface ReadinessItem {
   status: ItemStatus | null;
   inputs: readonly { slot: SlotRef; required: boolean }[];
   sequencing: readonly ItemId[];
+  /** Does this item have a non-empty gate chain? Read by *consumers* of its outputs (I2 decision D1). */
+  hasGate?: boolean;
 }
 
 export interface ReadinessPlan {
@@ -33,13 +35,16 @@ export interface Readiness {
 
 /**
  * Readiness for every leaf item (executor != null) in the plan, keyed by item
- * id. Composites and ENG are not included. Computed regardless of the item's
- * *current* status — the caller diffs this against the DB to decide whether
- * to fire `inputs_ready` / `inputs_missing` (lifecycle.ts), and the UI shows
- * `blockers` only while the item is "waiting" (ItemNode.notReadyBecause, api.ts).
+ * id. Composites and ENG produce no readiness of their own, but callers
+ * should still include them in `plan.items` (with status/hasGate) so their
+ * outputs' consumers can look them up as producers (D1, below). Computed
+ * regardless of the item's *current* status — the caller diffs this against
+ * the DB to decide whether to fire `inputs_ready` / `inputs_missing`
+ * (lifecycle.ts), and the UI shows `blockers` only while the item is
+ * "waiting" (ItemNode.notReadyBecause, api.ts).
  */
 export function computeReadiness(plan: ReadinessPlan): Map<ItemId, Readiness> {
-  const statusById = new Map(plan.items.map((it) => [it.id, it.status]));
+  const infoById = new Map(plan.items.map((it) => [it.id, it]));
   const result = new Map<ItemId, Readiness>();
 
   for (const item of plan.items) {
@@ -55,11 +60,21 @@ export function computeReadiness(plan: ReadinessPlan): Map<ItemId, Readiness> {
       if (!input.required) continue;
       if (!plan.publishedSlots.has(input.slot)) {
         blockers.push({ kind: "missing_input", slot: input.slot, producer: parseSlotRef(input.slot).itemId });
+        continue;
+      }
+      // I2 decision D1: a published input from a leaf producer with a gate
+      // counts only once that producer is done — being at_gate is not
+      // enough. ENG and composite producers (no gate of their own) are
+      // unaffected: published is enough for them, as in I1.
+      const producerId = parseSlotRef(input.slot).itemId;
+      const producer = infoById.get(producerId);
+      if (producer && producer.executor != null && producer.hasGate && producer.status !== "done") {
+        blockers.push({ kind: "input_not_approved", slot: input.slot, producer: producerId, status: producer.status });
       }
     }
 
     for (const after of item.sequencing) {
-      const status = statusById.get(after) ?? null;
+      const status = infoById.get(after)?.status ?? null;
       if (status !== "done") {
         blockers.push({ kind: "sequencing", item: after, status });
       }

@@ -8,12 +8,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlow, Background, Controls, Handle, Position, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useQuery } from "@tanstack/react-query";
-import type { EngagementId, ItemNode, PlanView, SlotNode } from "@workbench/core";
+import type { EngagementId, ItemId, ItemNode, PlanPreviewView, PlanView, SlotNode } from "@workbench/core";
 import { api, qk } from "../../api/index.js";
 import { selectAsset, selectItem } from "../../state/url.js";
+import { useUiStore } from "../../state/ui.js";
 import { layoutPlan, type LayoutResult } from "./layout.js";
 
-type FlowNodeData = { plan: PlanView } & ({ kind: "composite"; item: ItemNode } | { kind: "task"; item: ItemNode } | { kind: "data"; slot: SlotNode });
+/** J2.2: which of the previewed proposal's item ids this node is, if any. */
+type PreviewMark = "added" | "changed" | "cancelled" | null;
+
+type FlowNodeData = { plan: PlanView; mark: PreviewMark } & (
+  | { kind: "composite"; item: ItemNode }
+  | { kind: "task"; item: ItemNode }
+  | { kind: "data"; slot: SlotNode }
+);
 
 function statusClass(status: string | null): string {
   return status ? `status-${status}` : "status-none";
@@ -21,10 +29,10 @@ function statusClass(status: string | null): string {
 
 function CompositeNode({ data }: NodeProps<Node<FlowNodeData, "composite">>) {
   if (data.kind !== "composite") return null;
-  const { item } = data;
+  const { item, mark } = data;
   const rollup = item.rollup;
   return (
-    <div className="pv-composite" data-testid={`process-node-${item.id}`}>
+    <div className={`pv-composite ${mark ? `pv-mark-${mark}` : ""}`} data-testid={`process-node-${item.id}`}>
       <div className="pv-composite-header">
         <span>{item.title}</span>
         {rollup && (
@@ -39,7 +47,7 @@ function CompositeNode({ data }: NodeProps<Node<FlowNodeData, "composite">>) {
 
 function TaskNode({ data }: NodeProps<Node<FlowNodeData, "task">>) {
   if (data.kind !== "task") return null;
-  const { item } = data;
+  const { item, mark } = data;
   const icon = item.executor === "agent" ? "\u{1F916}" : "\u{1F464}";
   const hasGate = item.gate.length > 0;
   return (
@@ -47,7 +55,7 @@ function TaskNode({ data }: NodeProps<Node<FlowNodeData, "task">>) {
     <Ports />
     <button
       type="button"
-      className={`pv-task ${statusClass(item.status)}`}
+      className={`pv-task ${statusClass(item.status)} ${mark ? `pv-mark-${mark}` : ""}`}
       data-testid={`process-node-${item.id}`}
       title={item.notReadyBecause.length > 0 ? describeBlockers(item) : undefined}
       onClick={() => selectItem(item.id)}
@@ -117,17 +125,45 @@ function Ports() {
 
 const nodeTypes = { composite: CompositeNode, task: TaskNode, data: DataNode };
 
+function markFor(preview: PlanPreviewView | undefined, itemId: ItemId): PreviewMark {
+  if (!preview) return null;
+  if (preview.cancelled.includes(itemId)) return "cancelled";
+  if (preview.added.includes(itemId)) return "added";
+  if (preview.changed.includes(itemId)) return "changed";
+  return null;
+}
+
+function layoutFits(layout: LayoutResult, view: PlanView | PlanPreviewView): boolean {
+  const itemIds = new Set(view.items.map((i) => i.id));
+  const slotRefs = new Set(view.slots.map((s) => s.ref));
+  return layout.nodes.every((n) => (n.kind === "data" ? slotRefs.has(n.id) : itemIds.has(n.id)));
+}
+
 export function ProcessView({ eid }: { eid: EngagementId }) {
-  const plan = useQuery({ queryKey: qk.plan(eid), queryFn: () => api.getPlan(eid) });
-  const [layout, setLayout] = useState<LayoutResult | null>(null);
+  const previewProposalId = useUiStore((s) => s.previewProposalId);
+  const exitPreview = useUiStore((s) => s.exitPreview);
+  const plan = useQuery({ queryKey: qk.plan(eid), queryFn: () => api.getPlan(eid), enabled: previewProposalId == null });
+  const preview = useQuery({
+    queryKey: previewProposalId ? qk.proposalPreview(eid, previewProposalId) : ["proposalPreview", eid, "none"],
+    queryFn: () => api.previewProposal(eid, previewProposalId!),
+    enabled: previewProposalId != null,
+  });
+  const active: PlanView | PlanPreviewView | undefined = previewProposalId ? preview.data : plan.data;
+  const activeUpdatedAt = previewProposalId ? preview.dataUpdatedAt : plan.dataUpdatedAt;
+
+  // `active` changes a render before its new layout lands (a live update, or toggling
+  // the preview). An older layout is only reused while every one of its nodes still
+  // exists in `active`; otherwise its nodes would dereference items that aren't there.
+  const [laidOut, setLaidOut] = useState<{ view: PlanView | PlanPreviewView; layout: LayoutResult } | null>(null);
+  const layout = laidOut && active && (laidOut.view === active || layoutFits(laidOut.layout, active)) ? laidOut.layout : null;
   const laidOutOnce = useRef(false);
 
   useEffect(() => {
-    if (!plan.data) return;
+    if (!active) return;
     let cancelled = false;
-    void layoutPlan(plan.data).then((result) => {
+    void layoutPlan(active).then((result) => {
       if (!cancelled) {
-        setLayout(result);
+        setLaidOut({ view: active, layout: result });
         laidOutOnce.current = true;
       }
     });
@@ -136,31 +172,48 @@ export function ProcessView({ eid }: { eid: EngagementId }) {
     };
     // Re-layout whenever the plan's structural shape or statuses/versions change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan.dataUpdatedAt]);
+  }, [activeUpdatedAt, previewProposalId]);
 
   const { nodes, edges } = useMemo<{ nodes: Node[]; edges: Edge[] }>(() => {
-    if (!layout || !plan.data) return { nodes: [], edges: [] };
-    const itemsById = new Map(plan.data.items.map((i) => [i.id, i]));
-    const slotsByRef = new Map(plan.data.slots.map((s) => [s.ref, s]));
+    if (!layout || !active) return { nodes: [], edges: [] };
+    const itemsById = new Map(active.items.map((i) => [i.id, i]));
+    const slotsByRef = new Map(active.slots.map((s) => [s.ref, s]));
+    const previewView = previewProposalId ? (active as PlanPreviewView) : undefined;
     const rfNodes: Node[] = layout.nodes.map((n) => {
       const base = { id: n.id, position: { x: n.x, y: n.y }, style: { width: n.width, height: n.height }, draggable: false, selectable: true, ...(n.parentId ? { parentId: n.parentId, extent: "parent" as const } : {}) };
-      if (n.kind === "composite") return { ...base, type: "composite", data: { plan: plan.data!, kind: "composite", item: itemsById.get(n.id)! } };
-      if (n.kind === "task") return { ...base, type: "task", data: { plan: plan.data!, kind: "task", item: itemsById.get(n.id)! } };
-      return { ...base, type: "data", data: { plan: plan.data!, kind: "data", slot: slotsByRef.get(n.id)! } };
+      if (n.kind === "composite") {
+        const item = itemsById.get(n.id)!;
+        return { ...base, type: "composite", data: { plan: active, kind: "composite", item, mark: markFor(previewView, item.id) } };
+      }
+      if (n.kind === "task") {
+        const item = itemsById.get(n.id)!;
+        return { ...base, type: "task", data: { plan: active, kind: "task", item, mark: markFor(previewView, item.id) } };
+      }
+      return { ...base, type: "data", data: { plan: active, kind: "data", slot: slotsByRef.get(n.id)!, mark: null } };
     });
     const rfEdges: Edge[] = layout.edges.map((e) => ({ id: e.id, source: e.source, target: e.target, type: "smoothstep", style: { stroke: "var(--pv-edge, #8a94a6)", strokeWidth: 1.5 } }));
     return { nodes: rfNodes, edges: rfEdges };
-  }, [layout, plan.data]);
+  }, [layout, active, previewProposalId]);
 
   // Remount React Flow on every new layout: re-measuring a fresh graph is the
   // robust way to keep nodes and edges visible across live updates.
   const layoutKey = useMemo(() => Math.random().toString(36).slice(2), [layout]);
 
-  if (plan.status === "pending" || !layout) return <p>Loading process view…</p>;
-  if (plan.status === "error") return <p role="alert">Could not load the plan: {(plan.error as Error).message}</p>;
+  const loading = previewProposalId ? preview.status === "pending" : plan.status === "pending";
+  const error = previewProposalId ? preview.status === "error" : plan.status === "error";
+  if (loading || !layout) return <p>Loading process view…</p>;
+  if (error) return <p role="alert">Could not load the plan: {((previewProposalId ? preview.error : plan.error) as Error).message}</p>;
 
   return (
     <div className="process-view" data-testid="process-view">
+      {previewProposalId && (
+        <div className="preview-banner" data-testid="preview-banner">
+          <span>Previewing {previewProposalId} — not applied</span>
+          <button type="button" data-testid="preview-exit" onClick={exitPreview}>
+            Exit preview
+          </button>
+        </div>
+      )}
       <ReactFlow
         key={layoutKey}
         nodes={nodes}

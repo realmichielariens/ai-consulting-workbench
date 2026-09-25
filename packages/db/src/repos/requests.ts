@@ -5,12 +5,15 @@
 
 import { and, eq } from "drizzle-orm";
 import {
+  Escalation,
   GateRequestPayload,
   QuestionPayload,
   Request,
   RequestResponse,
   RunIssuePayload,
+  SuggestionPayload,
   type Actor,
+  type Escalation as EscalationT,
   type IsoTime,
   type ItemId,
   type RequestId,
@@ -30,8 +33,10 @@ const payloadSchemaFor = (type: RequestType) => {
       return GateRequestPayload;
     case "run_issue":
       return RunIssuePayload;
+    case "proposal":
+      return SuggestionPayload;
     default:
-      throw new Error(`requests repository: unsupported request type "${type}" in I1`);
+      throw new Error(`requests repository: unsupported request type "${type}" in I2`);
   }
 };
 
@@ -49,11 +54,14 @@ function mapRow(row: typeof requests.$inferSelect): Request {
   }
   const payload: unknown = payloadSchemaFor(type).parse(payloadJson);
   const response = row.response == null ? null : parseJsonColumn("response", row.response, RequestResponse);
+  const escalation = row.escalation == null ? null : parseJsonColumn("escalation", row.escalation, Escalation);
   return Request.parse({
     id: row.id,
     type,
     from: row.fromActor,
     to: row.toActor,
+    routedTo: row.routedTo,
+    escalation,
     itemId: row.itemId,
     runId: row.runId,
     status: row.status,
@@ -75,6 +83,8 @@ export interface CreateRequestInput {
   blocking: boolean;
   payload: unknown;
   createdAt: IsoTime;
+  /** Where the request was first routed (I2 question routing, D3); defaults to "human" (I1 behaviour). */
+  routedTo?: "approach" | "human";
 }
 
 export function createRequest(ctx: Db, input: CreateRequestInput): Request {
@@ -94,12 +104,51 @@ export function createRequest(ctx: Db, input: CreateRequestInput): Request {
       response: null,
       agendaId: null,
       threadId: null,
+      routedTo: input.routedTo ?? "human",
+      escalation: null,
       createdAt: toEpochMs(input.createdAt),
       resolvedAt: null,
     })
     .run();
   const row = getRequest(ctx, input.id);
   if (!row) throw new Error(`createRequest: row for ${input.id} vanished after insert`);
+  return row;
+}
+
+/** Moves the current addressee (J2.3/J2.4 handoffs). Does not touch `routedTo`, which records the *first* routing. */
+export function setAddressee(ctx: Db, id: RequestId, to: Actor | "approach"): void {
+  ctx.db.update(requests).set({ toActor: to }).where(eq(requests.id, id)).run();
+}
+
+/** The Approach Agent hands a question to the human (J2.4): addressee -> human, escalation recorded, request stays open. */
+export function setEscalation(ctx: Db, id: RequestId, escalation: EscalationT): Request {
+  ctx.db
+    .update(requests)
+    .set({ toActor: "human", escalation: toJsonColumn(escalation, Escalation) })
+    .where(eq(requests.id, id))
+    .run();
+  const row = getRequest(ctx, id);
+  if (!row) throw new Error(`setEscalation: no such request ${id}`);
+  return row;
+}
+
+/** J2.3 override: withdraws an open gate_request (its round is being redone via a resumed run), so it drops off the Inbox review list. */
+export function withdrawRequest(ctx: Db, id: RequestId, resolvedAt: IsoTime): Request {
+  ctx.db.update(requests).set({ status: "withdrawn", resolvedAt: toEpochMs(resolvedAt) }).where(eq(requests.id, id)).run();
+  const row = getRequest(ctx, id);
+  if (!row) throw new Error(`withdrawRequest: no such request ${id}`);
+  return row;
+}
+
+/** J2.3 override: replaces an already-resolved response (kept "answered") with the human's own, e.g. after the Approach Agent answered. */
+export function replaceResponse(ctx: Db, id: RequestId, response: RequestResponse, resolvedAt: IsoTime): Request {
+  ctx.db
+    .update(requests)
+    .set({ response: toJsonColumn(response, RequestResponse), resolvedAt: toEpochMs(resolvedAt) })
+    .where(eq(requests.id, id))
+    .run();
+  const row = getRequest(ctx, id);
+  if (!row) throw new Error(`replaceResponse: no such request ${id}`);
   return row;
 }
 

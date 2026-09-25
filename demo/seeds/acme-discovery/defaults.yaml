@@ -1,7 +1,7 @@
 # SeedDefaults (packages/core/src/seed.ts). Unspecified settings take the
 # Settings defaults, so only the two settings I1 needs to pin are listed here.
 settings:
-  # J1.4: questions always go to the human directly (no Approach Agent until I2).
-  questionHandling: always-human
+  # I2 decision D3: questions go to the Approach Agent first (the I1 walk switches to always-human).
+  questionHandling: aa-first
   # J1.1/J1.3: WI-002 starts by itself as soon as its inputs exist.
   itemStart: auto

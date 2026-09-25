@@ -51,6 +51,7 @@ function makeWorkPort(paths: ReturnType<typeof engagementPaths>): WorkPort {
     raiseQuestion: async () => ({ requestId: "RQ-0001", instruction: "Recorded. End your turn now." }),
     reportProgress: async () => {},
     submitOutputs: async () => ({ accepted: false, missing: ["interview-guide"], instruction: "Not accepted." }),
+    proposePlanChange: async () => ({ requestId: "RQ-9999", instruction: "Recorded." }),
   };
 }
 
@@ -68,7 +69,7 @@ function makeReq(paths: ReturnType<typeof engagementPaths>, workspace: ReturnTyp
     observer: undefined as unknown as RunObserver, // set by the test
     model: "claude-haiku-4-5",
     maxTurns: 40,
-    settings: { questionHandling: "always-human", itemStart: "auto", readPolicy: "project-with-tracking" },
+    settings: { questionHandling: "always-human", itemStart: "auto", planChanges: "propose", readPolicy: "project-with-tracking" },
   };
 }
 

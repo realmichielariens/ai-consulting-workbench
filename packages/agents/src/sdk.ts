@@ -28,6 +28,10 @@ import { checkDevCostGuard, recordDevCost } from "./cost-ledger.js";
 export const WORK_AGENT_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Skill", "Task"] as const;
 export const WORK_AGENT_ALLOWED_TOOLS = ["Read", "Glob", "Grep", "Skill", "Task", "Edit(./**)", "mcp__work__*"] as const;
 
+/** The Approach Agent's tool set (I2-PLAN §4.1): no Skill, no Task — it never delegates or invokes skills. */
+export const APPROACH_AGENT_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep"] as const;
+export const APPROACH_AGENT_ALLOWED_TOOLS = ["Read", "Glob", "Grep", "Edit(./**)", "mcp__plan__*"] as const;
+
 export interface RunOnceArgs {
   runId: RunId;
   itemId: ItemId;
@@ -41,10 +45,14 @@ export interface RunOnceArgs {
   /** [paths.root] — the engagement root, readable but write-restricted by the guard. */
   additionalDirectories: string[];
   systemPrompt: string;
-  /** Absolute path to the workbench-skills plugin dir. */
-  skillsPluginPath: string;
-  /** Already prefixed with "workbench-skills:" by the caller (runtime.ts). */
-  skills: string[];
+  /** The explicit built-in tool set for this run (Work Agent: WORK_AGENT_TOOLS; Approach Agent: APPROACH_AGENT_TOOLS). */
+  tools: readonly string[];
+  /** The matching allowedTools list for this run. */
+  allowedTools: readonly string[];
+  /** Absolute path to the workbench-skills plugin dir, or undefined when this run has no plugin (the Approach Agent). */
+  skillsPluginPath: string | undefined;
+  /** Already prefixed with "workbench-skills:" by the caller (runtime.ts). Empty/omitted when this run has no skills. */
+  skills?: string[];
   mcpServers: Record<string, McpServerConfig>;
   hooks: Partial<Record<HookEvent, HookCallbackMatcher[]>>;
   maxTurns: number;
@@ -132,10 +140,10 @@ export async function runOnce(args: RunOnceArgs): Promise<RunOnceResult> {
       settingSources: [],
       settings: { disableBundledSkills: true },
       env: args.env,
-      plugins: [{ type: "local", path: args.skillsPluginPath }],
-      skills: args.skills,
-      tools: [...WORK_AGENT_TOOLS],
-      allowedTools: [...WORK_AGENT_ALLOWED_TOOLS],
+      plugins: args.skillsPluginPath ? [{ type: "local", path: args.skillsPluginPath }] : [],
+      skills: args.skills ?? [],
+      tools: [...args.tools],
+      allowedTools: [...args.allowedTools],
       mcpServers: args.mcpServers,
       permissionMode: "dontAsk",
       hooks: args.hooks,

@@ -79,6 +79,7 @@ export function useEngagementSocket(api: WorkbenchApi, eid: EngagementId): WsSta
           void qc.invalidateQueries({ queryKey: qk.plan(eid) });
           void qc.invalidateQueries({ queryKey: qk.engagement(eid) });
           void qc.invalidateQueries({ queryKey: qk.inbox(eid) });
+          if (ev.payload.threadId) void qc.invalidateQueries({ queryKey: qk.thread(eid, ev.payload.threadId) });
           break;
         case "GuardDenied":
           void qc.invalidateQueries({ queryKey: qk.item(eid, ev.payload.itemId) });
@@ -87,6 +88,38 @@ export function useEngagementSocket(api: WorkbenchApi, eid: EngagementId): WsSta
         case "CheckpointCommitted":
         case "FeedbackNoted":
           break; // no query currently renders these directly
+
+        // I2: conversation, proposals, routing, notifications, settings, journal
+        case "ChatMessagePosted":
+          void qc.invalidateQueries({ queryKey: qk.thread(eid, ev.payload.threadId) });
+          break;
+        case "ProposalCreated":
+        case "ProposalApplied":
+        case "ProposalRejected":
+        case "ProposalSuperseded":
+        case "PlanChanged":
+          void qc.invalidateQueries({ queryKey: qk.proposals(eid) });
+          void qc.invalidateQueries({ queryKey: qk.plan(eid) });
+          void qc.invalidateQueries({ queryKey: qk.inbox(eid) });
+          void qc.invalidateQueries({ queryKey: qk.engagement(eid) });
+          break;
+        case "QuestionRouted":
+        case "QuestionEscalated":
+        case "SuggestionDeclined":
+          void qc.invalidateQueries({ queryKey: qk.inbox(eid) });
+          void qc.invalidateQueries({ queryKey: qk.item(eid, ev.payload.itemId) });
+          break;
+        case "HumanNotified":
+        case "NotificationDismissed":
+          void qc.invalidateQueries({ queryKey: qk.inbox(eid) });
+          void qc.invalidateQueries({ queryKey: qk.notifications(eid) });
+          break;
+        case "SettingsChanged":
+          void qc.invalidateQueries({ queryKey: qk.engagement(eid) });
+          break;
+        case "JournalAppended":
+          void qc.invalidateQueries({ queryKey: qk.journal(eid) });
+          break;
       }
     };
 

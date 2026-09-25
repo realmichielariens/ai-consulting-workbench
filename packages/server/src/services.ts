@@ -16,15 +16,19 @@ import {
   type AssetVersion,
   type EngagementId,
   type EngagementSummary,
+  type EngagementView,
   type GateVerdict,
   type ItemDetailView,
   type ItemId,
+  type NotificationId,
+  type ProfileView,
   type Request,
   type RequestId,
   type Run,
+  type Settings,
   type VersionKind,
 } from "@workbench/core";
-import { assetVersionsRepo, gateStepsRepo, itemsRepo, requestsRepo } from "@workbench/db";
+import { assetVersionsRepo, gateStepsRepo, itemsRepo, notificationsRepo, requestsRepo } from "@workbench/db";
 import {
   appendWorklog,
   createEngagementFromSeed,
@@ -34,28 +38,40 @@ import {
   writeItemMd,
   writeVersionFile,
 } from "@workbench/store";
+import { wireApproachHooks } from "./approachRunner.js";
 import { checkpointCommit } from "./checkpoint.js";
 import { conflict, illegalTransition, invalid, notFound } from "./errors.js";
 import { emitEvent, openEngagement, reloadMeta, type EngagementContext, type ServerContext } from "./engagementContext.js";
+import { activeProfileName, listProfileNames, setActiveProfile } from "./profileService.js";
+import { resolveQuestionAnswer } from "./questionAnswering.js";
 import { launchRun, wireAutostart } from "./runService.js";
 import { recomputeReadiness, scheduleAutostart, syncPlanState } from "./scheduler.js";
-import { getItemDetailView, toRun } from "./views.js";
+import { ensureThread } from "./threadService.js";
+import { getEngagementView, getItemDetailView, toRun } from "./views.js";
 
 // ---------------------------------------------------------------------------
 // J1.1 — create engagement from seed
 // ---------------------------------------------------------------------------
 
-export async function createEngagement(server: ServerContext, seedId: string, name: string): Promise<EngagementSummary> {
+export async function createEngagement(
+  server: ServerContext,
+  seedId: string,
+  name: string,
+  settings?: Partial<Settings>,
+): Promise<EngagementSummary> {
   const seedDir = path.join(server.repoRoot, "demo", "seeds", seedId);
   if (!fs.existsSync(seedDir)) throw notFound(`no such seed: ${seedId}`);
 
-  const result = createEngagementFromSeed({ workspace: server.workspace, seedDir, name });
+  const result = createEngagementFromSeed({ workspace: server.workspace, seedDir, name, settings });
   const ctx = openEngagement(server, result.engagementId);
   wireAutostart(ctx);
+  wireApproachHooks(ctx);
+  reloadMeta(ctx); // settings overrides are only reflected on disk by createEngagementFromSeed; pick them up before the first checkpoint
 
   const now = Date.now();
   itemsRepo.upsertDefinitions(ctx.dbCtx, result.defs, now);
   for (const v of result.seededVersions) assetVersionsRepo.insertAssetVersion(ctx.dbCtx, v);
+  ensureThread(ctx); // I2 J2.1: every engagement gets T-0001 at creation
 
   emitEvent(ctx, { type: "EngagementCreated", actor: "human", payload: { name, seedId } });
 
@@ -129,53 +145,7 @@ export async function resumeItem(ctx: EngagementContext, itemId: ItemId): Promis
 // ---------------------------------------------------------------------------
 
 export async function answerQuestion(ctx: EngagementContext, requestId: RequestId, mode: AnswerMode, text: string): Promise<Request> {
-  const request = requestsRepo.getRequest(ctx.dbCtx, requestId);
-  if (!request) throw notFound(`no such request: ${requestId}`);
-  if (request.type !== "question") throw invalid(`${requestId} is not a question`);
-  if (request.status !== "open") throw conflict(`${requestId} is already ${request.status}`);
-
-  const now = new Date().toISOString();
-  const resolved = requestsRepo.resolveRequest(ctx.dbCtx, requestId, "answered", { kind: "answer", mode, text, by: "human", at: now }, now);
-  appendWorklog(ctx.paths, request.itemId, {
-    actor: "human",
-    at: now,
-    entry: `Answered question: ${request.payload.question}\nMode: ${mode}\nAnswer: ${text}`,
-  });
-  emitEvent(ctx, { type: "RequestResolved", actor: "human", payload: { requestId, type: "question", itemId: request.itemId, summary: `Answered (${mode})` } });
-
-  const row = requireItem(ctx, request.itemId);
-
-  if (request.blocking) {
-    const t = applyItemEvent(row.status!, { type: "question_answered" }, { executor: row.executor! });
-    if (t.ok) {
-      itemsRepo.setStatus(ctx.dbCtx, request.itemId, t.to, Date.now());
-      emitEvent(ctx, { type: "ItemStatusChanged", actor: "human", payload: { itemId: request.itemId, from: row.status, to: t.to } });
-    }
-    const resumeSessionId = row.lastSessionId;
-    if (resumeSessionId) {
-      await launchRun(
-        ctx,
-        request.itemId,
-        "resume-answer",
-        { reason: "resume-answer", requestId, question: request.payload.question, mode, answer: text },
-        resumeSessionId,
-        "human",
-      );
-    }
-  } else if ((mode === "amend" || mode === "replace") && row.status === "ready" && row.lastSessionId) {
-    // Non-blocking question, answer changed after the fact: re-open if the item isn't running.
-    await launchRun(
-      ctx,
-      request.itemId,
-      "resume-answer",
-      { reason: "resume-answer", requestId, question: request.payload.question, mode, answer: text },
-      row.lastSessionId,
-      "human",
-    );
-  }
-
-  await checkpointCommit(ctx, { message: `Answer ${requestId} (${mode})`, actor: "human" });
-  return resolved;
+  return resolveQuestionAnswer(ctx, requestId, mode, text, "human");
 }
 
 // ---------------------------------------------------------------------------
@@ -370,6 +340,99 @@ export function addFeedback(ctx: EngagementContext, note: string, view: string, 
   fs.mkdirSync(path.dirname(ctx.workspace.feedbackLog), { recursive: true });
   fs.appendFileSync(ctx.workspace.feedbackLog, `${line}\n`, "utf8");
   emitEvent(ctx, { type: "FeedbackNoted", actor: "human", payload: { note, view, itemId } });
+}
+
+// ---------------------------------------------------------------------------
+// I2 — J2.3: override an answer the Approach Agent gave, while the item isn't running
+// ---------------------------------------------------------------------------
+
+export async function overrideAnswer(ctx: EngagementContext, requestId: RequestId, mode: AnswerMode, text: string): Promise<Request> {
+  const request = requestsRepo.getRequest(ctx.dbCtx, requestId);
+  if (!request) throw notFound(`no such request: ${requestId}`);
+  if (request.type !== "question") throw invalid(`${requestId} is not a question`);
+  if (request.response?.kind !== "answer" || !request.response.by.startsWith("approach:")) {
+    throw conflict(`${requestId} was not answered by the Approach Agent; there is nothing to override.`);
+  }
+  if (ctx.activeRuns.has(request.itemId)) throw conflict(`${request.itemId} is currently running; stop it before overriding its answer.`);
+
+  const row = requireItem(ctx, request.itemId);
+  if (row.status !== "ready" && row.status !== "at_gate") {
+    throw illegalTransition(`Override is only possible while ${request.itemId} is ready or at gate (it is ${row.status ?? "unknown"}).`);
+  }
+
+  const now = new Date().toISOString();
+  if (row.status === "at_gate") {
+    const openStep = gateStepsRepo.getOpenStep(ctx.dbCtx, request.itemId);
+    if (openStep?.requestId) requestsRepo.withdrawRequest(ctx.dbCtx, openStep.requestId, now);
+  }
+
+  const resolved = requestsRepo.replaceResponse(ctx.dbCtx, requestId, { kind: "answer", mode, text, by: "human", at: now }, now);
+  appendWorklog(ctx.paths, request.itemId, { actor: "human", at: now, entry: `Overrode the Approach Agent's answer: ${text}` });
+  emitEvent(ctx, { type: "RequestResolved", actor: "human", payload: { requestId, type: "question", itemId: request.itemId, summary: `Overridden by the human (${mode})` } });
+
+  const t = applyItemEvent(row.status, { type: "answer_overridden" }, { executor: row.executor! });
+  if (t.ok) {
+    itemsRepo.setStatus(ctx.dbCtx, request.itemId, t.to, Date.now());
+    emitEvent(ctx, { type: "ItemStatusChanged", actor: "human", payload: { itemId: request.itemId, from: row.status, to: t.to } });
+  }
+  if (row.lastSessionId) {
+    await launchRun(
+      ctx,
+      request.itemId,
+      "resume-answer",
+      { reason: "resume-answer", requestId, question: request.payload.question, mode, answer: text, answeredBy: "human" },
+      row.lastSessionId,
+      "human",
+    );
+  }
+
+  await checkpointCommit(ctx, { message: `Override answer ${requestId}`, actor: "human" });
+  return resolved;
+}
+
+// ---------------------------------------------------------------------------
+// I2 — J2.8: settings (per engagement) and model profile (workspace-wide)
+// ---------------------------------------------------------------------------
+
+export async function patchSettings(ctx: EngagementContext, patch: Partial<Settings>): Promise<EngagementView> {
+  const changes: Record<string, string> = {};
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) continue;
+    const current = (ctx.meta.settings as unknown as Record<string, unknown>)[key];
+    if (current !== value) changes[key] = String(value);
+  }
+
+  if (Object.keys(changes).length > 0) {
+    ctx.meta = { ...ctx.meta, settings: { ...ctx.meta.settings, ...patch } };
+    writeEngagementYaml(ctx.paths, ctx.meta);
+    emitEvent(ctx, { type: "SettingsChanged", actor: "human", payload: { changes } });
+    await checkpointCommit(ctx, { message: "Update settings", actor: "human" });
+    reloadMeta(ctx);
+  }
+
+  return getEngagementView(ctx);
+}
+
+export function getProfile(server: ServerContext): ProfileView {
+  const active = activeProfileName(server);
+  const models = server.config.profiles[active]!.models;
+  return { active, available: listProfileNames(server), models: { approach: models.approach, work: models.work } };
+}
+
+export function patchProfile(server: ServerContext, profile: string): ProfileView {
+  setActiveProfile(server, profile);
+  return getProfile(server);
+}
+
+// ---------------------------------------------------------------------------
+// I2 — FYIs
+// ---------------------------------------------------------------------------
+
+export function dismissNotification(ctx: EngagementContext, id: NotificationId): void {
+  const notification = notificationsRepo.getNotification(ctx.dbCtx, id);
+  if (!notification) throw notFound(`no such notification: ${id}`);
+  notificationsRepo.dismiss(ctx.dbCtx, id, new Date().toISOString());
+  emitEvent(ctx, { type: "NotificationDismissed", actor: "human", payload: { notificationId: id } });
 }
 
 // ---------------------------------------------------------------------------

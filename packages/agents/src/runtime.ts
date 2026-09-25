@@ -18,7 +18,7 @@ import { sdkEnv, type WorkspacePaths } from "@workbench/core/node";
 import { ActivityBuilder } from "./activity.js";
 import { forWorkAgent, type GuardScope } from "./guards.js";
 import { promptHash, renderRunPrompt, renderSystemPrompt, resolvePlacement } from "./prompts.js";
-import { CostCapExceededError, runOnce, type RunOnceArgs, type RunOnceResult } from "./sdk.js";
+import { CostCapExceededError, runOnce, WORK_AGENT_ALLOWED_TOOLS, WORK_AGENT_TOOLS, type RunOnceArgs, type RunOnceResult } from "./sdk.js";
 import { createWorkToolset } from "./workToolset.js";
 
 /** Injectable so runtime.test.ts can drive the nudge/termination loop with a scripted query(), with no SDK calls. */
@@ -113,6 +113,8 @@ async function executeRun(
           cwd: workDir,
           additionalDirectories: [paths.root],
           systemPrompt,
+          tools: WORK_AGENT_TOOLS,
+          allowedTools: WORK_AGENT_ALLOWED_TOOLS,
           skillsPluginPath: config.skillsPluginPath,
           skills,
           mcpServers: { work: workServer },

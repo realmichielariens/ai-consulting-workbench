@@ -147,6 +147,42 @@ describe("applyItemEvent: stop (R5)", () => {
   });
 });
 
+describe("applyItemEvent: I2 cancel", () => {
+  it("waiting -> cancelled", () => {
+    expect(applyItemEvent("waiting", { type: "cancel" }, agent)).toEqual({ ok: true, to: "cancelled" });
+  });
+
+  it("ready -> cancelled", () => {
+    expect(applyItemEvent("ready", { type: "cancel" }, human)).toEqual({ ok: true, to: "cancelled" });
+  });
+
+  it("refuses cancel while in_progress", () => {
+    expect(applyItemEvent("in_progress", { type: "cancel" }, agent).ok).toBe(false);
+  });
+});
+
+describe("applyItemEvent: I2 answer_overridden", () => {
+  it("ready -> in_progress", () => {
+    expect(applyItemEvent("ready", { type: "answer_overridden" }, agent)).toEqual({ ok: true, to: "in_progress" });
+  });
+
+  it("at_gate -> in_progress", () => {
+    expect(applyItemEvent("at_gate", { type: "answer_overridden" }, agent)).toEqual({ ok: true, to: "in_progress" });
+  });
+
+  it("refuses override outside ready/at_gate", () => {
+    expect(applyItemEvent("in_progress", { type: "answer_overridden" }, agent).ok).toBe(false);
+    expect(applyItemEvent("waiting", { type: "answer_overridden" }, agent).ok).toBe(false);
+  });
+});
+
+describe("applyItemEvent: I2 run_ended(completed) is Approach-only", () => {
+  it("is denied, even while in_progress", () => {
+    const r = applyItemEvent("in_progress", { type: "run_ended", outcome: "completed" }, agent);
+    expect(r).toEqual({ ok: false, reason: expect.stringContaining("Approach Agent") });
+  });
+});
+
 describe("humanStatus", () => {
   it("replaces underscores with spaces", () => {
     expect(humanStatus("in_progress")).toBe("in progress");

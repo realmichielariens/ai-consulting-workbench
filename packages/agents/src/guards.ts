@@ -322,3 +322,237 @@ export function forWorkAgent(scope: GuardScope, opts: ForWorkAgentOptions = {}):
     },
   };
 }
+
+// ---------------------------------------------------------------------------
+// Approach Agent guards (I2-PLAN §4.1). Same pure-decision + hook-wrapper
+// split as the Work Agent above, but with the Approach Agent's own scope
+// rules: writes confined to items/ENG/work/ (its own locus of control, like
+// a Work Agent's item work/), reads open to the whole engagement except
+// other items' work/, .workbench/ and .git/. No skills plugin (the Approach
+// Agent runs with no plugin/skills, sdk.ts), so there is no readable-skills-
+// dir exception here.
+
+export interface ApproachGuardScope {
+  /** Absolute path to items/ENG/work (the run's cwd, and the Approach Agent's only writable locus). */
+  workDir: string;
+  /** Absolute path to the engagement root (contains items/, .workbench/, .git/). */
+  engagementRoot: string;
+}
+
+/** Pure decision function for one Approach Agent tool call, mirroring decideForWorkAgent's shape. */
+export function decideForApproachAgent(scope: ApproachGuardScope, toolName: string, input: unknown, subagent: boolean): GuardDecision {
+  // Only the parent session may read/write the plan, publish, journal or notify (mirrors §8.3 for `work`).
+  if (subagent && toolName.startsWith("mcp__plan__")) {
+    return {
+      decision: "deny",
+      reason: `Subagents cannot use the plan tools (${toolName}). Only the main session may read, propose, answer or publish.`,
+    };
+  }
+
+  const engRoot = normalize(scope.engagementRoot);
+  const workDir = normalize(scope.workDir);
+  const itemsRoot = normalize(path.join(scope.engagementRoot, "items"));
+  const workbenchDir = normalize(path.join(scope.engagementRoot, ".workbench"));
+  const gitDir = normalize(path.join(scope.engagementRoot, ".git"));
+
+  if (toolName === "Bash" || toolName === "PowerShell" || toolName === "Task") {
+    // None of these are ever in the Approach Agent's `tools` (sdk.ts APPROACH_AGENT_TOOLS); deny outright as defense in depth.
+    return { decision: "deny", reason: `${toolName} is not enabled for the Approach Agent.` };
+  }
+
+  if (WRITE_TOOLS.has(toolName)) {
+    const raw = extractPrimaryPath(toolName, input);
+    if (!raw) return { decision: "allow" };
+    const norm = normalize(raw);
+    if (hasTraversal(raw) && !isInside(norm, workDir)) {
+      return {
+        decision: "deny",
+        reason: `${toolName}: '..' path segments are not allowed, and this path resolves outside items/ENG/work/ (${scope.workDir}). Denied: ${raw}`,
+        pathChecked: norm,
+      };
+    }
+    if (!isInside(norm, workDir)) {
+      return {
+        decision: "deny",
+        reason: `${toolName} is only allowed inside items/ENG/work/ (${scope.workDir}). Denied: ${raw}`,
+        pathChecked: norm,
+      };
+    }
+    return { decision: "allow", pathChecked: norm };
+  }
+
+  if (toolName === "Read") {
+    const raw = extractPrimaryPath(toolName, input);
+    if (!raw) return { decision: "allow" };
+    const norm = normalize(raw);
+
+    if (hasTraversal(raw) && !isInside(norm, engRoot)) {
+      return {
+        decision: "deny",
+        reason: `Read: '..' path segments are not allowed, and this path resolves outside the engagement root (${scope.engagementRoot}). Denied: ${raw}`,
+        pathChecked: norm,
+      };
+    }
+    if (!isInside(norm, engRoot)) {
+      return {
+        decision: "deny",
+        reason: `Read is only allowed inside the engagement root (${scope.engagementRoot}). Denied: ${raw}`,
+        pathChecked: norm,
+      };
+    }
+    if (isInside(norm, workbenchDir)) {
+      return { decision: "deny", reason: `Read of internal engine state (.workbench/) is never allowed. Denied: ${raw}`, pathChecked: norm };
+    }
+    if (isInside(norm, gitDir)) {
+      return { decision: "deny", reason: `Read of .git/ is never allowed. Denied: ${raw}`, pathChecked: norm };
+    }
+    if (isInside(norm, itemsRoot)) {
+      const segs = segmentsRelativeCI(itemsRoot, norm);
+      const otherItemId = segs[0];
+      const bucket = segs[1];
+      if (otherItemId && otherItemId !== "eng" && bucket === "work") {
+        return {
+          decision: "deny",
+          reason: `Read of another item's work/ is not allowed (${otherItemId}/work/). Denied: ${raw}`,
+          pathChecked: norm,
+        };
+      }
+    }
+    return { decision: "allow", pathChecked: norm };
+  }
+
+  if (SEARCH_TOOLS.has(toolName)) {
+    const i = input as Record<string, unknown>;
+    const basePathRaw = typeof i?.path === "string" ? i.path : undefined;
+
+    if (basePathRaw && hasTraversal(basePathRaw)) {
+      return { decision: "deny", reason: `${toolName}: 'path' may not contain '..' segments. Denied: ${basePathRaw}` };
+    }
+    // Default cwd for the Approach Agent's process is items/ENG/work/, but (unlike the Work
+    // Agent) Glob/Grep may target anywhere readable, same scope as Read above.
+    const baseAbs = basePathRaw ? normalize(basePathRaw) : workDir;
+    if (!isInside(baseAbs, engRoot)) {
+      return {
+        decision: "deny",
+        reason: `${toolName} is restricted to the engagement root (${scope.engagementRoot}). Denied path: ${basePathRaw ?? "(default cwd)"}`,
+        pathChecked: baseAbs,
+      };
+    }
+    if (isInside(baseAbs, workbenchDir) || isInside(baseAbs, gitDir)) {
+      return {
+        decision: "deny",
+        reason: `${toolName} may not target internal engine state (.workbench/) or .git/. Denied path: ${basePathRaw ?? "(default cwd)"}`,
+        pathChecked: baseAbs,
+      };
+    }
+    if (isInside(baseAbs, itemsRoot)) {
+      const segs = segmentsRelativeCI(itemsRoot, baseAbs);
+      const otherItemId = segs[0];
+      const bucket = segs[1];
+      if (otherItemId && otherItemId !== "eng" && bucket === "work") {
+        return {
+          decision: "deny",
+          reason: `${toolName} may not target another item's work/ (${otherItemId}/work/). Denied path: ${basePathRaw}`,
+          pathChecked: baseAbs,
+        };
+      }
+    }
+
+    if (toolName === "Glob") {
+      const pattern = typeof i?.pattern === "string" ? i.pattern : "";
+      if (hasTraversal(pattern)) {
+        return { decision: "deny", reason: `Glob: 'pattern' may not contain '..' segments. Denied: ${pattern}` };
+      }
+      const literalPrefix = globLiteralPrefix(pattern);
+      if (literalPrefix && looksAbsolute(literalPrefix)) {
+        const abs = normalize(literalPrefix);
+        if (!isInside(abs, engRoot)) {
+          return {
+            decision: "deny",
+            reason: `Glob: pattern's absolute prefix resolves outside the engagement root. Denied: ${pattern}`,
+            pathChecked: abs,
+          };
+        }
+      }
+    }
+
+    if (toolName === "Grep") {
+      const globFilter = typeof i?.glob === "string" ? i.glob : undefined;
+      if (globFilter && hasTraversal(globFilter)) {
+        return { decision: "deny", reason: `Grep: 'glob' filter may not contain '..' segments. Denied: ${globFilter}` };
+      }
+      // Grep's `pattern` is a content regex, not a path; '..' in it is not a traversal attempt.
+    }
+
+    return { decision: "allow" };
+  }
+
+  return { decision: "allow" };
+}
+
+export interface ApproachAgentGuards {
+  hooks: Partial<Record<HookEvent, HookCallbackMatcher[]>>;
+  /** Every PreToolUse decision made during the run so far. */
+  decisions: GuardDecisionLog;
+  /** Count of denied calls so far (Run.denials). */
+  denialCount(): number;
+}
+
+export interface ForApproachAgentOptions {
+  /** PostToolUse: called for every successful Read (implicit-read audit, mirrors the Work Agent). */
+  onRead?: (absPath: string, agentId?: string) => void;
+}
+
+/** Builds the `hooks` option for an Approach Agent run scoped to `scope`. */
+export function forApproachAgent(scope: ApproachGuardScope, opts: ForApproachAgentOptions = {}): ApproachAgentGuards {
+  const decisions: GuardDecisionLog = new Map();
+
+  const preToolUse: HookCallbackMatcher = {
+    hooks: [
+      async (input: HookInput): Promise<SyncHookJSONOutput> => {
+        const pre = input as PreToolUseHookInput;
+        const subagent = pre.agent_id != null;
+        const decision = decideForApproachAgent(scope, pre.tool_name, pre.tool_input, subagent);
+        decisions.set(pre.tool_use_id, { ...decision, agentId: pre.agent_id, agentType: pre.agent_type });
+
+        if (decision.decision === "deny") {
+          return {
+            continue: true,
+            hookSpecificOutput: {
+              hookEventName: "PreToolUse",
+              permissionDecision: "deny",
+              permissionDecisionReason: decision.reason,
+            },
+          };
+        }
+        return { continue: true };
+      },
+    ],
+  };
+
+  const postToolUse: HookCallbackMatcher = {
+    hooks: [
+      async (input: HookInput): Promise<SyncHookJSONOutput> => {
+        const post = input as PostToolUseHookInput;
+        if (post.tool_name === "Read") {
+          const decision = decisions.get(post.tool_use_id);
+          if (decision?.decision === "allow") {
+            const raw = extractPrimaryPath("Read", post.tool_input);
+            if (raw) opts.onRead?.(normalize(raw), post.agent_id);
+          }
+        }
+        return { continue: true };
+      },
+    ],
+  };
+
+  return {
+    hooks: { PreToolUse: [preToolUse], PostToolUse: [postToolUse] },
+    decisions,
+    denialCount: () => {
+      let n = 0;
+      for (const d of decisions.values()) if (d.decision === "deny") n++;
+      return n;
+    },
+  };
+}

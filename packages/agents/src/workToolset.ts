@@ -8,6 +8,7 @@
 import { createSdkMcpServer, tool, type McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-sdk";
 import {
   AppendWorklogInput,
+  ProposePlanChangeInput,
   PublishAssetInput,
   RaiseQuestionInput,
   ReportProgressInput,
@@ -105,10 +106,20 @@ export function createWorkToolset(port: WorkPort): WorkToolset {
       }, (r) => r.instruction),
   );
 
+  const proposePlanChange = tool(
+    "propose_plan_change",
+    "Suggests a change to the plan itself (a new item, a rewire, a brief update, …) for the Approach Agent to " +
+      "decide on. Non-blocking: this is not your call to make, so keep working (or submit) right after this call " +
+      "— don't wait for a decision. Give suggestedOps in the propose_ops format if you have a concrete change in " +
+      "mind; the Approach Agent decides what, if anything, to actually propose.",
+    ProposePlanChangeInput.shape,
+    async (args) => guarded(() => port.proposePlanChange(args), (r) => r.instruction),
+  );
+
   const server = createSdkMcpServer({
     name: "work",
     version: "0.1.0",
-    tools: [getBrief, publishAsset, appendWorklog, raiseQuestion, reportProgress, submitOutputs],
+    tools: [getBrief, publishAsset, appendWorklog, raiseQuestion, reportProgress, submitOutputs, proposePlanChange],
   });
 
   return { server, tracker };

@@ -1,6 +1,9 @@
 // Acceptance walk for I1 (J1.1-J1.8) against a running `pnpm dev:fake` on :5317.
 // Run from the repo root: node e2e/walks/i1.cjs
 // It creates a new engagement each time; screenshots of failures go to e2e/walks/out/.
+// I2: the acme seed defaults to aa-first (decision D3), so the walk switches the
+// new engagement to always-human right away to exercise the direct J1.4 path, and
+// rejects the plan change WI-004 suggests (J2.5) before checking the empty Inbox.
 const path = require("node:path");
 const fs = require("node:fs");
 const { chromium } = require("@playwright/test");
@@ -33,6 +36,16 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     await step("J1.1 create engagement", async () => {
       await page.getByTestId("create-engagement-button").first().click();
       await page.waitForURL(/\/e\//, { timeout: T });
+      const eid = decodeURIComponent(new URL(page.url()).pathname.split("/")[2]);
+      const status = await page.evaluate(async (id) => {
+        const res = await fetch(`/api/engagements/${id}/settings`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ questionHandling: "always-human" }),
+        });
+        return res.status;
+      }, eid);
+      if (status !== 200) throw new Error(`PATCH settings returned ${status}`);
       await page.getByTestId("process-view").waitFor({ timeout: T });
       await page.getByTestId("process-node-WI-002").waitFor({ timeout: T });
       await shot("02-process");
@@ -83,6 +96,14 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
       const card = page.getByTestId("inbox-card-review");
       await card.waitFor({ timeout: T });
       await card.getByTestId("review-approve").click();
+      await card.waitFor({ state: "detached", timeout: T });
+    });
+    await step("J2.5 reject WI-004's suggested plan change", async () => {
+      const card = page.getByTestId("inbox-card-proposal");
+      await card.waitFor({ timeout: T });
+      await card.getByTestId("proposal-reject-open").click();
+      await card.getByTestId("proposal-reject-reason").fill("Not part of the I1 walk.");
+      await card.getByTestId("proposal-reject-submit").click();
       await card.waitFor({ state: "detached", timeout: T });
     });
     await step("all done, inbox empty", async () => {

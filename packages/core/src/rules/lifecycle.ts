@@ -29,7 +29,10 @@ export type ItemEvent =
   | { type: "changes_requested" }
   | { type: "human_upload" }
   | { type: "mark_done" }
-  | { type: "stop" };
+  | { type: "stop" }
+  // I2:
+  | { type: "cancel" }
+  | { type: "answer_overridden" };
 
 export type ItemEventType = ItemEvent["type"];
 
@@ -87,6 +90,7 @@ export function applyItemEvent(status: ItemStatus, event: ItemEvent, ctx: ItemEv
     case "run_ended": {
       if (status !== "in_progress") return deny(`A run ended, but the item is ${humanStatus(status)}, not in progress.`);
       const { outcome } = event;
+      if (outcome === "completed") return deny("run_ended(completed) is an Approach Agent outcome; it carries no Work Agent item transition.");
       if (outcome === "submitted") return ok(ctx.hasGateChain ? "at_gate" : "done");
       if (outcome === "blocked") return ok("blocked"); // opens a blocking question request (J1.4)
       if (outcome === "no_submit" || outcome === "max_turns" || outcome === "error") return ok("blocked"); // opens a run_issue request (R3)
@@ -118,6 +122,18 @@ export function applyItemEvent(status: ItemStatus, event: ItemEvent, ctx: ItemEv
     case "stop":
       if (status !== "in_progress") return deny(`Stop is only possible while the item is in progress (it is ${humanStatus(status)}).`);
       return ok("ready"); // interrupt(); resumable, session kept (R5)
+
+    case "cancel":
+      if (status !== "waiting" && status !== "ready") {
+        return deny(`Cancel is only possible while the item is waiting or ready (it is ${humanStatus(status)}).`);
+      }
+      return ok("cancelled");
+
+    case "answer_overridden":
+      if (status !== "ready" && status !== "at_gate") {
+        return deny(`Override is only possible while the item is ready or at gate (it is ${humanStatus(status)}).`);
+      }
+      return ok("in_progress"); // launchRun(resume-answer) follows
 
     default: {
       const exhaustive: never = event;

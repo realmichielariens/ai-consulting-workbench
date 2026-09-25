@@ -67,7 +67,7 @@ describe("fake runtime end-to-end", () => {
       observer,
       model: "fake",
       maxTurns: 40,
-      settings: { questionHandling: "always-human", itemStart: "auto", readPolicy: "project-with-tracking" },
+      settings: { questionHandling: "always-human", itemStart: "auto", planChanges: "propose", readPolicy: "project-with-tracking" },
     };
 
     const result = await runtime.startRun(req).done;
@@ -109,7 +109,7 @@ describe("fake runtime end-to-end", () => {
       observer,
       model: "fake",
       maxTurns: 40,
-      settings: { questionHandling: "always-human", itemStart: "auto", readPolicy: "project-with-tracking" },
+      settings: { questionHandling: "always-human", itemStart: "auto", planChanges: "propose", readPolicy: "project-with-tracking" },
     };
 
     const result = await runtime.startRun(req).done;
@@ -156,7 +156,7 @@ describe("fake runtime end-to-end", () => {
       observer,
       model: "fake",
       maxTurns: 40,
-      settings: { questionHandling: "always-human", itemStart: "auto", readPolicy: "project-with-tracking" },
+      settings: { questionHandling: "always-human", itemStart: "auto", planChanges: "propose", readPolicy: "project-with-tracking" },
     };
 
     const result = await runtime.startRun(req).done;

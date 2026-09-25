@@ -43,7 +43,15 @@ import {
   type ItemId,
   type ItemNode,
   type ItemStatus,
+  type JournalView,
+  type Notification,
+  type NotificationId,
+  type PlanPreviewView,
   type PlanView,
+  type PostMessageResult,
+  type ProfileView,
+  type ProposalId,
+  type ProposalView,
   type Request,
   type RequestId,
   type Run,
@@ -55,6 +63,9 @@ import {
   type SlotName,
   type SlotNode,
   type SlotRef,
+  type ThreadId,
+  type ThreadSummary,
+  type ThreadView,
   type Version,
   type VersionKind,
   type WorklogView,
@@ -69,6 +80,10 @@ import { ApiRequestError, type WsStatus } from "../types.js";
 
 const now = (): string => new Date().toISOString();
 const pad = (n: number): string => String(n).padStart(4, "0");
+
+/** I2: one general conversation thread per engagement, created with it. */
+const THREAD_ID = "T-0001" as ThreadId;
+let mockProfile = "test";
 
 function slugify(name: string): string {
   const base = name
@@ -628,10 +643,10 @@ function finalizeInterrupted(eng: Eng, itemId: ItemId, runId: RunId): void {
   emitEvent(eng, "system", { type: "RunEnded", payload: { runId, itemId, outcome: "interrupted", costUsd: run.costUsd, turns: run.turns } });
 }
 
-function openRequest(eng: Eng, req: Omit<Request, "id" | "status" | "response" | "createdAt" | "resolvedAt">): RequestId {
+function openRequest(eng: Eng, req: Omit<Request, "id" | "status" | "response" | "createdAt" | "resolvedAt" | "routedTo" | "escalation">): RequestId {
   eng.reqSeq += 1;
   const id: RequestId = `RQ-${pad(eng.reqSeq)}` as RequestId;
-  const full = { ...req, id, status: "open", response: null, createdAt: now(), resolvedAt: null } as Request;
+  const full = { ...req, id, routedTo: "human", escalation: null, status: "open", response: null, createdAt: now(), resolvedAt: null } as Request;
   eng.requests.set(id, full);
   emitEvent(eng, req.from, { type: "RequestOpened", payload: { requestId: id, type: req.type, itemId: req.itemId, to: req.to } });
   return id;
@@ -784,7 +799,7 @@ function createEngagementInternal(seedId: string, name: string): EngagementSumma
     createdAt: now(),
     seedId,
     planVersion: 1,
-    settings: { questionHandling: "always-human", itemStart: "auto", readPolicy: "project-with-tracking" },
+    settings: { questionHandling: "always-human", itemStart: "auto", planChanges: "propose", readPolicy: "project-with-tracking" },
     items,
     order,
     versions: new Map(),
@@ -829,7 +844,7 @@ export const mockBackend = {
 
   getEngagement: async (eid: EngagementId): Promise<EngagementView> => {
     const eng = findEng(eid);
-    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", inboxCount: buildInbox(eng).entries.length };
+    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", approachModel: "claude-haiku-4-5", inboxCount: buildInbox(eng).entries.length };
   },
 
   getPlan: async (eid: EngagementId): Promise<PlanView> => buildPlan(findEng(eid)),
@@ -1014,6 +1029,95 @@ export const mockBackend = {
     const eng = findEng(eid);
     emitEvent(eng, "human", { type: "FeedbackNoted", payload: { note: body.note, view: body.view, itemId: body.itemId } });
     return { ok: true };
+  },
+
+  // ---------------------------------------------------------------------
+  // I2 stubs: the mock never runs the Approach Agent (no fake scripts for
+  // it here); it exists only so apps/web typechecks and dev:mock boots.
+  // The real server (dev:fake) is the target for the I2 journeys.
+  // ---------------------------------------------------------------------
+
+  listThreads: async (eid: EngagementId): Promise<ThreadSummary[]> => {
+    findEng(eid);
+    return [{ id: THREAD_ID, subject: "Conversation", createdAt: now(), messageCount: 0, activeRunId: null }];
+  },
+
+  getThread: async (eid: EngagementId, tid: ThreadId): Promise<ThreadView> => {
+    findEng(eid);
+    if (tid !== THREAD_ID) throw new ApiRequestError("not_found", `No thread "${tid}".`);
+    return { thread: { id: THREAD_ID, subject: "Conversation", createdAt: now(), messageCount: 0, activeRunId: null }, messages: [], activeRun: null };
+  },
+
+  postMessage: async (eid: EngagementId, tid: ThreadId): Promise<PostMessageResult> => {
+    const eng = findEng(eid);
+    if (tid !== THREAD_ID) throw new ApiRequestError("not_found", `No thread "${tid}".`);
+    eng.runSeq += 1;
+    return { messageId: "M-0001", runId: `R-${pad(eng.runSeq)}` as RunId };
+  },
+
+  listProposals: async (eid: EngagementId): Promise<ProposalView[]> => {
+    findEng(eid);
+    return [];
+  },
+
+  getProposal: async (eid: EngagementId, pid: ProposalId): Promise<ProposalView> => {
+    findEng(eid);
+    throw new ApiRequestError("not_found", `No proposal "${pid}".`);
+  },
+
+  previewProposal: async (eid: EngagementId, pid: ProposalId): Promise<PlanPreviewView> => {
+    const eng = findEng(eid);
+    throw new ApiRequestError("not_found", `No proposal "${pid}" in engagement "${eng.id}".`);
+  },
+
+  approveProposal: async (eid: EngagementId, pid: ProposalId): Promise<ProposalView> => {
+    findEng(eid);
+    throw new ApiRequestError("not_found", `No proposal "${pid}".`);
+  },
+
+  rejectProposal: async (eid: EngagementId, pid: ProposalId): Promise<ProposalView> => {
+    findEng(eid);
+    throw new ApiRequestError("not_found", `No proposal "${pid}".`);
+  },
+
+  overrideAnswer: async (eid: EngagementId, rid: RequestId, body: { mode: "approve" | "amend" | "replace"; text: string }): Promise<Request> => {
+    const eng = findEng(eid);
+    const req = eng.requests.get(rid);
+    if (!req || req.type !== "question") throw new ApiRequestError("not_found", `No question "${rid}".`);
+    const overridden = { ...req, status: "answered", response: { kind: "answer", mode: body.mode, text: body.text, by: "human", at: now() }, resolvedAt: now() } as Request;
+    eng.requests.set(rid, overridden);
+    emitEvent(eng, "human", { type: "RequestResolved", payload: { requestId: rid, type: req.type, itemId: req.itemId, summary: "answer" } });
+    return overridden;
+  },
+
+  listNotifications: async (eid: EngagementId): Promise<Notification[]> => {
+    findEng(eid);
+    return [];
+  },
+
+  dismissNotification: async (eid: EngagementId, nid: NotificationId): Promise<{ ok: true }> => {
+    const eng = findEng(eid);
+    emitEvent(eng, "human", { type: "NotificationDismissed", payload: { notificationId: nid } });
+    return { ok: true };
+  },
+
+  patchSettings: async (eid: EngagementId, body: Partial<Settings>): Promise<EngagementView> => {
+    const eng = findEng(eid);
+    eng.settings = { ...eng.settings, ...body };
+    emitEvent(eng, "human", { type: "SettingsChanged", payload: { changes: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])) } });
+    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", approachModel: "claude-haiku-4-5", inboxCount: buildInbox(eng).entries.length };
+  },
+
+  getProfile: async (): Promise<ProfileView> => ({ active: mockProfile, available: ["test", "dev", "demo"], models: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" } }),
+
+  patchProfile: async (body: { profile: string }): Promise<ProfileView> => {
+    mockProfile = body.profile;
+    return { active: mockProfile, available: ["test", "dev", "demo"], models: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" } };
+  },
+
+  getJournal: async (eid: EngagementId): Promise<JournalView> => {
+    findEng(eid);
+    return { markdown: "_No journal entries yet._" };
   },
 
   connectWs: (eid: EngagementId, onMessage: (msg: WsServerMessage) => void, onStatus: (status: WsStatus) => void): (() => void) => {

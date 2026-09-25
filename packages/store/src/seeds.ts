@@ -16,6 +16,7 @@ import {
   SEED_FILES,
   SeedDefaults,
   SeedManifest,
+  Settings,
   parseSlotRef,
   slotRef as makeSlotRef,
   type EngagementId,
@@ -246,6 +247,8 @@ export interface CreateEngagementFromSeedInput {
   workspace: WorkspacePaths;
   seedDir: string;
   name: string;
+  /** J1.1 overrides on top of the seed's defaults.yaml (I2: createEngagement's `settings` body field). */
+  settings?: Partial<Settings>;
 }
 
 export interface CreateEngagementFromSeedResult {
@@ -275,7 +278,7 @@ export function createEngagementFromSeed(input: CreateEngagementFromSeedInput): 
     name: input.name,
     createdAt: nowIso,
     seed: { id: seed.manifest.id, title: seed.manifest.title },
-    settings: seed.defaults.settings,
+    settings: { ...seed.defaults.settings, ...input.settings },
     planVersion: 1,
   });
   writeEngagementYaml(paths, meta);

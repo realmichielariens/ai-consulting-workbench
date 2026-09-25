@@ -15,6 +15,8 @@ import {
   type ItemId,
   type PublishAssetInput,
   type PublishAssetResult,
+  type ProposePlanChangeInput,
+  type ProposePlanChangeResult,
   type RaiseQuestionInput,
   type RaiseQuestionResult,
   type ReportProgressInput,
@@ -29,6 +31,7 @@ import { assetVersionsRepo, consumptionsRepo, itemsRepo, nextRequestId, requests
 import { appendWorklog, readItemMd, writeVersionFile } from "@workbench/store";
 import { checkpointCommit } from "./checkpoint.js";
 import { emitEvent, type EngagementContext } from "./engagementContext.js";
+import { questionRoutingFor, routeToApproach } from "./questionRouting.js";
 import { syncPlanState } from "./scheduler.js";
 
 export function createWorkPortImpl(ctx: EngagementContext, itemId: ItemId, runId: RunId): WorkPort {
@@ -148,23 +151,46 @@ export function createWorkPortImpl(ctx: EngagementContext, itemId: ItemId, runId
     async raiseQuestion(input: RaiseQuestionInput): Promise<RaiseQuestionResult> {
       const requestId = nextRequestId(ctx.dbCtx);
       const at = now();
-      requestsRepo.createRequest(ctx.dbCtx, {
+      const routing = questionRoutingFor(ctx);
+      const request = requestsRepo.createRequest(ctx.dbCtx, {
         id: requestId,
         type: "question",
         from: agentActor(itemId),
-        to: "human",
+        to: routing.to,
+        routedTo: routing.routedTo,
         itemId,
         runId,
         blocking: input.blocking,
         payload: { question: input.question, hypothesis: input.hypothesis, alternatives: input.alternatives },
         createdAt: at,
       });
-      emitEvent(ctx, { type: "RequestOpened", actor: agentActor(itemId), payload: { requestId, type: "question", itemId, to: "human" } });
+      emitEvent(ctx, { type: "RequestOpened", actor: agentActor(itemId), payload: { requestId, type: "question", itemId, to: routing.to } });
+      if (routing.routedTo === "approach") routeToApproach(ctx, request, "question");
 
       const instruction = input.blocking
         ? `Recorded ${requestId}. This question is blocking: end your turn now.`
         : `Recorded ${requestId}. Continue working from your hypothesis; end normally when done.`;
       return { requestId, instruction };
+    },
+
+    async proposePlanChange(input: ProposePlanChangeInput): Promise<ProposePlanChangeResult> {
+      const requestId = nextRequestId(ctx.dbCtx);
+      const at = now();
+      const request = requestsRepo.createRequest(ctx.dbCtx, {
+        id: requestId,
+        type: "proposal",
+        from: agentActor(itemId),
+        to: "approach",
+        routedTo: "approach",
+        itemId,
+        runId,
+        blocking: false,
+        payload: { summary: input.summary, suggestedOps: input.suggestedOps },
+        createdAt: at,
+      });
+      emitEvent(ctx, { type: "RequestOpened", actor: agentActor(itemId), payload: { requestId, type: "proposal", itemId, to: "approach" } });
+      routeToApproach(ctx, request, "suggestion");
+      return { requestId, instruction: `Recorded ${requestId}. The Approach Agent will review this suggestion; continue your own work.` };
     },
 
     async reportProgress(input: ReportProgressInput): Promise<void> {

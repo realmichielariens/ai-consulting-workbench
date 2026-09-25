@@ -13,14 +13,26 @@ import type {
   ItemDetailView,
   ItemId,
   InboxView,
+  JournalView,
+  Notification,
+  NotificationId,
+  PlanPreviewView,
   PlanView,
+  ProfileView,
+  ProposalId,
+  ProposalView,
   Request,
   RequestId,
   Run,
   RunActivityView,
   RunId,
   SeedSummary,
+  Settings,
   SlotName,
+  ThreadId,
+  ThreadSummary,
+  ThreadView,
+  PostMessageResult,
   Version,
   WorklogView,
   WsServerMessage,
@@ -79,6 +91,33 @@ export interface WorkbenchApi {
   // J1.8 and feedback
   openFolder(eid: EngagementId, itemId?: ItemId): Promise<{ path: string }>;
   addFeedback(eid: EngagementId, body: { note: string; view: string; itemId: ItemId | null }): Promise<{ ok: true }>;
+
+  // I2 — J2.1, J2.6, J2.7: the conversation
+  listThreads(eid: EngagementId): Promise<ThreadSummary[]>;
+  getThread(eid: EngagementId, tid: ThreadId): Promise<ThreadView>;
+  postMessage(eid: EngagementId, tid: ThreadId, body: { text: string }): Promise<PostMessageResult>;
+
+  // I2 — J2.2, J2.5: proposals
+  listProposals(eid: EngagementId): Promise<ProposalView[]>;
+  getProposal(eid: EngagementId, pid: ProposalId): Promise<ProposalView>;
+  previewProposal(eid: EngagementId, pid: ProposalId): Promise<PlanPreviewView>;
+  approveProposal(eid: EngagementId, pid: ProposalId): Promise<ProposalView>;
+  rejectProposal(eid: EngagementId, pid: ProposalId, body: { reason: string }): Promise<ProposalView>;
+
+  // I2 — J2.3: override an Approach Agent answer
+  overrideAnswer(eid: EngagementId, rid: RequestId, body: { mode: "approve" | "amend" | "replace"; text: string }): Promise<Request>;
+
+  // I2 — FYIs
+  listNotifications(eid: EngagementId): Promise<Notification[]>;
+  dismissNotification(eid: EngagementId, nid: NotificationId): Promise<{ ok: true }>;
+
+  // I2 — J2.8: settings and model profile
+  patchSettings(eid: EngagementId, body: Partial<Settings>): Promise<EngagementView>;
+  getProfile(): Promise<ProfileView>;
+  patchProfile(body: { profile: string }): Promise<ProfileView>;
+
+  // I2 — D4: the Approach Agent's journal
+  getJournal(eid: EngagementId): Promise<JournalView>;
 
   /**
    * Open the per-engagement WebSocket. Calls `onMessage` for every parsed

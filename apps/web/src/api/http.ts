@@ -14,12 +14,23 @@ import type {
   InboxView,
   ItemDetailView,
   ItemId,
+  JournalView,
+  Notification,
+  NotificationId,
+  PlanPreviewView,
   PlanView,
+  ProfileView,
+  ProposalId,
+  ProposalView,
   Request,
   Run,
   RunActivityView,
   SeedSummary,
   SlotName,
+  ThreadId,
+  ThreadSummary,
+  ThreadView,
+  PostMessageResult,
   Version,
   WorklogView,
 } from "@workbench/core";
@@ -193,6 +204,27 @@ export const httpApi: WorkbenchApi = {
 
   openFolder: (eid, itemId) => call("openFolder", { params: { eid }, body: { itemId } }) as Promise<{ path: string }>,
   addFeedback: (eid, body) => call("addFeedback", { params: { eid }, body }) as Promise<{ ok: true }>,
+
+  listThreads: (eid) => call("listThreads", { params: { eid } }) as Promise<ThreadSummary[]>,
+  getThread: (eid, tid) => call("getThread", { params: { eid, tid } }) as Promise<ThreadView>,
+  postMessage: (eid, tid, body) => call("postMessage", { params: { eid, tid }, body }) as Promise<PostMessageResult>,
+
+  listProposals: (eid) => call("listProposals", { params: { eid } }) as Promise<ProposalView[]>,
+  getProposal: (eid, pid) => call("getProposal", { params: { eid, pid } }) as Promise<ProposalView>,
+  previewProposal: (eid, pid) => call("previewProposal", { params: { eid, pid } }) as Promise<PlanPreviewView>,
+  approveProposal: (eid, pid) => call("approveProposal", { params: { eid, pid } }) as Promise<ProposalView>,
+  rejectProposal: (eid, pid, body) => call("rejectProposal", { params: { eid, pid }, body }) as Promise<ProposalView>,
+
+  overrideAnswer: (eid, rid, body) => call("overrideAnswer", { params: { eid, rid }, body }) as Promise<Request>,
+
+  listNotifications: (eid) => call("listNotifications", { params: { eid } }) as Promise<Notification[]>,
+  dismissNotification: (eid, nid) => call("dismissNotification", { params: { eid, nid } }) as Promise<{ ok: true }>,
+
+  patchSettings: (eid, body) => call("patchSettings", { params: { eid }, body }) as Promise<EngagementView>,
+  getProfile: () => call("getProfile") as Promise<ProfileView>,
+  patchProfile: (body) => call("patchProfile", { body }) as Promise<ProfileView>,
+
+  getJournal: (eid) => call("getJournal", { params: { eid } }) as Promise<JournalView>,
 
   connectWs,
 };

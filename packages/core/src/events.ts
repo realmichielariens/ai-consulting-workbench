@@ -20,6 +20,12 @@ import {
   Version,
   VersionKind,
   GateVerdict,
+  MessageId,
+  NotificationId,
+  ProposalId,
+  ProposalOrigin,
+  ChatRole,
+  ThreadId,
 } from "./domain.js";
 
 const ev = <T extends string, P extends z.ZodType>(type: T, payload: P) =>
@@ -47,10 +53,18 @@ export const EventBody = z.discriminatedUnion("type", [
     "GateVerdictRecorded",
     z.object({ itemId: ItemId, requestId: RequestId, verdict: GateVerdict, versions: z.array(SlotVersionRef) }),
   ),
-  ev("RunStarted", z.object({ runId: RunId, itemId: ItemId, reason: RunReason, model: z.string() })),
+  /** Approach Agent runs carry itemId "ENG"; conversation turns also carry their threadId. */
+  ev("RunStarted", z.object({ runId: RunId, itemId: ItemId, reason: RunReason, model: z.string(), threadId: ThreadId.optional() })),
   ev(
     "RunEnded",
-    z.object({ runId: RunId, itemId: ItemId, outcome: RunOutcome, costUsd: z.number(), turns: z.number().int() }),
+    z.object({
+      runId: RunId,
+      itemId: ItemId,
+      outcome: RunOutcome,
+      costUsd: z.number(),
+      turns: z.number().int(),
+      threadId: ThreadId.optional(),
+    }),
   ),
   ev(
     "GuardDenied",
@@ -60,6 +74,37 @@ export const EventBody = z.discriminatedUnion("type", [
   ev("LocusViolation", z.object({ runId: RunId, itemId: ItemId, paths: z.array(z.string()), reverted: z.boolean() })),
   ev("CheckpointCommitted", z.object({ sha: z.string(), message: z.string() })),
   ev("FeedbackNoted", z.object({ note: z.string(), view: z.string(), itemId: ItemId.nullable() })),
+
+  // I2: proposals and plan changes
+  ev(
+    "ProposalCreated",
+    z.object({
+      proposalId: ProposalId,
+      origin: ProposalOrigin,
+      suggestedBy: ItemId.nullable(),
+      threadId: ThreadId.nullable(),
+      opCount: z.number().int(),
+    }),
+  ),
+  ev("ProposalApplied", z.object({ proposalId: ProposalId, planVersion: z.number().int() })),
+  ev("ProposalRejected", z.object({ proposalId: ProposalId, reason: z.string() })),
+  ev("ProposalSuperseded", z.object({ proposalId: ProposalId, by: ProposalId })),
+  /** Every plan-version bump: an applied proposal, or a human edit of a brief (J1.7). */
+  ev(
+    "PlanChanged",
+    z.object({ planVersion: z.number().int(), cause: z.enum(["proposal", "edit"]), proposalId: ProposalId.nullable() }),
+  ),
+
+  // I2: conversation, routing, notifications, settings, journal
+  ev("ChatMessagePosted", z.object({ threadId: ThreadId, messageId: MessageId, role: ChatRole })),
+  ev("QuestionRouted", z.object({ requestId: RequestId, itemId: ItemId, to: z.enum(["approach", "human"]) })),
+  ev("QuestionEscalated", z.object({ requestId: RequestId, itemId: ItemId })),
+  ev("SuggestionDeclined", z.object({ requestId: RequestId, itemId: ItemId, reason: z.string() })),
+  ev("HumanNotified", z.object({ notificationId: NotificationId, text: z.string() })),
+  ev("NotificationDismissed", z.object({ notificationId: NotificationId })),
+  /** Only the changed keys. */
+  ev("SettingsChanged", z.object({ changes: z.record(z.string(), z.string()) })),
+  ev("JournalAppended", z.object({ entry: z.string() })),
 ]);
 export type EventBody = z.infer<typeof EventBody>;
 export type EventType = EventBody["type"];

@@ -32,6 +32,8 @@ const questionRequest: Extract<Request, { type: "question" }> = {
   response: null,
   createdAt: "2026-09-23T00:00:00.000Z",
   resolvedAt: null,
+  routedTo: "human",
+  escalation: null,
   type: "question",
   payload: {
     question: "Vision or history for the CIO section?",
@@ -83,6 +85,8 @@ const gateRequest: Extract<Request, { type: "gate_request" }> = {
   response: null,
   createdAt: "2026-09-23T00:00:00.000Z",
   resolvedAt: null,
+  routedTo: "human",
+  escalation: null,
   type: "gate_request",
   payload: {
     step: 0,

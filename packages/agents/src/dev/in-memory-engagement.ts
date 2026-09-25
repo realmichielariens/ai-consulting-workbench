@@ -9,23 +9,41 @@ import path from "node:path";
 import {
   agentActor,
   formatVersion,
+  itemKindOf,
   parseVersion,
   slotRef as toSlotRef,
   WorkPortError,
   type Actor,
+  type AnswerRequestInput,
   type AppendWorklogInput,
+  type ApproachPort,
+  type ApproachSessionKind,
   type BriefView,
+  type DeclineSuggestionInput,
+  type EscalateInput,
+  type GetItemInput,
   type ItemDef,
+  type ItemDigest,
   type ItemId,
+  type JournalAppendInput,
+  type NotifyHumanInput,
+  type PlanDigest,
+  type PlanToolAck,
+  type ProposeOpsInput,
+  type ProposeOpsResult,
   type PublishAssetInput,
   type PublishAssetResult,
+  type PublishEngagementAssetInput,
+  type ProposePlanChangeResult,
   type RaiseQuestionInput,
   type RaiseQuestionResult,
   type ReportProgressInput,
   type RequestId,
+  type RunId,
   type SlotRef,
   type SubmitOutputsInput,
   type SubmitOutputsResult,
+  type ThreadId,
   type Version,
   type VersionKind,
   type WorkPort,
@@ -60,7 +78,9 @@ export class InMemoryEngagement {
   readonly versions = new Map<SlotRef, PublishedVersion[]>();
   readonly questions: RecordedQuestion[] = [];
   readonly worklog = new Map<ItemId, string[]>();
+  readonly journal: string[] = [];
   private requestSeq = 0;
+  private proposalSeq = 0;
 
   constructor(engagementRoot: string, items: ItemDef[]) {
     this.paths = engagementPaths(engagementRoot);
@@ -92,6 +112,11 @@ export class InMemoryEngagement {
     this.requestSeq += 1;
     return `RQ-${String(this.requestSeq).padStart(4, "0")}` as RequestId;
   }
+
+  nextProposalId(): string {
+    this.proposalSeq += 1;
+    return `P-${String(this.proposalSeq).padStart(4, "0")}`;
+  }
 }
 
 function nextVersion(prev: PublishedVersion, kind: VersionKind): { major: number; minor: number } {
@@ -110,6 +135,10 @@ export class InMemoryWorkPort implements WorkPort {
     readonly itemId: ItemId,
     readonly runId: string,
   ) {}
+
+  async proposePlanChange(): Promise<ProposePlanChangeResult> {
+    return { requestId: "RQ-9999", instruction: "Suggestion recorded (in-memory engagement: not routed anywhere). Continue your work." };
+  }
 
   private get item(): ItemDef {
     const item = this.eng.items.get(this.itemId);
@@ -198,5 +227,112 @@ export class InMemoryWorkPort implements WorkPort {
     // The full completion report (input.summary/selfCheck/openIssues) isn't persisted by this minimal
     // harness — the activity stream already carries it (ActivityBuilder's "submit" kind).
     return { accepted: true, missing: [], instruction: "Submitted for human review. End your turn now." };
+  }
+}
+
+/**
+ * Minimal in-memory ApproachPort for the dev CLI (agents:try-approach). Like
+ * InMemoryWorkPort, this is NOT the real store — proposeOps only validates
+ * `input` against the Zod schema (ProposeOpsInput/PlanOp, already done by the
+ * MCP tool layer before this is called) and prints the ops rather than
+ * actually applying them to the plan; there is no real engine here to run
+ * planOps.ts against.
+ */
+export class InMemoryApproachPort implements ApproachPort {
+  constructor(
+    private readonly eng: InMemoryEngagement,
+    readonly runId: RunId,
+    readonly kind: ApproachSessionKind = "conversation",
+    readonly threadId: ThreadId | null = null,
+    readonly requestId: RequestId | null = null,
+  ) {}
+
+  async getPlan(): Promise<PlanDigest> {
+    const items = [...this.eng.items.values()].sort((a, b) => a.order - b.order);
+    const lines = items.map((item) => {
+      const kind = itemKindOf(item);
+      const outputs = item.outputs.map((o) => {
+        const latest = this.eng.latest(toSlotRef(item.id, o.slot));
+        return `${o.slot}${latest ? ` v${latest.version}` : " (unpublished)"}`;
+      });
+      const who = kind === "task" ? `, ${item.executor}` : "";
+      const outPart = outputs.length > 0 ? ` — outputs: ${outputs.join(", ")}` : "";
+      const parentPart = item.parent ? ` [under ${item.parent}]` : "";
+      return `- ${item.id} (${kind}${who}): ${item.title}${parentPart}${outPart}`;
+    });
+    const text =
+      `# Plan\n\n${lines.join("\n")}\n\n` +
+      `Open questions recorded: ${this.eng.questions.length} (in-memory harness: not modeled as routable Request objects).`;
+
+    const usedPrefixes = new Map<string, number>();
+    for (const id of this.eng.items.keys()) {
+      const m = /^([A-Z]{2,4})-(\d+)/.exec(id);
+      if (m) usedPrefixes.set(m[1]!, Math.max(usedPrefixes.get(m[1]!) ?? 0, Number(m[2])));
+    }
+    const suggestedNextIds =
+      usedPrefixes.size > 0 ? [...usedPrefixes.entries()].map(([prefix, n]) => `${prefix}-${n + 1}`) : ["PH-1", "WI-001"];
+
+    return { planVersion: 1, text, suggestedNextIds };
+  }
+
+  async getItem(input: GetItemInput): Promise<ItemDigest> {
+    const item = this.eng.items.get(input.itemId);
+    if (!item) throw new WorkPortError("not_found", `No such item: ${input.itemId}`);
+    const outputs = item.outputs.map((o) => ({
+      slot: toSlotRef(item.id, o.slot),
+      latestVersion: this.eng.latest(toSlotRef(item.id, o.slot))?.version ?? null,
+    }));
+    return { def: item, status: null, outputs, openRequests: [] };
+  }
+
+  async proposeOps(input: ProposeOpsInput): Promise<ProposeOpsResult> {
+    // "proposeOps validates only with the Zod schema and prints the ops" (I2-PLAN §4, try-approach.ts).
+    console.log(`\n[propose_ops] rationale: ${input.rationale}`);
+    console.log(JSON.stringify(input.ops, null, 2));
+    const proposalId = this.eng.nextProposalId();
+    return {
+      ok: true,
+      proposalId,
+      superseded: null,
+      errors: [],
+      instruction: `Recorded ${proposalId} (${input.ops.length} operation${input.ops.length === 1 ? "" : "s"}). In-memory harness: not applied to the plan. Awaiting human approval.`,
+    };
+  }
+
+  async answerRequest(input: AnswerRequestInput): Promise<PlanToolAck> {
+    console.log(`\n[answer_request] ${input.requestId} (${input.mode}): ${input.text}`);
+    return { instruction: `Recorded the answer to ${input.requestId} (in-memory harness). End your turn now.` };
+  }
+
+  async escalate(input: EscalateInput): Promise<PlanToolAck> {
+    console.log(`\n[escalate] ${input.requestId}: ${input.view}`);
+    return { instruction: `Escalated ${input.requestId} to the human (in-memory harness). End your turn now.` };
+  }
+
+  async declineSuggestion(input: DeclineSuggestionInput): Promise<PlanToolAck> {
+    console.log(`\n[decline_suggestion] ${input.requestId}: ${input.reason}`);
+    return { instruction: `Declined ${input.requestId} (in-memory harness). End your turn now.` };
+  }
+
+  async publishEngagementAsset(input: PublishEngagementAssetInput): Promise<PublishAssetResult> {
+    const workDir = this.eng.paths.itemWork("ENG");
+    const sourceAbs = path.isAbsolute(input.sourcePath) ? input.sourcePath : path.join(workDir, input.sourcePath);
+    if (!isInside(sourceAbs, workDir)) {
+      throw new WorkPortError("outside_work", `sourcePath must be inside ENG/work/. Denied: ${input.sourcePath}`);
+    }
+    if (!fs.existsSync(sourceAbs) || !fs.statSync(sourceAbs).isFile()) {
+      throw new WorkPortError("not_found", `Source file not found: ${input.sourcePath}`);
+    }
+    const slot = toSlotRef("ENG", input.slot);
+    const entry = this.eng.publish(slot, sourceAbs, input.kind, input.note, "approach:in-memory" as Actor);
+    return { slot, version: entry.version, path: entry.path };
+  }
+
+  async journalAppend(input: JournalAppendInput): Promise<void> {
+    this.eng.journal.push(input.entry);
+  }
+
+  async notifyHuman(input: NotifyHumanInput): Promise<void> {
+    console.log(`\n[notify_human]${input.itemId ? ` (${input.itemId})` : ""}: ${input.text}`);
   }
 }

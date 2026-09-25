@@ -187,6 +187,8 @@ stateDiagram-v2
 
 - **Composite items** don't have their own lifecycle. They show a roll-up (for example "3/5 done, 1 blocked") and the "worst" child status.
 - **Human items** follow the same lifecycle. "In progress" means the human is working on it.
+- **"Required inputs available"** means that every required input slot has a published version **and**, when the producing item has a gate, that the producer is `done` (I2 decision D1). A draft that is still under review therefore does not start its consumers. Producers without a gate, such as human items, ENG and composites, only need a published version.
+- **Stopping or interrupting a run** (R5, or a restart) moves the item from In progress back to **Ready**. Its session is kept, and the human can **Resume** it. The diagram leaves out this edge.
 
 ### 4.3 Agent, human and composite items
 

@@ -7,8 +7,10 @@ import type { FastifyInstance } from "fastify";
 import { routes, WS_PATH, type EngagementId, type WsServerMessage } from "@workbench/core";
 import { eventsRepo } from "@workbench/db";
 import { listSeeds } from "@workbench/store";
+import { postMessage } from "./approachRunner.js";
 import { openEngagement, type ServerContext } from "./engagementContext.js";
 import { reconcileEngagement } from "./startup.js";
+import { approveProposal, getProposalView, listProposalViews, previewProposal, rejectProposal } from "./proposalService.js";
 import { ApiHttpError, HTTP_STATUS_FOR, invalid, notFound } from "./errors.js";
 import * as services from "./services.js";
 import * as views from "./views.js";
@@ -37,7 +39,7 @@ export function registerRoutes(app: FastifyInstance, server: ServerContext): voi
 
   app.post(routes.createEngagement.path, async (req, reply) => {
     const body = routes.createEngagement.body.parse(req.body);
-    const summary = await services.createEngagement(server, body.seedId, body.name);
+    const summary = await services.createEngagement(server, body.seedId, body.name, body.settings);
     reply.code(201);
     return summary;
   });
@@ -155,6 +157,91 @@ export function registerRoutes(app: FastifyInstance, server: ServerContext): voi
     const body = routes.addFeedback.body.parse(req.body);
     services.addFeedback(ctxFor(server, eid), body.note, body.view, body.itemId ?? null);
     return { ok: true as const };
+  });
+
+  // I2 — J2.1/J2.6/J2.7: the conversation
+  app.get(routes.listThreads.path, async (req) => {
+    const { eid } = routes.listThreads.params.parse(req.params);
+    return views.listThreadSummaries(ctxFor(server, eid));
+  });
+
+  app.get(routes.getThread.path, async (req) => {
+    const { eid, tid } = routes.getThread.params.parse(req.params);
+    return views.getThreadView(ctxFor(server, eid), tid);
+  });
+
+  app.post(routes.postMessage.path, async (req, reply) => {
+    const { eid, tid } = routes.postMessage.params.parse(req.params);
+    const body = routes.postMessage.body.parse(req.body);
+    const result = await postMessage(ctxFor(server, eid), tid, body.text);
+    reply.code(202);
+    return result;
+  });
+
+  // I2 — J2.2/J2.5: proposals
+  app.get(routes.listProposals.path, async (req) => {
+    const { eid } = routes.listProposals.params.parse(req.params);
+    return listProposalViews(ctxFor(server, eid));
+  });
+
+  app.get(routes.getProposal.path, async (req) => {
+    const { eid, pid } = routes.getProposal.params.parse(req.params);
+    return getProposalView(ctxFor(server, eid), pid);
+  });
+
+  app.get(routes.previewProposal.path, async (req) => {
+    const { eid, pid } = routes.previewProposal.params.parse(req.params);
+    return previewProposal(ctxFor(server, eid), pid);
+  });
+
+  app.post(routes.approveProposal.path, async (req) => {
+    const { eid, pid } = routes.approveProposal.params.parse(req.params);
+    return approveProposal(ctxFor(server, eid), pid);
+  });
+
+  app.post(routes.rejectProposal.path, async (req) => {
+    const { eid, pid } = routes.rejectProposal.params.parse(req.params);
+    const body = routes.rejectProposal.body.parse(req.body);
+    return rejectProposal(ctxFor(server, eid), pid, body.reason);
+  });
+
+  // I2 — J2.3: override
+  app.post(routes.overrideAnswer.path, async (req) => {
+    const { eid, rid } = routes.overrideAnswer.params.parse(req.params);
+    const body = routes.overrideAnswer.body.parse(req.body);
+    return services.overrideAnswer(ctxFor(server, eid), rid, body.mode, body.text);
+  });
+
+  // I2 — FYIs
+  app.get(routes.listNotifications.path, async (req) => {
+    const { eid } = routes.listNotifications.params.parse(req.params);
+    return views.listNotificationsView(ctxFor(server, eid));
+  });
+
+  app.post(routes.dismissNotification.path, async (req) => {
+    const { eid, nid } = routes.dismissNotification.params.parse(req.params);
+    services.dismissNotification(ctxFor(server, eid), nid);
+    return { ok: true as const };
+  });
+
+  // I2 — J2.8: settings and profile
+  app.patch(routes.patchSettings.path, async (req) => {
+    const { eid } = routes.patchSettings.params.parse(req.params);
+    const body = routes.patchSettings.body.parse(req.body);
+    return services.patchSettings(ctxFor(server, eid), body);
+  });
+
+  app.get(routes.getProfile.path, async () => services.getProfile(server));
+
+  app.patch(routes.patchProfile.path, async (req) => {
+    const body = routes.patchProfile.body.parse(req.body);
+    return services.patchProfile(server, body.profile);
+  });
+
+  // I2 — D4: approach journal
+  app.get(routes.getJournal.path, async (req) => {
+    const { eid } = routes.getJournal.params.parse(req.params);
+    return views.getJournalView(ctxFor(server, eid));
   });
 
   // WebSocket: hello (with lastSeq) then live events + activity.

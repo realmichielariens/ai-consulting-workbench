@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EngagementId, InboxEntry, Request } from "@workbench/core";
 import { api, qk } from "../api/index.js";
 import { selectAsset, selectItem } from "../state/url.js";
+import { ProposalCard } from "./ProposalCard.js";
+import { formatActor } from "../lib/actorLabel.js";
 
 // InboxEntry's per-kind `request` field is typed as the full `Request`
 // union (api.ts), not narrowed to the matching variant — the server
@@ -51,7 +53,15 @@ export function useInboxMutations(eid: EngagementId) {
     mutationFn: (vars: { itemId: string; slot: string; file: File }) => api.uploadOutput(eid, vars.itemId, vars.slot, vars.file),
     onSuccess: invalidate,
   });
-  return { answer, verdict, issue, markDone, upload };
+  const override = useMutation({
+    mutationFn: (vars: { rid: string; mode: "approve" | "amend" | "replace"; text: string }) => api.overrideAnswer(eid, vars.rid, { mode: vars.mode, text: vars.text }),
+    onSuccess: invalidate,
+  });
+  const dismiss = useMutation({
+    mutationFn: (nid: string) => api.dismissNotification(eid, nid),
+    onSuccess: invalidate,
+  });
+  return { answer, verdict, issue, markDone, upload, override, dismiss };
 }
 
 export function Inbox({ eid }: { eid: EngagementId }) {
@@ -67,7 +77,7 @@ export function Inbox({ eid }: { eid: EngagementId }) {
     <ul className="inbox-list" data-testid="inbox-list">
       {inbox.data.entries.map((entry) => (
         <li key={entryKey(entry)}>
-          <InboxCard entry={entry} m={m} />
+          <InboxCard eid={eid} entry={entry} m={m} />
         </li>
       ))}
     </ul>
@@ -75,10 +85,19 @@ export function Inbox({ eid }: { eid: EngagementId }) {
 }
 
 function entryKey(entry: InboxEntry): string {
-  return entry.kind === "human_item" ? `human_item:${entry.item.id}` : `${entry.kind}:${entry.request.id}`;
+  switch (entry.kind) {
+    case "human_item":
+      return `human_item:${entry.item.id}`;
+    case "proposal":
+      return `proposal:${entry.proposal.proposal.id}`;
+    case "fyi":
+      return `fyi:${entry.notification.id}`;
+    default:
+      return `${entry.kind}:${entry.request.id}`;
+  }
 }
 
-function InboxCard({ entry, m }: { entry: InboxEntry; m: ReturnType<typeof useInboxMutations> }) {
+function InboxCard({ eid, entry, m }: { eid: EngagementId; entry: InboxEntry; m: ReturnType<typeof useInboxMutations> }) {
   switch (entry.kind) {
     case "question":
       return <QuestionCard entry={entry} m={m} />;
@@ -88,6 +107,14 @@ function InboxCard({ entry, m }: { entry: InboxEntry; m: ReturnType<typeof useIn
       return <HumanItemCard entry={entry} m={m} />;
     case "run_issue":
       return <RunIssueCard entry={entry} m={m} />;
+    case "proposal":
+      return (
+        <div data-testid="inbox-card-proposal">
+          <ProposalCard eid={eid} view={entry.proposal} />
+        </div>
+      );
+    case "fyi":
+      return <FyiCard entry={entry} m={m} />;
   }
 }
 
@@ -113,6 +140,12 @@ export function QuestionCard({ entry, m }: { entry: Extract<InboxEntry, { kind: 
       <p>
         <strong>Hypothesis:</strong> {request.payload.hypothesis}
       </p>
+      {request.escalation && (
+        <div className="escalation-note">
+          <strong>The Approach Agent escalated this</strong>
+          <p data-testid="question-escalation-view">{request.escalation.view}</p>
+        </div>
+      )}
       {request.payload.alternatives.length > 0 && (
         <ul className="alternatives">
           {request.payload.alternatives.map((alt, i) => (
@@ -364,6 +397,80 @@ export function RunIssueCard({ entry, m }: { entry: Extract<InboxEntry, { kind: 
         </button>
       </div>
       {pending && <p className="pending">Sending…</p>}
+    </div>
+  );
+}
+
+export function FyiCard({ entry, m }: { entry: Extract<InboxEntry, { kind: "fyi" }>; m: ReturnType<typeof useInboxMutations> }) {
+  const { notification, request, item, override } = entry;
+  const [overriding, setOverriding] = useState(false);
+  const answered = request?.status === "answered" && request.response?.kind === "answer" ? request.response : null;
+  const [text, setText] = useState(answered?.text ?? "");
+  const dismissPending = m.dismiss.isPending && m.dismiss.variables === notification.id;
+  const overridePending = m.override.isPending && m.override.variables?.rid === request?.id;
+
+  return (
+    <div className="card inbox-card" data-testid="inbox-card-fyi" data-notification-id={notification.id}>
+      {item && (
+        <div className="card-header">
+          <button type="button" className="link" onClick={() => selectItem(item.id)}>
+            {item.title}
+          </button>
+        </div>
+      )}
+      <p>{notification.text}</p>
+
+      {request && request.type === "question" && (
+        <div className="fyi-question">
+          <p className="question-text">{request.payload.question}</p>
+          <p>
+            <strong>Hypothesis:</strong> {request.payload.hypothesis}
+          </p>
+          {answered && (
+            <p>
+              Answered by {formatActor(answered.by)}: {answered.text}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="actions">
+        <button type="button" data-testid="fyi-dismiss" disabled={dismissPending} onClick={() => m.dismiss.mutate(notification.id)}>
+          Dismiss
+        </button>
+        {request && (
+          <button
+            type="button"
+            data-testid="fyi-override-open"
+            disabled={!override.allowed || overriding}
+            title={override.reason ?? undefined}
+            onClick={() => setOverriding(true)}
+          >
+            Override
+          </button>
+        )}
+      </div>
+      {!override.allowed && override.reason && <p className="helper-text">{override.reason}</p>}
+
+      {overriding && request && (
+        <div className="answer-editor">
+          <textarea data-testid="fyi-override-text" value={text} onChange={(e) => setText(e.target.value)} rows={3} />
+          <div className="actions">
+            <button
+              type="button"
+              data-testid="fyi-override-submit"
+              disabled={overridePending || text.trim().length === 0}
+              onClick={() => m.override.mutate({ rid: request.id, mode: "replace", text })}
+            >
+              Send override
+            </button>
+            <button type="button" disabled={overridePending} onClick={() => setOverriding(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {(dismissPending || overridePending) && <p className="pending">Sending…</p>}
     </div>
   );
 }

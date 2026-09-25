@@ -7,3 +7,7 @@ export * as gateStepsRepo from "./gateSteps.js";
 export * as leasesRepo from "./leases.js";
 export * as eventsRepo from "./events.js";
 export * as inboxRepo from "./inbox.js";
+export * as proposalsRepo from "./proposals.js";
+export * as threadsRepo from "./threads.js";
+export * as notificationsRepo from "./notifications.js";
+export * as agendaRepo from "./agenda.js";
