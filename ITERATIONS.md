@@ -5,7 +5,7 @@
 | **Status** | Draft v1 |
 | **Date** | 2026-09-23 |
 | **Companions** | [DESIGN.md](DESIGN.md) (functional design, "D§"), [ARCHITECTURE.md](ARCHITECTURE.md) (technical architecture, "A§"), [spike/M0-FINDINGS.md](spike/M0-FINDINGS.md) |
-| **Implementation plans** | [iterations/I1-PLAN.md](iterations/I1-PLAN.md) |
+| **Implementation plans** | [iterations/I1-PLAN.md](iterations/I1-PLAN.md), [iterations/I2-PLAN.md](iterations/I2-PLAN.md) |
 | **Replaces** | The delivery order of the milestones in A§18. The milestones remain as capability areas; this document decides in which order they are delivered. |
 
 ---
