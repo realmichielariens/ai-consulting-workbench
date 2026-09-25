@@ -2,11 +2,56 @@
 
 | | |
 |---|---|
-| **Status** | Draft v1, awaiting the decisions in §3 |
+| **Status** | **Approved 2026-09-25.** The decisions in §3 are confirmed as recommended. Ready to execute; start with §0. |
 | **Date** | 2026-09-25 |
 | **Goal** | Deliver I2 as specified in [ITERATIONS.md §5](../ITERATIONS.md): journeys **J2.1–J2.8**, with I1's journeys still working |
 | **Execution model** | Lean (§5): the main session writes contracts and does integration; **three** Sonnet agents with compact, self-contained briefs, **at most two at a time**; one user look before any real-agent validation |
 | **Builds on** | I1 at `4d8fae8` on `iteration/i1` |
+
+---
+
+## 0. Handover: start here (for a new session)
+
+**State.**
+- Branch `iteration/i1` holds I1, complete as a demo, plus this plan. Create `iteration/i2` from it.
+- I1's formal validations were deliberately deferred (§8).
+- The I1 plan and its reports are in `iterations/I1-PLAN.md` and `iterations/I1/`. Read them only if you need detail.
+
+**Read first** (keep it to these; I1 overspent on reading):
+- this plan;
+- `CLAUDE.md` (conventions; its "stop rule" still applies to subagents);
+- `ITERATIONS.md` §5 (the I2 journeys);
+- the contracts in `packages/core/src/{domain,ports,api,events}.ts` and `packages/db/src/schema.ts`.
+
+**Packages as built in I1.**
+
+| Package | Contents |
+|---|---|
+| `packages/core` | Contracts, plus the pure rules in `src/rules/`: lifecycle, readiness, versioning, gates, rollup, actions. Node-only helpers are in `@workbench/core/node`. |
+| `packages/db` | Drizzle schema, migrations, repositories, leases |
+| `packages/store` | Item files, seeds, Git checkpoints, `plan.md` projection |
+| `packages/agents` | SDK adapter `sdk.ts`, guards, work toolset, prompts, activity mapping, runtime with one nudge, scripted fake runtime and `fake-scripts/`, the `agents:try` CLI |
+| `packages/server` | Fastify routes, services, `runService`, scheduler, `WorkPort`, checkpoints, startup reconciliation and orphan cleanup, views, `demo:headless` |
+| `apps/web` | React UI: start page, process view v0 (React Flow + ELK), item detail, asset viewer, Inbox |
+
+**Commands.**
+
+| Command | What it does |
+|---|---|
+| `pnpm dev:fake` | Fake agents, no cost. Web on :5317, API on :4317. |
+| `pnpm dev` | Real Haiku agents |
+| `pnpm test`, `pnpm typecheck` | 290 tests, all green at handover |
+| `node e2e/walks/i1.cjs` | Acceptance walk for J1.1–J1.8. Needs `dev:fake` running; exit 0 = pass. |
+| `pnpm demo:headless --fake` | The same flow through the API, without a browser |
+
+**Gotchas found in I1.**
+- **Port 5173 is taken on this machine** by another project, so the web app uses 5317.
+- **`tsx watch` hangs under `concurrently`**, so the server's dev script runs without watch mode. Restart it after server changes.
+- **Leftover servers.** If `dev:fake` fails with `EADDRINUSE`, a previous server (possibly the user's own `pnpm dev`) is still on 4317. Ask the user or check the process before killing it.
+- **Process filtering.** Node processes started by `pnpm` don't always show the repo path on their command line. Find leftovers by port, not by command line.
+- **React Flow v12 custom nodes need `<Handle>`s** or edges silently disappear. The process view remounts per layout to stay correct during live updates.
+- **The real Work Agent tends to decide instead of asking.** Hence D2 in §3.
+- **Usage.** The previous session nearly used two 5-hour Claude windows. Follow §2 and §5 strictly: compact briefs, at most two subagents at a time, and the main session integrates.
 
 ---
 
@@ -49,16 +94,16 @@ Starting from a seed (J1.1) still works, and every I1 journey keeps working.
 
 ---
 
-## 3. Decisions (defaults apply unless you say otherwise)
+## 3. Decisions (confirmed by the user on 2026-09-25)
 
-| # | Question | Recommended default |
+| # | Question | Decision |
 |---|---|---|
 | **D1** | Should a consumer wait until its input has **passed its producer's gate**, or only until it is **published**? | **Passed the gate.** An item becomes ready only on inputs whose producer is `done`. Items without a gate are unaffected. This is a small change to the readiness rule, noted in D§4.2. |
 | **D2** | When a Work Agent makes a judgement call on something its brief flags as open, should it say so? | **Yes, as a non-blocking question.** It raises the question with its hypothesis and carries on. The Approach Agent or the human can still override the answer (J2.3), and the choice becomes visible without stopping the work. Implemented as a change to the protocol prompt. |
 | **D3** | Default question handling for new engagements? | **`aa-first`** (the D§8.1 default). The seed's `defaults.yaml` changes to match. |
 | **D4** | Visibility of the approach journal (A§20.1-4)? | **Visible, read-only**, in an "Approach" tab. |
 | **D5** | What happens to a chat message sent while the agent is mid-turn (M0 S5)? | **It is queued in the UI** and sent when the turn ends. The UI shows "queued". |
-| **D6** | Compare planning on the `demo` profile (Opus 5.5) against Haiku? | **Optional, after the look**: one J2.1 + J2.2 run, ≤ $3, only with your OK. |
+| **D6** | Compare planning on the `demo` profile (Opus 5.5) against Haiku? | **Optional, after the look**: one J2.1 + J2.2 run, ≤ $3. **Ask the user first**; this is not pre-approved. |
 
 ---
 
@@ -144,7 +189,7 @@ Each agent gets a brief that includes: its paths, the files to read (≤ 8), the
 
 | Package | Who | Builds | Checks before stopping | Depends on |
 |---|---|---|---|---|
-| **P0** | Main | The contract deltas (§4.4) and the migration; the `blank` seed; I1's walk committed as `e2e/walks/i1.cjs`; the three briefs | Typecheck; `i1.cjs` passes | — |
+| **P0** | Main | The contract deltas (§4.4) and the migration; the `blank` seed; the three briefs. (`e2e/walks/i1.cjs` already exists; it was committed during planning.) | Typecheck; `i1.cjs` passes | — |
 | **A: ENGINE + SERVER** | Sonnet | <ul><li>`planOps.ts` (validate, apply to defs, preview) with tests</li><li>D1 in `readiness.ts`</li><li>repositories for the new tables</li><li>services: threads and turns (lease, briefing and delta text, message persistence, queue); proposals (create from the port, supersede, approve → apply per §4.3, reject); question routing (aa-first → agenda row + task queue + fallback escalation; always-human → as in I1); suggestions; override (only when the item isn't running); notifications; settings and profile (profile override in `workspace/.workbench/settings.json`); journal</li><li>`ApproachPort` implementation, views, routes</li><li>`demo:headless` extended with a J2 script</li></ul> | Typecheck; the rule tests; one API-level flow test (blank → kick-off turn → proposal → approve → WI-002 runs → question answered by the Approach Agent); `demo:headless --fake` | P0 |
 | **B: APPROACH RUNTIME** | Sonnet | <ul><li>In `packages/agents`: `createSdkApproachRuntime` / `createFakeApproachRuntime`, the `plan` MCP toolset, Approach Agent guards (with tests), and the `propose_plan_change` work tool</li><li>Prompts: `approach-conversation.md` (role, clarifying-question style, how to plan with the operations, granularity `medium`, the "never do substantive work" rule), `approach-question.md`, `approach-suggestion.md`</li><li>The D2 protocol tweak in `protocol.md` and the skill</li><li>Fake Approach scripts: the kick-off dialogue that publishes context and stakeholders, then proposes the acme plan (the same items as the seed); question handling (answer the first question, escalate the second); a suggestion that becomes a proposal (CFO follow-up)</li><li>An `agents:try-approach` CLI over an in-memory `ApproachPort`</li></ul> | Typecheck; guard and toolset tests; the fake CLI; **one real smoke**: a kick-off turn plus a plan proposal on Haiku, ≤ $0.15 | P0 (in parallel with A) |
 | **C: WEB UI** | Sonnet, after A or B stops | <ul><li>Left panel with **Chat** and **Inbox** tabs</li><li>Chat: messages; streaming activity of the running turn; proposal cards inline; asset links; a send box with the queued state (D5)</li><li>Proposal card (rationale, readable operations, **Preview** toggle that swaps the process view to the preview `PlanView` with a banner, Approve / Reject with a reason)</li><li>Inbox: `proposal`, `fyi` (dismiss), and the question card showing "Answered by the Approach Agent" + **Override**, or the escalation view</li><li>Settings panel (question handling, item start, profile)</li><li>Approach tab (the journal, read-only)</li><li>"Start with the Approach Agent" on the start page</li><li>Plan version in the header</li></ul> | Typecheck; existing tests | P0; API from A |
