@@ -220,6 +220,8 @@ describe("I2 flow: blank engagement -> conversation turn -> proposal -> approve 
 
     const wi002 = ((await app.inject({ method: "GET", url: `/api/engagements/${eid}/items/WI-002` })).json() as ItemDetailView).node;
     expect(wi002.status).toBe("at_gate");
+    const wi003BeforeGate = ((await app.inject({ method: "GET", url: `/api/engagements/${eid}/items/WI-003` })).json() as ItemDetailView).node;
+    expect(wi003BeforeGate.status).toBe("waiting"); // D1: WI-002's published output still needs its gate approval
 
     // The question was routed to and answered by the Approach Agent (not a plain human answer).
     const inbox = (await app.inject({ method: "GET", url: `/api/engagements/${eid}/inbox` })).json() as { entries: InboxEntry[] };
@@ -228,5 +230,32 @@ describe("I2 flow: blank engagement -> conversation turn -> proposal -> approve 
     expect(fyi?.request?.response).toMatchObject({ kind: "answer", mode: "approve" });
     expect((fyi?.request?.response as { by: string } | undefined)?.by).toMatch(/^approach:/);
     expect(fyi?.override.allowed).toBe(true); // ready/at_gate, not running: override should be offered
+
+    const oldReview = inbox.entries.find((e): e is Extract<InboxEntry, { kind: "review" }> => e.kind === "review" && e.item.id === "WI-002");
+    expect(oldReview).toBeDefined();
+    const override = await app.inject({
+      method: "POST",
+      url: `/api/engagements/${eid}/requests/${fyi!.request!.id}/override`,
+      payload: { mode: "replace", text: "Focus on the CIO's vision, with one question on prior commitments." },
+    });
+    expect(override.statusCode).toBe(200);
+
+    const newReview = await waitFor(async () => {
+      const res = await app.inject({ method: "GET", url: `/api/engagements/${eid}/inbox` });
+      const next = (res.json() as { entries: InboxEntry[] }).entries.find(
+        (e): e is Extract<InboxEntry, { kind: "review" }> => e.kind === "review" && e.item.id === "WI-002" && e.request.id !== oldReview!.request.id,
+      );
+      return next;
+    }, 10000);
+    const verdict = await app.inject({
+      method: "POST",
+      url: `/api/engagements/${eid}/requests/${newReview.request.id}/verdict`,
+      payload: { verdict: "approved", comments: "" },
+    });
+    expect(verdict.statusCode).toBe(200);
+    const afterVerdict = (await app.inject({ method: "GET", url: `/api/engagements/${eid}/items/WI-002` })).json() as ItemDetailView;
+    expect(afterVerdict.node.status).toBe("done");
+    const wi003AfterGate = ((await app.inject({ method: "GET", url: `/api/engagements/${eid}/items/WI-003` })).json() as ItemDetailView).node;
+    expect(wi003AfterGate.status).toBe("ready");
   });
 });

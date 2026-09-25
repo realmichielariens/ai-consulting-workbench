@@ -11,6 +11,9 @@ A local, single-user POC in which a human runs an engagement (for example an IT 
 | [ITERATIONS.md](ITERATIONS.md) | The iteration order, and **the user journeys that are the specification** (I1: §4) |
 | [iterations/I1-PLAN.md](iterations/I1-PLAN.md) | Work packages, look points, validation, budget |
 | [spike/M0-FINDINGS.md](spike/M0-FINDINGS.md) | What M0 validated about the SDK. The working SDK configuration is in §2. |
+| [ux/EXHIBIT.md](ux/EXHIBIT.md) | The visual language (tokens in `ux/exhibit-tokens.css`, playground in `ux/playground/`). Any UI work follows it. |
+| [ux/REDESIGN-PLAN.md](ux/REDESIGN-PLAN.md) | The journey redesign: shell, pages, flows, and why |
+| [iterations/UX1-PLAN.md](iterations/UX1-PLAN.md) | The UX1 iteration (the redesign, before the rest of I3). Briefs are in `iterations/UX1/briefs/`. |
 
 ## Contracts (read-only for work-package agents)
 

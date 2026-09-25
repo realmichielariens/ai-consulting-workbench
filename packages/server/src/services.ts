@@ -12,6 +12,7 @@ import {
   computeItemActions,
   nextVersion,
   resolveGateVerdict,
+  withdrawGateStep,
   type AnswerMode,
   type AssetVersion,
   type EngagementId,
@@ -363,7 +364,11 @@ export async function overrideAnswer(ctx: EngagementContext, requestId: RequestI
   const now = new Date().toISOString();
   if (row.status === "at_gate") {
     const openStep = gateStepsRepo.getOpenStep(ctx.dbCtx, request.itemId);
-    if (openStep?.requestId) requestsRepo.withdrawRequest(ctx.dbCtx, openStep.requestId, now);
+    if (!openStep || !openStep.requestId || !withdrawGateStep(openStep)) {
+      throw conflict(`No open review for ${request.itemId} to withdraw.`);
+    }
+    gateStepsRepo.withdrawStep(ctx.dbCtx, request.itemId, openStep.round, openStep.seq, now);
+    requestsRepo.withdrawRequest(ctx.dbCtx, openStep.requestId, now);
   }
 
   const resolved = requestsRepo.replaceResponse(ctx.dbCtx, requestId, { kind: "answer", mode, text, by: "human", at: now }, now);

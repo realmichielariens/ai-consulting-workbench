@@ -322,7 +322,7 @@ The following are **not** cut down in I1, even though I1 barely needs some of th
 
 - **One general conversation thread** with the Approach Agent. It streams and can be resumed across restarts.
   - A deterministic **situation briefing** is built at the start of the session.
-  - **Decision to make here** (from M0 S5): messages the human sends while the agent is mid-turn are *queued* in the UI, not merged into the running turn.
+  - Messages the human sends while the agent is mid-turn are *queued* in the UI and sent after the turn ends (I2 decision D5).
 - **`plan` tools (subset):**
   - `get_plan`, `get_item`;
   - `propose_ops`;
@@ -343,7 +343,8 @@ The following are **not** cut down in I1, even though I1 barely needs some of th
   - plan changes (`propose` only in I2);
   - model profile (`test` / `demo`).
 - **The process view** can preview a pending proposal: a toggle between the current plan and the proposed plan.
-- **Decision to make here**: the visibility of the approach journal (A§20.1-4). The proposal is that the human can see it but not edit it.
+- A consumer of a gated producer's output becomes ready only after the producer is done (I2 decision D1). A Work Agent flags open judgment calls as non-blocking questions and continues (D2).
+- The approach journal is visible and read-only in the **Approach** tab (D4).
 
 **Out of scope**: several threads, the agenda board, triage, triggers, claims, "discuss" (all I5); `split`, `merge` and `move` (I3); `reopen_item` (I4); AI review (I6).
 
@@ -384,9 +385,9 @@ The following are **not** cut down in I1, even though I1 barely needs some of th
 1. The item turns **Blocked**. The item detail shows "Question sent to the Approach Agent".
 2. A task session of the Approach Agent reads the question, the hypothesis, the brief and the context.
 3. If the context is sufficient, it answers (`answer_request`). The Work Agent session resumes with the answer.
-4. The human sees the question and the Approach Agent's answer in the item's activity and worklog, and gets an FYI notification. The human can still **override** the answer. That re-opens the item with the new answer, as in J1.4 step 5.
+4. The human sees the question and the Approach Agent's answer in the item's activity and worklog, and gets an FYI notification. Once the item is idle (ready or at review), the human can **override** the answer. The current review is withdrawn, and the Work Agent resumes with the new answer, as in J1.4 step 5.
 
-*Correct when*: an answer from the Approach Agent is always attributed to the Approach Agent and can always be overridden.
+*Correct when*: an answer from the Approach Agent is always attributed to the Approach Agent and can be overridden once the item is idle.
 
 #### J2.4 The Approach Agent escalates a question
 *Actor*: Approach Agent → human.
@@ -428,7 +429,7 @@ The following are **not** cut down in I1, even though I1 barely needs some of th
 
 ### 5.3 Changed journeys
 
-- **J1.4** now starts with the Approach Agent when `aa-first` is set (J2.3/J2.4). The direct path remains under `always-human`.
+- **J1.4** now starts with the Approach Agent because `aa-first` is the default (J2.3/J2.4). The direct path remains under `always-human`.
 - **J1.7**: editing a brief by hand is still allowed. It is now also recorded as a plan-version bump.
 
 ### 5.4 Learning questions

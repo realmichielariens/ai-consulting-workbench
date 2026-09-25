@@ -94,6 +94,15 @@ export function resolveStep(
     .run();
 }
 
+/** Closes a review round without a verdict when its submission is withdrawn. */
+export function withdrawStep(ctx: Db, itemId: ItemId, round: number, seq: number, at: IsoTime): void {
+  ctx.db
+    .update(gateSteps)
+    .set({ status: "withdrawn", at: toEpochMs(at) })
+    .where(and(eq(gateSteps.itemId, itemId), eq(gateSteps.round, round), eq(gateSteps.seq, seq), eq(gateSteps.status, "open")))
+    .run();
+}
+
 export function getStep(ctx: Db, itemId: ItemId, round: number, seq: number): GateStepRow | null {
   const row = ctx.db
     .select()

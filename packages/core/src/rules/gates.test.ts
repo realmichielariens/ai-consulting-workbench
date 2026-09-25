@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { openGateRound, resolveGateVerdict, type GateRoundStep } from "./gates.js";
+import { openGateRound, resolveGateVerdict, withdrawGateStep, type GateRoundStep } from "./gates.js";
 
 const humanReviewChain = [{ type: "human-review" as const }];
 const submitted = [{ slot: "WI-002/interview-guide" as const, version: "1.0" as const }];
@@ -52,5 +52,13 @@ describe("resolveGateVerdict", () => {
     const r = resolveGateVerdict(openStep(1), 2, "approved", true);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toMatch(/newer version/i);
+  });
+});
+
+describe("withdrawGateStep", () => {
+  it("closes only an open review when its answer is overridden", () => {
+    const step: GateRoundStep = { round: 1, seq: 0, type: "human-review", status: "open", assetVersions: submitted };
+    expect(withdrawGateStep(step)).toBe("withdrawn");
+    expect(withdrawGateStep({ ...step, status: "passed" })).toBeNull();
   });
 });

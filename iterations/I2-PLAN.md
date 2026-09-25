@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Approved 2026-09-25.** The decisions in §3 are confirmed as recommended. Ready to execute; start with §0. |
+| **Status** | **Implemented and integrated 2026-09-25.** Fake-runtime I1 and I2 walks pass. Awaiting the user look in §6 before broader real-agent validation. |
 | **Date** | 2026-09-25 |
 | **Goal** | Deliver I2 as specified in [ITERATIONS.md §5](../ITERATIONS.md): journeys **J2.1–J2.8**, with I1's journeys still working |
 | **Execution model** | Lean (§5): the main session writes contracts and does integration; **three** Sonnet agents with compact, self-contained briefs, **at most two at a time**; one user look before any real-agent validation |
@@ -13,8 +13,8 @@
 ## 0. Handover: start here (for a new session)
 
 **State.**
-- Branch `iteration/i1` holds I1, complete as a demo, plus this plan. Create `iteration/i2` from it.
-- I1's formal validations were deliberately deferred (§8).
+- Branch `iteration/i2` contains P0, packages A/B/C, and integration. On 2026-09-25, `pnpm test` passed 402 tests, `pnpm typecheck` passed, and both `e2e/walks/i1.cjs` and `i2.cjs` exited 0 against a fresh isolated fake workspace with no page or HTTP errors.
+- The Approach runtime's one real smoke completed for $0.0792: it published both ENG assets and proposed five valid operations. The broader real pass, S6-lite and guard battery in §6 await the user look.
 - The I1 plan and its reports are in `iterations/I1-PLAN.md` and `iterations/I1/`. Read them only if you need detail.
 
 **Read first** (keep it to these; I1 overspent on reading):
@@ -40,7 +40,7 @@
 |---|---|
 | `pnpm dev:fake` | Fake agents, no cost. Web on :5317, API on :4317. |
 | `pnpm dev` | Real Haiku agents |
-| `pnpm test`, `pnpm typecheck` | 290 tests, all green at handover |
+| `pnpm test`, `pnpm typecheck` | 402 tests and all package typechecks green at integration |
 | `node e2e/walks/i1.cjs` | Acceptance walk for J1.1–J1.8. Needs `dev:fake` running; exit 0 = pass. |
 | `pnpm demo:headless --fake` | The same flow through the API, without a browser |
 

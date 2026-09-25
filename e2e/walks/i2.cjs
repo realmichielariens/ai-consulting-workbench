@@ -12,6 +12,7 @@ const ROOT = path.resolve(__dirname, "..", "..");
 const SHOTS = path.join(__dirname, "out");
 fs.mkdirSync(SHOTS, { recursive: true });
 const T = 90_000;
+const WEB_URL = process.env.WORKBENCH_WEB_URL || "http://localhost:5317/";
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
 (async () => {
@@ -47,7 +48,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
   try {
     await step("J2.1 start with the Approach Agent", async () => {
-      await page.goto("http://localhost:5317/");
+      await page.goto(WEB_URL);
       originalProfile = (await apiGet("/api/profile")).active;
       await page.getByTestId("start-with-approach").click();
       await page.waitForURL(/\/e\//, { timeout: T });
@@ -115,7 +116,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
       if (await fyi.count()) await fyi.getByTestId("fyi-dismiss").click();
     });
     await step("J1.6 human item uploads + mark done", async () => {
-      const card = page.getByTestId("inbox-card-human-item").filter({ hasText: "WI-003" }).first();
+      const card = page.locator('[data-testid="inbox-card-human-item"][data-item-id="WI-003"]');
       await card.waitFor({ timeout: T });
       for (const who of ["ceo", "cfo", "coo", "cio"]) {
         await card.getByTestId(`upload-input-notes-${who}`).setInputFiles(path.join(ROOT, `demo/interview-notes/notes-${who}.md`));
@@ -127,7 +128,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     await step("J2.5 WI-004 suggests a CFO follow-up → approve the proposal", async () => {
       const card = page.getByTestId("inbox-card-proposal");
       await card.waitFor({ timeout: T });
-      await card.getByText(/suggested by WI-004/i).waitFor({ timeout: T });
+      await card.getByTestId("proposal-suggested-by").filter({ hasText: /WI-004/i }).waitFor({ timeout: T });
       await shot("05-suggestion");
       await card.getByTestId("proposal-approve").click();
       await card.waitFor({ state: "detached", timeout: T });
@@ -192,6 +193,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
       await panel.getByTestId("setting-profile").selectOption(before);
       await page.waitForFunction(async (p) => (await (await fetch("/api/profile")).json()).active === p, before, { timeout: T, polling: 500 });
       await shot("08-settings");
+      await panel.getByTestId("settings-close").click();
     });
     await step("D4 approach journal tab renders", async () => {
       await tab("approach");

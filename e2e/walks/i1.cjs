@@ -12,6 +12,7 @@ const ROOT = path.resolve(__dirname, "..", "..");
 const SHOTS = path.join(__dirname, "out");
 fs.mkdirSync(SHOTS, { recursive: true });
 const T = 90_000;
+const WEB_URL = process.env.WORKBENCH_WEB_URL || "http://localhost:5317/";
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
 (async () => {
@@ -29,7 +30,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
   try {
     await step("J1.1 start page", async () => {
-      await page.goto("http://localhost:5317/");
+      await page.goto(WEB_URL);
       await page.getByTestId("seed-card").first().waitFor({ timeout: T });
       await shot("01-start");
     });

@@ -28,8 +28,14 @@ export function recomputeReadiness(ctx: EngagementContext): void {
   }
 
   const readinessItems: ReadinessItem[] = rows
-    .filter((r) => r.executor != null)
-    .map((r) => ({ id: r.id, executor: r.executor, status: r.status, inputs: inputsByItem.get(r.id) ?? [], sequencing: seqByItem.get(r.id) ?? [] }));
+    .map((r) => ({
+      id: r.id,
+      executor: r.executor,
+      status: r.status,
+      hasGate: r.gate.length > 0,
+      inputs: inputsByItem.get(r.id) ?? [],
+      sequencing: seqByItem.get(r.id) ?? [],
+    }));
   const readiness = computeReadiness({ items: readinessItems, publishedSlots });
 
   const now = Date.now();

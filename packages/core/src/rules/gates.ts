@@ -10,7 +10,7 @@
 
 import type { GateStep, GateType, GateVerdict, SlotVersionRef } from "../domain.js";
 
-export type GateStepStatus = "pending" | "open" | "passed" | "changes_requested";
+export type GateStepStatus = "pending" | "open" | "passed" | "changes_requested" | "withdrawn";
 
 export interface GateRoundStep {
   round: number;
@@ -19,6 +19,11 @@ export interface GateRoundStep {
   status: GateStepStatus;
   /** The exact versions under review (J1.5): a verdict binds to these, not to "the latest". */
   assetVersions: SlotVersionRef[];
+}
+
+/** An answer override invalidates the submission under review before the item resumes. */
+export function withdrawGateStep(step: GateRoundStep): GateStepStatus | null {
+  return step.status === "open" ? "withdrawn" : null;
 }
 
 /**
