@@ -1,25 +1,40 @@
-// The live/selected run's activity (J1.3, R4): readable summaries, raw
-// detail/tool.input collapsed by default, auto-scroll that yields once the
-// human scrolls up.
+// UX1 brief B §Build 2: the live/selected run's activity, restyled as the
+// Exhibit stream (EXHIBIT §7.4): a mono timestamp, a signal dot, then a line
+// of prose. No emoji (EXHIBIT §8) — the icon map is replaced by a coloured
+// dot. Reused as-is by the rail's ChatPanel (plan §4: "Become the Item
+// page"), so the exported names and props stay stable.
 
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ActivityItem, EngagementId, RunId } from "@workbench/core";
 import { api, qk } from "../../api/index.js";
+import "./ActivityStream.css";
 
-const KIND_ICON: Record<ActivityItem["kind"], string> = {
-  text: "\u{1F4AC}",
-  tool: "\u{1F527}",
-  denial: "\u{26D4}",
-  progress: "⏳",
-  publish: "\u{1F4E4}",
-  question: "❓",
-  submit: "✅",
-  nudge: "\u{1F449}",
-  result: "\u{1F3C1}",
-  error: "❌",
-  system: "⚙️",
-};
+// "implicit" (a dotted caution outline) is EXHIBIT §7.4's fourth stream dot; it needs the
+// implicit-read tracking that arrives in I4, so only read/write/ask/positive/caution/critical are reachable here.
+type DotKind = "read" | "write" | "ask" | "positive" | "caution" | "critical";
+
+function dotKind(item: ActivityItem): DotKind {
+  switch (item.kind) {
+    case "text":
+    case "result":
+    case "system":
+    case "progress":
+      return "read";
+    case "tool":
+      return /read/i.test(item.tool?.name ?? "") ? "read" : "write";
+    case "publish":
+    case "submit":
+      return "positive";
+    case "question":
+      return "ask";
+    case "nudge":
+      return "caution";
+    case "denial":
+    case "error":
+      return "critical";
+  }
+}
 
 export function ActivityStream({ eid, runId }: { eid: EngagementId; runId: RunId }) {
   const q = useQuery({ queryKey: qk.runActivity(eid, runId), queryFn: () => api.getRunActivity(eid, runId), refetchInterval: false });
@@ -57,15 +72,13 @@ export function ActivityRow({ item }: { item: ActivityItem }) {
   const hasRaw = item.detail != null || item.tool?.input != null;
   return (
     <div className={`activity-row activity-${item.kind}`} data-testid="activity-item" data-kind={item.kind}>
-      <span className="activity-icon" aria-hidden="true">
-        {KIND_ICON[item.kind]}
-      </span>
+      <time className="mono">{new Date(item.at).toLocaleTimeString()}</time>
+      <i className={`activity-dot activity-dot-${dotKind(item)}`} aria-hidden="true" />
       <div className="activity-body">
         <div className="activity-summary">
           {item.summary}
-          {item.agentId && <span className="badge subagent-badge"> subagent: {item.agentId}</span>}
+          {item.agentId && <span className="tag">subagent: {item.agentId}</span>}
         </div>
-        <div className="activity-time">{new Date(item.at).toLocaleTimeString()}</div>
         {hasRaw && (
           <>
             <button type="button" className="link" data-testid="activity-raw-toggle" onClick={() => setOpen((v) => !v)}>

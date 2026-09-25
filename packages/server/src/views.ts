@@ -5,11 +5,14 @@
 import fs from "node:fs";
 import {
   ActivityItem,
+  compareByConsequence,
+  computeConsequence,
   computeItemActions,
   type Allowed,
   type AssetContentView,
   type AssetVersion,
   type AssetVersionsView,
+  type EngagementSummary,
   type EngagementView,
   type InboxEntry,
   type InboxView,
@@ -27,6 +30,7 @@ import {
   type ThreadId,
   type ThreadSummary,
   type ThreadView,
+  type PlanView,
   type Version,
   type WorklogView,
 } from "@workbench/core";
@@ -118,13 +122,20 @@ function itemRef(ctx: EngagementContext, id: ItemId): { id: ItemId; title: strin
 export function getInboxView(ctx: EngagementContext): InboxView {
   const requests = inboxRepo.listInboxRequests(ctx.dbCtx, "human");
   const humanItems = inboxRepo.listInboxHumanItems(ctx.dbCtx);
+  const plan = buildPlanView(ctx);
 
-  const entries: InboxEntry[] = [];
+  // `at` only orders entries of equal consequence (oldest first); it is not part of the view.
+  const ranked: { entry: InboxEntry; at: string | null }[] = [];
   for (const request of requests) {
     const item = itemRef(ctx, request.itemId);
-    if (request.type === "question") entries.push({ kind: "question", request, item });
-    else if (request.type === "gate_request") entries.push({ kind: "review", request, item });
-    else if (request.type === "run_issue") entries.push({ kind: "run_issue", request, item });
+    const at = request.createdAt;
+    if (request.type === "question") {
+      ranked.push({ at, entry: { kind: "question", request, item, consequence: computeConsequence(plan, "question", item.id) } });
+    } else if (request.type === "gate_request") {
+      ranked.push({ at, entry: { kind: "review", request, item, consequence: computeConsequence(plan, "review", item.id) } });
+    } else if (request.type === "run_issue") {
+      ranked.push({ at, entry: { kind: "run_issue", request, item, consequence: computeConsequence(plan, "run_issue", item.id) } });
+    }
   }
   for (const row of humanItems) {
     const inputs = itemsRepo.listInputs(ctx.dbCtx, row.id).map((i) => ({
@@ -139,24 +150,42 @@ export function getInboxView(ctx: EngagementContext): InboxView {
       format: o.format,
       latest: assetVersionsRepo.latestVersion(ctx.dbCtx, o.slotRef),
     }));
-    entries.push({
-      kind: "human_item",
-      item: { id: row.id, title: row.title },
-      status: row.status!,
-      inputs,
-      outputs,
-      markDone: computeItemActions(itemActionState(ctx, row.id)).markDone,
+    ranked.push({
+      at: null,
+      entry: {
+        kind: "human_item",
+        item: { id: row.id, title: row.title },
+        status: row.status!,
+        inputs,
+        outputs,
+        markDone: computeItemActions(itemActionState(ctx, row.id)).markDone,
+        consequence: computeConsequence(plan, "human_item", row.id),
+      },
     });
   }
   for (const proposal of proposalsRepo.listPending(ctx.dbCtx)) {
-    entries.push({ kind: "proposal", proposal: getProposalView(ctx, proposal.id) });
+    ranked.push({
+      at: proposal.createdAt,
+      entry: { kind: "proposal", proposal: getProposalView(ctx, proposal.id), consequence: computeConsequence(plan, "proposal", null) },
+    });
   }
   for (const notification of notificationsRepo.listUndismissed(ctx.dbCtx)) {
     const request = notification.requestId ? requestsRepo.getRequest(ctx.dbCtx, notification.requestId) : null;
     const item = notification.itemId ? itemRef(ctx, notification.itemId) : null;
-    entries.push({ kind: "fyi", notification, request, item, override: overrideAllowedFor(ctx, request) });
+    ranked.push({
+      at: notification.createdAt,
+      entry: {
+        kind: "fyi",
+        notification,
+        request,
+        item,
+        override: overrideAllowedFor(ctx, request),
+        consequence: computeConsequence(plan, "fyi", item?.id ?? null),
+      },
+    });
   }
-  return { entries };
+  ranked.sort((a, b) => compareByConsequence({ score: a.entry.consequence.score, at: a.at }, { score: b.entry.consequence.score, at: b.at }));
+  return { entries: ranked.map((r) => r.entry) };
 }
 
 /** Whether the Inbox should offer "Override" on an FYI about a question the Approach Agent answered (J2.3). */
@@ -172,9 +201,9 @@ function overrideAllowedFor(ctx: EngagementContext, request: Request | null): Al
   return { allowed: true, reason: null };
 }
 
-export function getEngagementView(ctx: EngagementContext): EngagementView {
+/** The engagements-home row (C6); also the base of the full engagement view. */
+export function getEngagementSummaryView(ctx: EngagementContext): EngagementSummary {
   const totalRow = ctx.dbCtx.sqlite.prepare("SELECT COALESCE(SUM(cost_usd), 0) AS total FROM runs").get() as { total: number };
-  const inbox = getInboxView(ctx);
   return {
     id: ctx.id,
     name: ctx.meta.name,
@@ -182,13 +211,30 @@ export function getEngagementView(ctx: EngagementContext): EngagementView {
     seedId: ctx.meta.seed?.id ?? null,
     planVersion: ctx.meta.planVersion,
     costUsd: totalRow.total,
+    progress: planProgress(buildPlanView(ctx)),
+    inboxCount: getInboxView(ctx).entries.length,
+  };
+}
+
+/**
+ * Leaf tasks done / total. Counted directly rather than from ENG's roll-up,
+ * because phases are top-level items (parent null), not ENG's children.
+ * Cancelled items are dropped from the plan, so they don't count.
+ */
+function planProgress(plan: PlanView): { done: number; total: number } {
+  const leaves = plan.items.filter((i) => i.status != null && i.status !== "cancelled");
+  return { done: leaves.filter((i) => i.status === "done").length, total: leaves.length };
+}
+
+export function getEngagementView(ctx: EngagementContext): EngagementView {
+  return {
+    ...getEngagementSummaryView(ctx),
     settings: ctx.meta.settings,
     folderPath: ctx.paths.root,
     runtime: ctx.runtime.kind,
     profile: ctx.server.config.profile,
     workModel: ctx.profile.models.work,
     approachModel: ctx.profile.models.approach,
-    inboxCount: inbox.entries.length,
   };
 }
 

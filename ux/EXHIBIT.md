@@ -227,7 +227,7 @@ Shapes 6 of 14 questions in the guide.             ← why it matters (consequen
 ## 10. Implementation conventions (apps/web)
 
 1. **Import the tokens once**, in `main.tsx`, from `ux/exhibit-tokens.css` or from a copy in `apps/web/src/styles/`. The redesign plan decides which. Component CSS uses `var(--…)` only: no hex values, no font names, no px sizes that a token already covers.
-2. **Fonts are self-hosted.** The app runs locally, and a POC demo must not depend on Google Fonts at runtime. Adding `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` and `@fontsource-variable/source-serif-4` is a **dependency request** (CLAUDE.md rule 3).
+2. **Fonts are loaded from Google Fonts for now**, through a `<link>` in `apps/web/index.html` (decided 2026-09-25). The fallback stacks in the tokens keep the app readable offline. If offline demos become important, self-host through `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` and `@fontsource-variable/source-serif-4`; that is a dependency request (CLAUDE.md rule 3).
 3. **One glyph module** (`apps/web/src/ui/glyphs.tsx`) exports `StatusGlyph`, `ExecGlyph`, `GateGlyph`, `DocGlyph` and `HarveyBall`. Nothing else draws these.
 4. **A small primitives layer** (`apps/web/src/ui/`): `Button`, `Segmented`, `Tag`, `SourceChip`, `Status`, `Version`, `Card` (kicker, title, evidence, actions), `Tracker`. Pages compose them. There is no UI library.
 5. The theme and density are set as `data-theme` and `data-density` on `<html>` and stored per user in `localStorage` (a convenience only).

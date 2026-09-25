@@ -28,11 +28,39 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     try { await fn(); log("OK  ", name); }
     catch (e) { log("FAIL", name, "-", e.message.split("\n")[0]); await shot("FAIL-" + name.replace(/\W+/g, "_")); throw e; }
   };
-  const tab = (name) => page.getByTestId(`tab-${name}`).click();
+  // UX1 (UX1-PLAN §7): decisions on the Brief, reviews in the document's review bar,
+  // human work on the Item page, the conversation in the Kick-off stage or the rail.
+  const brief = page.getByTestId("brief-page");
+  const chat = page.getByTestId("chat-panel");
+  const goHome = async () => { await page.getByTestId("nav-home").click(); await brief.waitFor({ timeout: T }); };
+  const goPlan = async () => { await page.getByTestId("nav-plan").click(); await page.getByTestId("process-view").waitFor({ timeout: T }); };
+  /** The conversation is in the stage during the Kick-off, else in the rail: open the rail if it is collapsed. */
+  const showChat = async () => {
+    if (!(await chat.isVisible())) await page.getByTestId("rail-toggle").click();
+    await chat.waitFor({ timeout: T });
+  };
+  /** FYIs are collapsed into one "N updates" row on the Brief. */
+  const showFyis = async () => {
+    const toggle = brief.getByTestId("fyi-updates-toggle");
+    await toggle.waitFor({ timeout: T });
+    if (!/hide/i.test(await toggle.innerText())) await toggle.click();
+  };
+  /** Opens the top review card's document and acts in its review bar, then returns to the Brief. */
+  const review = async (act) => {
+    await goHome();
+    const card = brief.getByTestId("inbox-card-review").first();
+    await card.waitFor({ timeout: T });
+    await card.getByTestId("review-open").click();
+    const bar = page.getByTestId("review-bar");
+    await bar.waitFor({ timeout: T });
+    await act(bar);
+    await bar.waitFor({ state: "detached", timeout: T });
+    await goHome();
+  };
   const approachMessages = () => page.locator('[data-testid="chat-message"][data-role="approach"]');
   /** Sends a chat message and waits for the Approach Agent's reply to that turn. */
   const say = async (text) => {
-    await tab("chat");
+    await showChat();
     const before = await approachMessages().count();
     await page.getByTestId("chat-input").fill(text);
     await page.getByTestId("chat-send").click();
@@ -65,8 +93,8 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
       await say("Four C-suite interviews: CEO, CFO, COO and CIO. The CIO is three months in the role. One human does the interviews.");
       await page.getByTestId("chat-asset-link").nth(1).waitFor({ timeout: T });
       await page.getByTestId("proposal-card").first().waitFor({ timeout: T });
-      await page.getByTestId("process-slot-ENG/context").waitFor({ timeout: T });
-      await page.getByTestId("process-slot-ENG/stakeholders").waitFor({ timeout: T });
+      await page.getByTestId("kickoff-asset-ENG/context").waitFor({ timeout: T });
+      await page.getByTestId("kickoff-asset-ENG/stakeholders").waitFor({ timeout: T });
       await shot("02-proposal");
     });
     await step("J2.1 correction → stakeholders v1.1", async () => {
@@ -76,11 +104,11 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     await step("J2.1 reload resumes the same conversation", async () => {
       const n = await page.getByTestId("chat-message").count();
       await page.reload();
-      await tab("chat");
+      await showChat();
       await page.getByTestId("chat-message").nth(n - 1).waitFor({ timeout: T });
     });
     await step("J2.2 preview the proposal, then approve", async () => {
-      const card = page.getByTestId("proposal-card").first();
+      const card = chat.getByTestId("proposal-card").first();
       if ((await card.getByTestId("proposal-op").count()) < 5) throw new Error("expected at least 5 readable operations");
       await card.getByTestId("proposal-preview-toggle").click();
       await page.getByTestId("preview-banner").waitFor({ timeout: T });
@@ -88,61 +116,71 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
       await shot("03-preview");
       await page.getByTestId("preview-exit").click();
       await page.getByTestId("preview-banner").waitFor({ state: "detached", timeout: T });
-      await card.getByTestId("proposal-approve").click();
+      await page.getByTestId("nav-home").click();
+      await showChat();
+      await chat.getByTestId("proposal-card").first().getByTestId("proposal-approve").click();
       await page.getByTestId("plan-version").filter({ hasText: "v2" }).waitFor({ timeout: T });
+      await brief.waitFor({ timeout: T }); // with an approved plan, home is the Brief
+      await goPlan();
       await page.getByTestId("process-node-WI-002").waitFor({ timeout: T });
     });
     await step("J2.3 WI-002's question is answered by the Approach Agent (FYI)", async () => {
-      await tab("inbox");
-      const fyi = page.getByTestId("inbox-card-fyi").filter({ hasText: /Approach Agent/ }).first();
+      await goHome();
+      await showFyis();
+      const fyi = brief.getByTestId("inbox-card-fyi").filter({ hasText: /Approach Agent/ }).first();
       await fyi.waitFor({ timeout: T });
       await shot("04-fyi");
     });
     await step("J2.3 override the answer once WI-002 is at its gate", async () => {
-      const review = page.getByTestId("inbox-card-review");
-      await review.waitFor({ timeout: T });
-      const fyi = page.getByTestId("inbox-card-fyi").filter({ hasText: /Approach Agent/ }).first();
+      const reviewCard = brief.getByTestId("inbox-card-review");
+      await reviewCard.waitFor({ timeout: T });
+      await showFyis();
+      const fyi = brief.getByTestId("inbox-card-fyi").filter({ hasText: /Approach Agent/ }).first();
       await fyi.getByTestId("fyi-override-open").click();
       await fyi.getByTestId("fyi-override-text").fill("Focus on her forward vision, but include one question on inherited commitments.");
       await fyi.getByTestId("fyi-override-submit").click();
-      await review.waitFor({ state: "detached", timeout: T });
+      await reviewCard.waitFor({ state: "detached", timeout: T });
     });
     await step("J2.3 re-run reaches the gate → approve", async () => {
-      const review = page.getByTestId("inbox-card-review");
-      await review.waitFor({ timeout: T });
-      await review.getByTestId("review-approve").click();
-      await review.waitFor({ state: "detached", timeout: T });
-      const fyi = page.getByTestId("inbox-card-fyi").first();
-      if (await fyi.count()) await fyi.getByTestId("fyi-dismiss").click();
+      await review((bar) => bar.getByTestId("review-approve").click());
+      if (await brief.getByTestId("fyi-updates-toggle").count()) {
+        await showFyis();
+        const fyi = brief.getByTestId("inbox-card-fyi").first();
+        if (await fyi.count()) await fyi.getByTestId("fyi-dismiss").click();
+      }
     });
     await step("J1.6 human item uploads + mark done", async () => {
-      const card = page.locator('[data-testid="inbox-card-human-item"][data-item-id="WI-003"]');
+      await goHome();
+      const card = brief.locator('[data-testid="inbox-card-human-item"][data-item-id="WI-003"]');
       await card.waitFor({ timeout: T });
+      await card.getByTestId("human-item-open").click();
+      const work = page.getByTestId("your-work");
+      await work.waitFor({ timeout: T });
       for (const who of ["ceo", "cfo", "coo", "cio"]) {
-        await card.getByTestId(`upload-input-notes-${who}`).setInputFiles(path.join(ROOT, `demo/interview-notes/notes-${who}.md`));
-        await card.getByTestId(`upload-slot-notes-${who}`).getByText(/v1\.0/).waitFor({ timeout: T });
+        await work.getByTestId(`upload-input-notes-${who}`).setInputFiles(path.join(ROOT, `demo/interview-notes/notes-${who}.md`));
+        await work.getByTestId(`upload-slot-notes-${who}`).getByText(/1\.0/).waitFor({ timeout: T });
       }
-      await card.getByTestId("mark-done").click();
-      await card.waitFor({ state: "detached", timeout: T });
+      await work.getByTestId("mark-done").click();
+      await work.waitFor({ state: "detached", timeout: T }); // Your work shows only while the item is ready or in progress
+      await goHome();
     });
     await step("J2.5 WI-004 suggests a CFO follow-up → approve the proposal", async () => {
-      const card = page.getByTestId("inbox-card-proposal");
+      await goHome();
+      const card = brief.getByTestId("inbox-card-proposal");
       await card.waitFor({ timeout: T });
       await card.getByTestId("proposal-suggested-by").filter({ hasText: /WI-004/i }).waitFor({ timeout: T });
       await shot("05-suggestion");
       await card.getByTestId("proposal-approve").click();
       await card.waitFor({ state: "detached", timeout: T });
+      await goPlan();
       await page.getByTestId("process-node-WI-003e").waitFor({ timeout: T });
     });
     await step("J1.5 WI-004 review → approve", async () => {
-      const card = page.getByTestId("inbox-card-review");
-      await card.waitFor({ timeout: T });
-      await card.getByTestId("review-approve").click();
-      await card.waitFor({ state: "detached", timeout: T });
+      await review((bar) => bar.getByTestId("review-approve").click());
     });
     await step("J2.6 human asks for a change → reject with a reason", async () => {
       await say("Add a short benchmarking item before synthesis.");
-      const card = page.getByTestId("proposal-card").last();
+      const card = chat.getByTestId("proposal-card").last();
       await card.getByTestId("proposal-reject-open").click();
       await card.getByTestId("proposal-reject-reason").fill("Scope it to three peers first.");
       await card.getByTestId("proposal-reject-submit").click();
@@ -150,13 +188,14 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     });
     await step("J2.6 ask again → approve → WI-005 appears", async () => {
       await say("Fine as proposed, please add the benchmarking item after all.");
-      const card = page.getByTestId("proposal-card").last();
+      const card = chat.getByTestId("proposal-card").last();
       await card.getByTestId("proposal-approve").click();
+      await goPlan();
       await page.getByTestId("process-node-WI-005").waitFor({ timeout: T });
     });
     await step("J2.4 WI-005's question is escalated → amend", async () => {
-      await tab("inbox");
-      const card = page.getByTestId("inbox-card-question");
+      await goHome();
+      const card = brief.getByTestId("inbox-card-question");
       await card.waitFor({ timeout: T });
       await card.getByTestId("question-escalation-view").waitFor({ timeout: T });
       await shot("06-escalated");
@@ -196,7 +235,8 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
       await panel.getByTestId("settings-close").click();
     });
     await step("D4 approach journal tab renders", async () => {
-      await tab("approach");
+      await showChat();
+      await page.getByTestId("rail-journal").click();
       await page.getByTestId("approach-journal").waitFor({ timeout: T });
     });
   } catch { process.exitCode = 1; }

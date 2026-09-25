@@ -8,10 +8,11 @@ import type { PlanView } from "@workbench/core";
 
 const elk = new ELK();
 
-export const TASK_W = 200;
+// UX1 brief B §Build 1: task nodes are 188px wide in the Exhibit canvas node spec (EXHIBIT §7.4).
+export const TASK_W = 188;
 export const TASK_H = 74;
 export const DATA_W = 150;
-export const DATA_H = 56;
+export const DATA_H = 52;
 
 export interface LaidOutNode {
   id: string;

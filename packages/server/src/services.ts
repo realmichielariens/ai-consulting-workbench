@@ -48,7 +48,7 @@ import { resolveQuestionAnswer } from "./questionAnswering.js";
 import { launchRun, wireAutostart } from "./runService.js";
 import { recomputeReadiness, scheduleAutostart, syncPlanState } from "./scheduler.js";
 import { ensureThread } from "./threadService.js";
-import { getEngagementView, getItemDetailView, toRun } from "./views.js";
+import { getEngagementSummaryView, getEngagementView, getItemDetailView, toRun } from "./views.js";
 
 // ---------------------------------------------------------------------------
 // J1.1 — create engagement from seed
@@ -89,14 +89,7 @@ export async function createEngagement(
 }
 
 function getEngagementSummary(ctx: EngagementContext): EngagementSummary {
-  return {
-    id: ctx.id,
-    name: ctx.meta.name,
-    createdAt: ctx.meta.createdAt,
-    seedId: ctx.meta.seed?.id ?? null,
-    planVersion: ctx.meta.planVersion,
-    costUsd: (ctx.dbCtx.sqlite.prepare("SELECT COALESCE(SUM(cost_usd), 0) AS total FROM runs").get() as { total: number }).total,
-  };
+  return getEngagementSummaryView(ctx);
 }
 
 // ---------------------------------------------------------------------------

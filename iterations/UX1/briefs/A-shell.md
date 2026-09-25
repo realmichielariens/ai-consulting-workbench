@@ -15,7 +15,7 @@ You also set up the primitives and glyphs that packages B and C will use. You do
 - `apps/web/src/pages/home/**`
 - the page stubs listed below
 - `apps/web/src/components/{EngagementLayout,StartPage,SettingsPanel,FeedbackModal}.tsx`, and their tests
-- delete `apps/web/src/styles.css` once `styles/base.css` replaces it
+- delete `apps/web/src/styles.css` once `styles/base.css` replaces it. `main.tsx` already imports `../../../ux/exhibit-tokens.css` first (U0); replace its `./styles.css` import with `./styles/base.css`, keeping the tokens import first
 
 **Read-only:**
 - `apps/web/src/api/**`
@@ -49,11 +49,13 @@ Do not read DESIGN/ARCHITECTURE/ITERATIONS.
    - `{kind:"journal", ref:"ENG"}` for the journal;
    - otherwise null.
 
+   Type it as `StageContext & { label: string }`, where `StageContext` is the U0 contract type in `@workbench/core` (`packages/core/src/api.ts`: `{ kind: "item" | "asset" | "plan" | "journal", ref: string, version?: string }`). This is what C passes to `api.postMessage(eid, tid, { text, context })`, minus `label`.
+
    Also export a `label` string ("themes.md 2.0", "WI-004 Consolidate themes") for the chip. Unit-test the parse and build round trips, and the legacy redirects.
 4. **Tabs** (`shell/tabs.ts`, zustand, persisted per engagement in `localStorage` with every read and write in try/catch): Home and Plan are pinned. An object tab opens on navigation, and focuses if it is already open. A doc tab's key is the slotRef, and opening another version of the same slot replaces it. There are at most 8 object tabs, closed least recently used first. Closing the active tab activates its left neighbour. Unit-test the LRU and replace rules.
 5. **The shell** (`shell/AppShell.tsx`, used by `App.tsx` for `/e/:eid/**`):
    - the **nav rail**: W mark (`back-to-start`), `nav-home` (with the badge `inbox-count` = `engagement.inboxCount`), `nav-plan`, `nav-documents`, and `open-settings` at the bottom. Tooltips on all of them;
-   - the **top bar**: engagement name, KPIs (`progress-kpi` with a Harvey ball and done/total from `progress`, `plan-version` showing "v3", spend to 2 decimals), a live indicator (count of `activeRunId` in the plan), `rail-toggle`;
+   - the **top bar**: engagement name, KPIs (`progress-kpi` with a Harvey ball and done/total from `engagement.progress` (U0 C6: leaf tasks, cancelled excluded), `plan-version` showing "v3", spend to 2 decimals), a live indicator (count of `activeRunId` in the plan), `rail-toggle`;
    - the **tab strip** (`stage-tab-<key>`, `stage-tab-close-<key>`). The home tab is labelled "Kick-off" while `plan.items.length <= 1`, else "Brief";
    - the **stage**, which renders the page for the route;
    - the **rail** (`approach-rail`): a header with "Approach Agent", `rail-journal` (→ `openJournal`), `rail-expand` (→ `/conversation`) and collapse; its body renders `rail/RailContent.tsx`. Resizable from 320 to 480px, width persisted, toggled with `\` (`shell/shortcuts.ts` with `useShortcut`, ignored in inputs). Under 1280px it overlays with `--shadow-float`. **While the home tab is the Kick-off, or the route is `/conversation`, hide the rail**, so only one `chat-panel` exists;

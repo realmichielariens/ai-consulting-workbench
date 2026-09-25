@@ -348,7 +348,7 @@ Nothing in UX1 changes the engine rules, the DB schema or the Work Agent protoco
 
 ## 11. Decisions
 
-D6 was confirmed by the user on 2026-09-25. The others are adopted as recommended in [UX1-PLAN §2](../iterations/UX1-PLAN.md), to be reconfirmed at the start of U0.
+All the recommendations below were confirmed by the user on 2026-09-25. Fonts come from Google Fonts for now; see [UX1-PLAN §2](../iterations/UX1-PLAN.md).
 
 | # | Question | My recommendation |
 |---|---|---|

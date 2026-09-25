@@ -16,6 +16,7 @@ import {
   type RunId,
   type RunObserver,
   type RunResult,
+  type StageContext,
   type ThreadId,
 } from "@workbench/core";
 import { leasesRepo, nextMessageId, nextNotificationId, nextRunId, notificationsRepo, requestsRepo, runsRepo, threadsRepo, eventsRepo } from "@workbench/db";
@@ -26,6 +27,7 @@ import { checkpointCommit } from "./checkpoint.js";
 import { conflict } from "./errors.js";
 import { emitEvent, pushActivity, type EngagementContext } from "./engagementContext.js";
 import { currentModelProfile } from "./profileService.js";
+import { describeStageContext } from "./stageContext.js";
 import { ensureThread } from "./threadService.js";
 
 const LEASE_MS = 5 * 60 * 1000;
@@ -59,7 +61,7 @@ function buildApproachObserver(ctx: EngagementContext, runId: RunId, threadId: T
 }
 
 /** J2.1/J2.6/J2.7 — post a human message to T-0001, starting (or resuming) a conversation turn. 409 while a turn is already running. */
-export async function postMessage(ctx: EngagementContext, threadId: ThreadId, text: string): Promise<PostMessageResult> {
+export async function postMessage(ctx: EngagementContext, threadId: ThreadId, text: string, context?: StageContext): Promise<PostMessageResult> {
   if (threadId !== "T-0001") throw conflict(`no such thread: ${threadId}`);
   const thread = ensureThread(ctx);
   const profile = currentModelProfile(ctx.server);
@@ -75,7 +77,10 @@ export async function postMessage(ctx: EngagementContext, threadId: ThreadId, te
   const lease = leasesRepo.acquireLease(ctx.dbCtx, { scopeKey, role: "approach", holder: runId, leaseMs: LEASE_MS, now });
   if (!lease.acquired) throw conflict(`A turn is already running on ${thread.id}.`);
 
-  const situation = thread.sessionId == null ? buildBriefing(ctx) : buildSinceLastTurn(ctx, thread.lastSeenSeq);
+  const baseSituation = thread.sessionId == null ? buildBriefing(ctx) : buildSinceLastTurn(ctx, thread.lastSeenSeq);
+  const situation = context ? `${baseSituation}
+
+${describeStageContext(ctx, context)}` : baseSituation;
 
   runsRepo.createRun(ctx.dbCtx, {
     id: runId,

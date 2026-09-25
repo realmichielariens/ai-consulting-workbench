@@ -1,12 +1,13 @@
-// Top-level route switch, driven by the tiny URL-state module (state/url.ts):
-// "/" is the start page (J1.1), "/e/:eid" is an open engagement.
+// Top-level route switch: "/" is the Engagements home, "/e/:eid/**" mounts
+// the Exhibit shell (shell/AppShell.tsx). Driven by shell/nav.ts's useEid(),
+// which is reactive to both pushState navigation and back/forward.
 
-import { useRoute } from "./state/url.js";
-import { StartPage } from "./components/StartPage.js";
-import { EngagementLayout } from "./components/EngagementLayout.js";
+import { useEid } from "./shell/nav.js";
+import { HomePage } from "./pages/home/HomePage.js";
+import { AppShell } from "./shell/AppShell.js";
 
 export function App() {
-  const route = useRoute();
-  if (route.view === "engagement" && route.eid) return <EngagementLayout eid={route.eid} />;
-  return <StartPage />;
+  const eid = useEid();
+  if (eid) return <AppShell eid={eid} />;
+  return <HomePage />;
 }

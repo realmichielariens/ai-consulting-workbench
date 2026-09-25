@@ -1,0 +1,11 @@
+.journal-page {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: var(--sp-6) var(--sp-5);
+}
+.journal-page .approach-journal {
+  font-family: var(--font-read);
+  font-size: var(--fs-read);
+  line-height: var(--lh-read);
+  color: var(--ink);
+}

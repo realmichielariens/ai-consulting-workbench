@@ -18,7 +18,7 @@ describe("httpApi", () => {
   });
 
   test("parses a valid response against the route's Zod schema", async () => {
-    const summary = { id: "acme-discovery", name: "Acme", createdAt: "2026-09-23T00:00:00.000Z", seedId: "acme-discovery", planVersion: 1, costUsd: 0.12 };
+    const summary = { id: "acme-discovery", name: "Acme", createdAt: "2026-09-23T00:00:00.000Z", seedId: "acme-discovery", planVersion: 1, costUsd: 0.12, progress: { done: 2, total: 7 }, inboxCount: 3 };
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([summary]));
 
     const result = await httpApi.listEngagements();

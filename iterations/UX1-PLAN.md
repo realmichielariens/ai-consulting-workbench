@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Planned 2026-09-25. Not started. |
+| **Status** | U0, A, B, C and integration done 2026-09-25: 452 tests, typecheck and both walks green at $0. Next: the user look (§6), then §8 items 5–7. |
 | **Goal** | Rebuild the web UI's shell and journeys in the Exhibit language (`ux/EXHIBIT.md`), following the redesign (`ux/REDESIGN-PLAN.md`). **Every I1 and I2 journey keeps working.** |
 | **Scope** | Web UI, plus three small server additions (C1, C2, C6). No engine rule, DB schema, Work Agent or Approach Agent change. |
 | **Position** | After I2, **before the rest of I3.** The process view v0 (React Flow + ELK, proposal preview marks) already exists. UX1 moves it into the Plan tab and restyles it. I3's depth, focus, lanes, ghost overlay and restructuring are built afterwards, in that tab. |
@@ -75,7 +75,7 @@ A new engagement starts in a **kick-off** layout, with the conversation filling 
 
 ## 2. Decisions
 
-D6 was confirmed by the user on 2026-09-25. The others are the recommendations in `ux/REDESIGN-PLAN.md` §11, adopted for this plan. **Confirm them with the user at the start of U0**, in one message; they may override any of them.
+**All confirmed by the user on 2026-09-25.** Don't re-ask.
 
 | # | Decision |
 |---|---|
@@ -87,7 +87,7 @@ D6 was confirmed by the user on 2026-09-25. The others are the recommendations i
 | D6 | **UX1 comes before the rest of I3** (confirmed). |
 | D7 | `ux/exhibit-tokens.css` is the only tokens file. The web app imports it by relative path. |
 | D8 | The dev strip is visible by default, and can be hidden in Settings. |
-| D9 | Fonts are self-hosted via `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` and `@fontsource-variable/source-serif-4`. **Ask the user before `pnpm add`** (CLAUDE rule 3). If they decline, use a Google Fonts `<link>` in `apps/web/index.html`. |
+| D9 | **Fonts come from Google Fonts for now:** `preconnect` links plus one stylesheet `<link>` in `apps/web/index.html`, for IBM Plex Sans (400/500/600/700), IBM Plex Mono (400/500) and Source Serif 4 (opsz 8–60, 400/600, italic 400), with `display=swap`. Copy the URL from `ux/playground/index.html`, dropping the families the playground uses only for its alternatives. The fallback stacks in the tokens keep the app readable offline. There are no new dependencies. Self-hosting via `@fontsource` is a later option. |
 
 ---
 
@@ -97,7 +97,7 @@ D6 was confirmed by the user on 2026-09-25. The others are the recommendations i
 - the shell;
 - Engagements home, Kick-off, Brief, Plan (canvas restyle + tracker + peek + proposal bar), Item, Document, Documents register, Journal;
 - the rail;
-- settings drawer, dev strip, tokens, fonts, glyphs, primitives;
+- settings drawer, dev strip, tokens, fonts (Google Fonts link), glyphs, primitives;
 - C1, C2, C6;
 - walk updates.
 
@@ -144,14 +144,14 @@ export const Consequence = z.object({
 - Add one server test: the situation contains the line when a context is given.
 
 **C6: progress on engagements.**
-- `EngagementSummary` gains `progress: { done: number, total: number }` (from the engagement root's `rollup`, or counted over leaf tasks if that is null) and `inboxCount` (moved up from `EngagementView`).
+- `EngagementSummary` gains `progress: { done: number, total: number }` and `inboxCount` (moved up from `EngagementView`). *As built (U0):* progress counts leaf tasks directly, excluding cancelled ones, because phases are top-level items (parent null) and ENG's roll-up is therefore empty.
 - `listEngagements` already builds full views, so fill both there.
 
 All three changes: typecheck, update the existing tests, and add the new rule tests. `pnpm test` must stay green.
 
 ### 4.2 Styling setup (U0)
 
-- `apps/web/src/main.tsx` imports `../../../ux/exhibit-tokens.css`, then the fonts (D9), then `./styles/base.css` (created by A). Vite's workspace-root `fs.allow` permits the relative import; verify it with `vite build`.
+- `apps/web/index.html` loads the fonts (D9). `apps/web/src/main.tsx` imports `../../../ux/exhibit-tokens.css`, then `./styles/base.css` (created by A). Vite's workspace-root `fs.allow` permits the relative import; verify it with `vite build`.
 - Every component uses `var(--…)` tokens only. The status colour comes from `--status-<ItemStatus>`.
 - CSS is plain and co-located: each page or component folder has its own `.css` file, imported by its component. There is no CSS-in-JS and no UI library.
 
@@ -234,7 +234,7 @@ Each brief is in `iterations/UX1/briefs/`, and states its paths, what to read (�
 
 | Package | Who | Builds | Checks before stopping | Depends on |
 |---|---|---|---|---|
-| **U0** | Main | <ul><li>confirm §2 with the user;</li><li>ask the user to commit the I2 work;</li><li>fonts (D9);</li><li>C1, C2, C6 (§4.1) with tests;</li><li>web api client additions (`postMessage` context);</li><li>the token import in `main.tsx`;</li><li>review the briefs against the final contracts</li></ul> | `pnpm test`, `pnpm typecheck`, both walks still green (no UI change yet) | — |
+| **U0** | Main | <ul><li>ask the user to commit the I2 work;</li><li>the Google Fonts link (D9);</li><li>C1, C2, C6 (§4.1) with tests;</li><li>web api client additions (`postMessage` context);</li><li>the token import in `main.tsx`;</li><li>review the briefs against the final contracts</li></ul> | `pnpm test`, `pnpm typecheck`, both walks still green (no UI change yet) | — |
 | **A: Shell** | Sonnet | Brief A: shell, routing and tabs, nav, top bar, dev strip, rail container, settings drawer, Engagements home, `ui/` primitives and glyphs, base CSS, page stubs | Typecheck; web tests; url/tabs unit tests; boot check: open an engagement and click through the stubs | U0 |
 | **B: Stage pages** | Sonnet | Brief B: Plan (restyled canvas, tracker, peek, proposal bar), Item page with *Your work*, Document page with the review bar, Documents register | Typecheck; web tests; the review-bar and tracker unit tests; boot check | A |
 | **C: Brief and rail** | Sonnet | Brief C: decision cards, Brief (computed title, keyboard), Kick-off, rail (memo stream, inline cards, context chip, expand), Journal page | Typecheck; web tests; brief-title and card unit tests; boot check | A (**in parallel with B**) |

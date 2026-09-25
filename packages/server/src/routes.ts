@@ -33,7 +33,7 @@ export function registerRoutes(app: FastifyInstance, server: ServerContext): voi
   app.get(routes.listEngagements.path, async () => {
     return services.listEngagementIds(server).map((id) => {
       const ctx = ctxFor(server, id);
-      return views.getEngagementView(ctx);
+      return views.getEngagementSummaryView(ctx);
     });
   });
 
@@ -173,7 +173,7 @@ export function registerRoutes(app: FastifyInstance, server: ServerContext): voi
   app.post(routes.postMessage.path, async (req, reply) => {
     const { eid, tid } = routes.postMessage.params.parse(req.params);
     const body = routes.postMessage.body.parse(req.body);
-    const result = await postMessage(ctxFor(server, eid), tid, body.text);
+    const result = await postMessage(ctxFor(server, eid), tid, body.text, body.context);
     reply.code(202);
     return result;
   });

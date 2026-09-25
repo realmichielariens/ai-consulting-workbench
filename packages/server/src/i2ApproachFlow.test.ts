@@ -104,10 +104,11 @@ function fakeHandle(runId: string, work: () => Promise<RunResult>): RunHandle {
 }
 
 /** The scripted ApproachRuntime for this test: turn 1 publishes ENG's two slots and proposes the plan; the only task answers WI-002's question. */
-function createScriptedApproachRuntime(): ApproachRuntime {
+function createScriptedApproachRuntime(turns: ApproachTurnRequest[] = []): ApproachRuntime {
   return {
     kind: "fake",
     startTurn(req: ApproachTurnRequest): RunHandle {
+      turns.push(req);
       return fakeHandle(req.runId, async (): Promise<RunResult> => {
         req.observer.onSession("fake-aa-session-1");
         if (req.resumeSessionId == null) {
@@ -233,6 +234,10 @@ describe("I2 flow: blank engagement -> conversation turn -> proposal -> approve 
 
     const oldReview = inbox.entries.find((e): e is Extract<InboxEntry, { kind: "review" }> => e.kind === "review" && e.item.id === "WI-002");
     expect(oldReview).toBeDefined();
+    // C1: the review holds up WI-003 and, through its notes, WI-004; the server ranks by that consequence.
+    expect(oldReview!.consequence).toEqual({ score: 55, blocks: ["WI-003", "WI-004"], reason: "Blocks 2 items" });
+    expect(inbox.entries[0]).toBe(oldReview);
+    expect(fyi!.consequence.reason).toBe("For your information");
     const override = await app.inject({
       method: "POST",
       url: `/api/engagements/${eid}/requests/${fyi!.request!.id}/override`,
@@ -257,5 +262,30 @@ describe("I2 flow: blank engagement -> conversation turn -> proposal -> approve 
     expect(afterVerdict.node.status).toBe("done");
     const wi003AfterGate = ((await app.inject({ method: "GET", url: `/api/engagements/${eid}/items/WI-003` })).json() as ItemDetailView).node;
     expect(wi003AfterGate.status).toBe("ready");
+  });
+  it("C2: adds the stage context line to the turn's situation, without changing the chat body", async () => {
+    const createRes = await app.inject({ method: "POST", url: "/api/engagements", payload: { seedId: "blank", name: "Acme (C2 test)" } });
+    const eid = (createRes.json() as { id: string }).id;
+    const ctx = openEngagement(server, eid);
+    const turns: ApproachTurnRequest[] = [];
+    ctx.approachRuntime = createScriptedApproachRuntime(turns);
+
+    await app.inject({ method: "POST", url: `/api/engagements/${eid}/threads/T-0001/messages`, payload: { text: "Let's scope Acme's IT strategy." } });
+    await waitFor(async () => (ctx.approachRuns.size === 0 && turns.length === 1 ? true : undefined));
+    expect(turns[0]!.situation).not.toContain("currently viewing");
+
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/engagements/${eid}/threads/T-0001/messages`,
+      payload: { text: "What changed here?", context: { kind: "asset", ref: "ENG/context", version: "1.0" } },
+    });
+    expect(res.statusCode).toBe(202);
+    expect(turns[1]!.situation).toContain("The human is currently viewing: document ENG/context v1.0 (");
+    expect(turns[1]!.message).toBe("What changed here?");
+    await waitFor(async () => (ctx.approachRuns.size === 0 ? true : undefined));
+
+    const thread = (await app.inject({ method: "GET", url: `/api/engagements/${eid}/threads/T-0001` })).json() as { messages: { role: string; body: string }[] };
+    expect(thread.messages.filter((m) => m.role === "human").map((m) => m.body)).toEqual(["Let's scope Acme's IT strategy.", "What changed here?"]);
+    await ctx.writeQueue.run(() => undefined); // let queued git checkpoints finish before afterEach removes the folder
   });
 });

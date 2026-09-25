@@ -71,3 +71,16 @@ You replace four of those stubs. Package C builds the Brief and the rail in para
 - No real SDK runs. Don't run the e2e walks.
 
 Finish with a **≤ 20-line final message**: what you built, any ids added beyond the plan, check evidence, contract change requests, and open issues. No report files.
+
+---
+
+## Package A's hand-off (pasted by the main session)
+
+A is done: typecheck clean, 434/434 tests green. Code against these exports (all read-only for you):
+
+- **`shell/nav.ts`**: `openHome(eid)`, `openPlan(eid, { sel?, view?: "canvas"|"tracker", preview? })`, `openDocuments(eid)`, `openItem(eid, itemId, { tab?: ItemTab, run? })`, `openDoc(eid, slotRef, version?)`, `openJournal(eid)`, `openConversation(eid)`, `backToStart()`, `useStageRoute(): StageRoute`, `useEid()`, `useStageContext(): (StageContext & { label: string }) | null`. Types: `StageRoute` (a union on `page`: `home | plan{view,sel,preview} | documents | item{itemId,tab,run} | doc{itemId,slot,version} | journal | conversation | none`), `PlanViewMode`, `ItemTab`.
+- **`ui/index.ts`**: `Button` (`ButtonProps`, `ButtonVariant`), `Segmented` (`SegmentedOption`), `Tag`, `SourceChip`, `Version`, `Card`, `Tracker` (`TrackerColumn`, `TrackerRow`, `TrackerGroupRow`, `TrackerDataRow`), `StatusGlyph`, `Status`, `ExecGlyph`, `GateGlyph`, `DocGlyph`, `HarveyBall`, `harveyFromRatio`. Read each file's props before use. The primitives declare `data-testid` explicitly.
+- **`shell/shortcuts.ts`**: `useShortcut(key, handler, { when? })`. **`shell/rail.ts`**: `useRailStore` (`open`, `width`, `toggle()`, `setOpen()`). **`shell/tabs.ts`**: `useTabsStore`.
+- **Stub signatures** (keep them: `shell/AppShell.tsx` renders them, and you can't edit it): `PlanPage({ eid, sel?, view?, preview? })`, `ItemPage({ eid, itemId, tab?, run? })`, `DocumentPage({ eid, itemId, slot, version })`, `DocumentsPage({ eid })`, `BriefPage({ eid })`, `KickoffPage({ eid })`, `JournalPage({ eid })`, `RailContent({ eid })`. The shell passes the route params as these props; the stubs ignore the optional ones today.
+- **Legacy router:** `state/url.ts` still exists only because the old components use it. **Your new code must navigate only through `shell/nav.ts`.** Remove every `state/url.ts` import from the files you own, so the main session can delete it at integration.
+- `styles.css` is gone, so the old components you replace render unstyled for now. That is expected.

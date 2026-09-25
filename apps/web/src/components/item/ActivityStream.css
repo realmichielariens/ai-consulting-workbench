@@ -1,0 +1,75 @@
+/* EXHIBIT §7.4 "Activity stream": mono timestamp, a signal dot, then prose. */
+
+.activity-stream {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 480px;
+  /* A flex item with its own overflow gets an automatic min-height of 0 (CSS
+     Flexbox §4.5), so inside .item-page's flex column it would otherwise be
+     crushed to zero height once the page's content exceeds the viewport. */
+  flex-shrink: 0;
+}
+.activity-row {
+  display: grid;
+  grid-template-columns: 58px 14px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  padding: var(--sp-2) 0;
+  border-bottom: 1px dashed var(--rule);
+  font-size: var(--fs-sm);
+}
+.activity-row time.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.activity-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rule-strong);
+  transform: translateY(2px);
+}
+.activity-dot-read {
+  background: var(--ink-3);
+}
+.activity-dot-write {
+  background: var(--accent);
+}
+.activity-dot-ask {
+  background: var(--gate);
+  border-radius: 1px;
+  transform: translateY(2px) rotate(45deg);
+}
+.activity-dot-positive {
+  background: var(--positive);
+}
+.activity-dot-caution {
+  background: var(--caution);
+}
+.activity-dot-critical {
+  background: var(--critical);
+}
+.activity-denial .activity-summary {
+  color: var(--critical);
+}
+.activity-error .activity-summary {
+  color: var(--critical);
+}
+.activity-body {
+  min-width: 0;
+}
+.activity-summary {
+  color: var(--ink);
+}
+.activity-raw {
+  margin-top: 6px;
+  padding: var(--sp-2);
+  background: var(--sunken);
+  border-radius: var(--r);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}

@@ -2,7 +2,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "./App.js";
-import "./styles.css";
+// UX1 D7: the one tokens file, shared with the playground.
+import "../../../ux/exhibit-tokens.css";
+import "./styles/base.css";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },

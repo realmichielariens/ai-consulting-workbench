@@ -2,6 +2,21 @@
 
 A local, single-user POC in which a human runs an engagement (for example an IT strategy) with AI agents, built on the Claude Agent SDK. See [DESIGN.md](DESIGN.md) and [ARCHITECTURE.md](ARCHITECTURE.md) for what it does and how it's built, and [CLAUDE.md](CLAUDE.md) for the conventions every package follows.
 
+## Try UX1: the Exhibit redesign
+
+About 15 minutes, on scripted agents at no cost.
+
+1. Run `pnpm dev:fake` and open <http://localhost:5317>.
+2. Click **Start with the Approach Agent**. The conversation fills the stage (the Kick-off). Send the kick-off messages from the I2 steps below, and watch `context` and `stakeholders` appear under *Taking shape*. On the proposal card, click **Review on plan**: the Plan opens with the proposal bar. Click **Approve** there. You land on the **Brief**, now your home, and the conversation moves into the rail.
+3. When a question card arrives on the Brief, press `E` to amend it, type, and send.
+4. On a review card, click **Open & review**. Read the document, then click **Approve** in the review bar at the bottom.
+5. On the *Conduct CxO interviews* card, click **Open**. On its Item page, under *Your work*, upload the four files from `demo/interview-notes/` and click **Mark done**.
+6. On the **Plan**, switch **Canvas** ⇄ **Tracker**. Click a node to peek at it, and use **Open** to open it as a tab.
+7. Open a document and ask the rail "what changed here?". The context chip above the composer shows what the agent sees.
+8. Toggle dark mode in **Settings** (the gear, bottom left), and toggle the rail with `\`.
+
+The I1 and I2 steps below still work, with the new navigation: the Inbox is now the **Brief**, Chat is the **rail**, reviews happen in the document's review bar, and human work happens on the Item page. Developer details (runtime, WebSocket, cost, Open folder, Feedback) are in the strip at the bottom.
+
 ## Try I2 with the Approach Agent
 
 1. Run `pnpm dev:fake` and open <http://localhost:5317>. This uses scripted agents at no API cost.

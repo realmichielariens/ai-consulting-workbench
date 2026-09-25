@@ -70,6 +70,10 @@ export const EngagementSummary = z.object({
   seedId: z.string().nullable(),
   planVersion: z.number().int(),
   costUsd: z.number(),
+  /** UX1 C6: leaf items done / total (the engagement root's roll-up). */
+  progress: z.object({ done: z.number().int(), total: z.number().int() }),
+  /** Open Inbox entries ("needs you"). */
+  inboxCount: z.number().int(),
 });
 export type EngagementSummary = z.infer<typeof EngagementSummary>;
 
@@ -82,7 +86,6 @@ export const EngagementView = EngagementSummary.extend({
   workModel: z.string(),
   /** I2: the model new Approach Agent sessions use (J2.8). */
   approachModel: z.string(),
-  inboxCount: z.number().int(),
 });
 export type EngagementView = z.infer<typeof EngagementView>;
 
@@ -213,6 +216,18 @@ export const ThreadView = z.object({
 });
 export type ThreadView = z.infer<typeof ThreadView>;
 
+/**
+ * UX1 C2: what the human is looking at when they send a message (the rail's context chip).
+ * Not persisted: the server turns it into one line of the turn's situation text.
+ */
+export const StageContext = z.object({
+  kind: z.enum(["item", "asset", "plan", "journal"]),
+  /** An ItemId (item, plan selection, journal = "ENG") or a SlotRef (asset). */
+  ref: z.string().min(1),
+  version: Version.optional(),
+});
+export type StageContext = z.infer<typeof StageContext>;
+
 export const PostMessageResult = z.object({ messageId: z.string(), runId: RunId });
 export type PostMessageResult = z.infer<typeof PostMessageResult>;
 
@@ -228,14 +243,28 @@ export type JournalView = z.infer<typeof JournalView>;
 
 const ItemRef = z.object({ id: ItemId, title: z.string() });
 
+/**
+ * UX1 C1: how much waits on an Inbox entry (rules/consequence.ts). The server
+ * returns entries sorted by score desc, then age asc, so every surface shows one order.
+ */
+export const Consequence = z.object({
+  /** Higher = more urgent: kind weight + 10 per blocked item. */
+  score: z.number(),
+  /** Non-done, non-cancelled items transitively downstream of the entry's item. */
+  blocks: z.array(ItemId),
+  /** "Blocks 2 items" | "Blocks 1 item" | "Blocks nothing yet" | "Plan change" | "For your information" */
+  reason: z.string(),
+});
+export type Consequence = z.infer<typeof Consequence>;
+
 export const InboxEntry = z.discriminatedUnion("kind", [
   /**
    * J1.4: approve / amend / replace. Under aa-first only escalated questions reach the Inbox;
    * request.escalation then holds the Approach Agent's view (J2.4).
    */
-  z.object({ kind: z.literal("question"), request: Request, item: ItemRef }),
+  z.object({ kind: z.literal("question"), request: Request, item: ItemRef, consequence: Consequence }),
   /** J1.5: approve / request changes, for the exact versions in request.payload.submitted. */
-  z.object({ kind: z.literal("review"), request: Request, item: ItemRef }),
+  z.object({ kind: z.literal("review"), request: Request, item: ItemRef, consequence: Consequence }),
   /** J1.6: a ready or in-progress human item with its inputs and output slots. */
   z.object({
     kind: z.literal("human_item"),
@@ -244,11 +273,12 @@ export const InboxEntry = z.discriminatedUnion("kind", [
     inputs: z.array(z.object({ slot: SlotRef, required: z.boolean(), available: AssetVersion.nullable() })),
     outputs: z.array(z.object({ slot: SlotName, slotRef: SlotRef, required: z.boolean(), format: z.string(), latest: AssetVersion.nullable() })),
     markDone: Allowed,
+    consequence: Consequence,
   }),
   /** R3: retry / stop. */
-  z.object({ kind: z.literal("run_issue"), request: Request, item: ItemRef }),
+  z.object({ kind: z.literal("run_issue"), request: Request, item: ItemRef, consequence: Consequence }),
   /** J2.2 / J2.5: a pending proposal: approve / reject with a reason / preview. */
-  z.object({ kind: z.literal("proposal"), proposal: ProposalView }),
+  z.object({ kind: z.literal("proposal"), proposal: ProposalView, consequence: Consequence }),
   /**
    * J2.3: an FYI (dismissible). When it is about a question the Approach Agent answered,
    * `request` is that question (response.by = "approach:…") and `override` says whether the human can override now.
@@ -259,6 +289,7 @@ export const InboxEntry = z.discriminatedUnion("kind", [
     request: Request.nullable(),
     item: ItemRef.nullable(),
     override: Allowed,
+    consequence: Consequence,
   }),
 ]);
 export type InboxEntry = z.infer<typeof InboxEntry>;
@@ -438,7 +469,7 @@ export const routes = {
     method: "POST",
     path: "/api/engagements/:eid/threads/:tid/messages",
     params: ET,
-    body: z.object({ text: z.string().min(1) }),
+    body: z.object({ text: z.string().min(1), context: StageContext.optional() }),
     response: PostMessageResult,
   },
 

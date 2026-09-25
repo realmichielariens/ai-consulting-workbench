@@ -33,6 +33,7 @@ import type {
   ThreadSummary,
   ThreadView,
   PostMessageResult,
+  StageContext,
   Version,
   WorklogView,
   WsServerMessage,
@@ -95,7 +96,8 @@ export interface WorkbenchApi {
   // I2 — J2.1, J2.6, J2.7: the conversation
   listThreads(eid: EngagementId): Promise<ThreadSummary[]>;
   getThread(eid: EngagementId, tid: ThreadId): Promise<ThreadView>;
-  postMessage(eid: EngagementId, tid: ThreadId, body: { text: string }): Promise<PostMessageResult>;
+  /** UX1 C2: `context` is what the stage shows (the rail's context chip); never persisted. */
+  postMessage(eid: EngagementId, tid: ThreadId, body: { text: string; context?: StageContext }): Promise<PostMessageResult>;
 
   // I2 — J2.2, J2.5: proposals
   listProposals(eid: EngagementId): Promise<ProposalView[]>;

@@ -1,0 +1,191 @@
+/* UX1 brief B §Build 3: the Document page (the reading room), ported from
+   ux/playground/index.html §07's .doc-wrap/.doc-main/.doc-side/.vlist/.review-bar. */
+
+.doc-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  min-height: 100%;
+  position: relative;
+}
+
+.doc-main {
+  padding: var(--sp-6) var(--sp-8) 110px var(--sp-10);
+  overflow-y: auto;
+}
+.doc-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.doc-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: var(--sp-4) 0 var(--sp-6);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+
+.doc {
+  max-width: var(--measure);
+}
+.doc h1 {
+  font-size: 28px;
+}
+.doc h2 {
+  margin-top: var(--sp-6);
+}
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--sp-4) 0;
+  font-size: var(--fs-sm);
+  font-family: var(--font-ui);
+}
+.doc th {
+  text-align: left;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 6px 10px;
+  border-bottom: 2px solid var(--ink);
+}
+.doc td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--rule);
+}
+.doc-source {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  white-space: pre-wrap;
+  background: var(--sunken);
+  padding: var(--sp-4);
+  border-radius: var(--r);
+  max-width: none;
+}
+
+.doc-side {
+  border-left: 1px solid var(--rule);
+  padding: var(--sp-6) var(--sp-4);
+  font-size: var(--fs-sm);
+  background: var(--paper);
+  overflow-y: auto;
+}
+.doc-side .block {
+  margin-bottom: var(--sp-6);
+}
+.doc-side-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.doc-side-consumer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.vlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--rule-strong);
+}
+.vlist li {
+  position: relative;
+  padding: 0 0 14px 14px;
+}
+.vlist li::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--ink-3);
+}
+.vlist li.cur::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.vlist li.mat::before {
+  width: 9px;
+  height: 9px;
+  left: -5px;
+  top: 4px;
+  border-radius: 1px;
+}
+.vlist li p {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.review-bar {
+  position: sticky;
+  bottom: 0;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-6);
+  background: var(--surface);
+  border-top: 1px solid var(--ink);
+}
+.review-bar-criteria {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.review-bar-criterion {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+.review-bar-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.review-bar-comments {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.review-bar-comments textarea {
+  min-width: 220px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r);
+  padding: 6px 8px;
+}
+
+.row-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.link {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  padding: 0;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}

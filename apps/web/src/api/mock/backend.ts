@@ -14,6 +14,8 @@
 
 import {
   applyItemEvent,
+  compareByConsequence,
+  computeConsequence,
   computeItemActions,
   computeReadiness,
   formatVersion,
@@ -667,7 +669,19 @@ function resolveRequest(eng: Eng, rid: RequestId, response: NonNullable<Request[
 // ---------------------------------------------------------------------------
 
 function toSummary(eng: Eng): EngagementSummary {
-  return { id: eng.id, name: eng.name, createdAt: eng.createdAt, seedId: eng.seedId, planVersion: eng.planVersion, costUsd: eng.costUsd };
+  // Same count as the server (views.planProgress): leaf tasks, cancelled excluded.
+  const leaves = buildPlan(eng).items.filter((i) => i.status != null && i.status !== "cancelled");
+  const progress = { done: leaves.filter((i) => i.status === "done").length, total: leaves.length };
+  return {
+    id: eng.id,
+    name: eng.name,
+    createdAt: eng.createdAt,
+    seedId: eng.seedId,
+    planVersion: eng.planVersion,
+    costUsd: eng.costUsd,
+    progress,
+    inboxCount: buildInbox(eng).entries.length,
+  };
 }
 
 function itemActionState(eng: Eng, item: ItemRuntime) {
@@ -751,14 +765,16 @@ function buildItemDetail(eng: Eng, id: ItemId): ItemDetailView {
 }
 
 function buildInbox(eng: Eng): InboxView {
-  const entries: InboxEntry[] = [];
+  const plan = buildPlan(eng);
+  const ranked: { entry: InboxEntry; at: string | null }[] = [];
   for (const req of eng.requests.values()) {
     if (req.status !== "open") continue;
     const item = eng.items.get(req.itemId)!;
     const ref = { id: req.itemId, title: item.def.title };
-    if (req.type === "question") entries.push({ kind: "question", request: req, item: ref });
-    else if (req.type === "gate_request") entries.push({ kind: "review", request: req, item: ref });
-    else if (req.type === "run_issue") entries.push({ kind: "run_issue", request: req, item: ref });
+    const at = req.createdAt;
+    if (req.type === "question") ranked.push({ at, entry: { kind: "question", request: req, item: ref, consequence: computeConsequence(plan, "question", ref.id) } });
+    else if (req.type === "gate_request") ranked.push({ at, entry: { kind: "review", request: req, item: ref, consequence: computeConsequence(plan, "review", ref.id) } });
+    else if (req.type === "run_issue") ranked.push({ at, entry: { kind: "run_issue", request: req, item: ref, consequence: computeConsequence(plan, "run_issue", ref.id) } });
   }
   for (const item of eng.items.values()) {
     if (item.def.executor !== "human") continue;
@@ -766,9 +782,12 @@ function buildInbox(eng: Eng): InboxView {
     const inputs = item.def.inputs.map((inp) => ({ slot: inp.slot, required: inp.required, available: (eng.versions.get(inp.slot) ?? []).at(-1) ?? null }));
     const outputs = item.def.outputs.map((o) => ({ slot: o.slot, slotRef: slotRef(item.def.id, o.slot), required: o.required, format: o.format, latest: (eng.versions.get(slotRef(item.def.id, o.slot)) ?? []).at(-1) ?? null }));
     const actions = itemActionState(eng, item);
-    entries.push({ kind: "human_item", item: { id: item.def.id, title: item.def.title }, status: item.status, inputs, outputs, markDone: actions.markDone });
+    const consequence = computeConsequence(plan, "human_item", item.def.id);
+    ranked.push({ at: null, entry: { kind: "human_item", item: { id: item.def.id, title: item.def.title }, status: item.status, inputs, outputs, markDone: actions.markDone, consequence } });
   }
-  return { entries };
+  // Same order as the server (views.getInboxView): consequence score, then age.
+  ranked.sort((a, b) => compareByConsequence({ score: a.entry.consequence.score, at: a.at }, { score: b.entry.consequence.score, at: b.at }));
+  return { entries: ranked.map((r) => r.entry) };
 }
 
 // ---------------------------------------------------------------------------
@@ -844,7 +863,7 @@ export const mockBackend = {
 
   getEngagement: async (eid: EngagementId): Promise<EngagementView> => {
     const eng = findEng(eid);
-    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", approachModel: "claude-haiku-4-5", inboxCount: buildInbox(eng).entries.length };
+    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", approachModel: "claude-haiku-4-5" };
   },
 
   getPlan: async (eid: EngagementId): Promise<PlanView> => buildPlan(findEng(eid)),
@@ -1105,7 +1124,7 @@ export const mockBackend = {
     const eng = findEng(eid);
     eng.settings = { ...eng.settings, ...body };
     emitEvent(eng, "human", { type: "SettingsChanged", payload: { changes: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])) } });
-    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", approachModel: "claude-haiku-4-5", inboxCount: buildInbox(eng).entries.length };
+    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", approachModel: "claude-haiku-4-5" };
   },
 
   getProfile: async (): Promise<ProfileView> => ({ active: mockProfile, available: ["test", "dev", "demo"], models: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" } }),

@@ -1,0 +1,7 @@
+/* UX1 brief B §Build 4: the Documents register — a Tracker over the plan's slots. */
+
+.documents-page {
+  padding: var(--sp-5) var(--sp-6);
+  overflow-y: auto;
+  height: 100%;
+}
