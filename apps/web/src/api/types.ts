@@ -18,6 +18,7 @@ import type {
   NotificationId,
   PlanPreviewView,
   PlanView,
+  PatchProfileBody,
   ProfileView,
   ProposalId,
   ProposalView,
@@ -57,6 +58,7 @@ export interface WorkbenchApi {
   listSeeds(): Promise<SeedSummary[]>;
   listEngagements(): Promise<EngagementSummary[]>;
   createEngagement(body: { seedId: string; name: string }): Promise<EngagementSummary>;
+  deleteEngagement(eid: EngagementId): Promise<{ ok: true }>;
   getEngagement(eid: EngagementId): Promise<EngagementView>;
 
   // J1.2
@@ -116,7 +118,7 @@ export interface WorkbenchApi {
   // I2 — J2.8: settings and model profile
   patchSettings(eid: EngagementId, body: Partial<Settings>): Promise<EngagementView>;
   getProfile(): Promise<ProfileView>;
-  patchProfile(body: { profile: string }): Promise<ProfileView>;
+  patchProfile(body: PatchProfileBody): Promise<ProfileView>;
 
   // I2 — D4: the Approach Agent's journal
   getJournal(eid: EngagementId): Promise<JournalView>;

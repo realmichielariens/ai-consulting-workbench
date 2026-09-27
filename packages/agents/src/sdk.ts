@@ -21,8 +21,7 @@ import {
   type SpawnedProcess,
 } from "@anthropic-ai/claude-agent-sdk";
 import type { ItemId, RunId } from "@workbench/core";
-import { redact, type WorkspacePaths } from "@workbench/core/node";
-import { checkDevCostGuard, recordDevCost } from "./cost-ledger.js";
+import { redact } from "@workbench/core/node";
 
 /** The explicit built-in tool set (M0-FINDINGS §2): I1 never enables Bash or PowerShell (CLAUDE.md rule 4). */
 export const WORK_AGENT_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Skill", "Task"] as const;
@@ -64,9 +63,6 @@ export interface RunOnceArgs {
   onMessage: (message: SDKMessage) => void;
   /** Called once with the Claude Code child's PID (R2 orphan cleanup), the first time it is known. */
   onPid: (pid: number) => void;
-  workspace: WorkspacePaths;
-  /** config.dev.totalCapUsd. */
-  devCapUsd: number;
 }
 
 export interface RunOnceResult {
@@ -110,12 +106,10 @@ function lastAssistantText(message: SDKAssistantMessage): string | undefined {
 /**
  * Runs one query() call: streams every message to `onMessage`, appends the
  * redacted transcript to `runStreamPath`, retries pre-first-assistant-output
- * rate-limit/overloaded failures, records the child PID, checks and updates
- * the dev cost ledger, and returns a normalized summary.
+ * rate-limit/overloaded failures, and records the child PID, and returns a
+ * normalized summary.
  */
 export async function runOnce(args: RunOnceArgs): Promise<RunOnceResult> {
-  checkDevCostGuard(args.workspace, args.devCapUsd);
-
   fs.mkdirSync(path.dirname(args.runStreamPath), { recursive: true });
   const appendStream = (obj: unknown) => {
     fs.appendFileSync(args.runStreamPath, `${redact(JSON.stringify(obj))}\n`, "utf8");
@@ -204,7 +198,6 @@ export async function runOnce(args: RunOnceArgs): Promise<RunOnceResult> {
   }
 
   const costUsd = lastResult?.total_cost_usd ?? 0;
-  recordDevCost(args.workspace, { runId: args.runId, itemId: args.itemId, costUsd, at: new Date().toISOString() });
 
   return {
     sessionId,
@@ -216,5 +209,3 @@ export async function runOnce(args: RunOnceArgs): Promise<RunOnceResult> {
     retries,
   };
 }
-
-export { CostCapExceededError } from "./cost-ledger.js";

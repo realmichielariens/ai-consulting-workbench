@@ -1,7 +1,22 @@
+/* Sized in the reading face's ch, like the Document page's column. */
 .journal-page {
   max-width: var(--measure);
   margin: 0 auto;
   padding: var(--sp-6) var(--sp-5);
+  font-family: var(--font-read);
+  font-size: var(--fs-read);
+}
+.journal-page[data-width="wide"] {
+  max-width: 120ch;
+}
+.journal-page[data-width="full"] {
+  max-width: none;
+}
+.journal-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--sp-4);
+  font-family: var(--font-ui);
 }
 .journal-page .approach-journal {
   font-family: var(--font-read);

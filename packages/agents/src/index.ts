@@ -7,7 +7,6 @@ export const AGENTS_PACKAGE = "@workbench/agents";
 export { createSdkRuntime, type RuntimeConfig, type RuntimeDeps } from "./runtime.js";
 export {
   runOnce,
-  CostCapExceededError,
   WORK_AGENT_TOOLS,
   WORK_AGENT_ALLOWED_TOOLS,
   APPROACH_AGENT_TOOLS,
@@ -43,7 +42,6 @@ export {
   renderApproachSuggestionPrompt,
   type PromptPlacement,
 } from "./prompts.js";
-export { readDevCostTotal, checkDevCostGuard, recordDevCost, type DevCostLedgerEntry } from "./cost-ledger.js";
 export { createFakeRuntime, defaultFakeScriptsDir, type FakeRuntimeOptions } from "./fake/index.js";
 export { FakeItemScript, FakeStep, loadFakeScript } from "./fake/scripts.js";
 export { createSdkApproachRuntime } from "./approachRuntime.js";

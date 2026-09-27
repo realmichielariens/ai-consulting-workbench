@@ -11,4 +11,3 @@ profiles:
 skillsPlugin: ./workbench-skills
 promptsDir: ./packages/agents/prompts
 server: { port: 4317, webPort: 5317 }
-dev: { totalCapUsd: 16 }

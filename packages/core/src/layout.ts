@@ -13,10 +13,10 @@ export interface WorkspacePaths {
   libraryDir: string;
   /** Pinned CLAUDE_CONFIG_DIR for every SDK child. Resume depends on it staying stable (M0 S5). */
   claudeConfigDir: string;
-  /** Dev cost guard ledger: one JSON line per SDK run. */
-  devCostLedger: string;
   /** In-app feedback notes (ITERATIONS.md §1.3). */
   feedbackLog: string;
+  /** Deleted engagement folders are moved here first, then removed (services.ts deleteEngagement). */
+  trashDir: string;
 }
 
 export function workspacePaths(home: string): WorkspacePaths {
@@ -27,8 +27,8 @@ export function workspacePaths(home: string): WorkspacePaths {
     engagement: (id) => path.join(h, "engagements", id),
     libraryDir: path.join(h, "library"),
     claudeConfigDir: path.join(h, ".workbench", "claude-config"),
-    devCostLedger: path.join(h, ".dev-cost-ledger.jsonl"),
     feedbackLog: path.join(h, "feedback.jsonl"),
+    trashDir: path.join(h, ".workbench", "trash"),
   };
 }
 

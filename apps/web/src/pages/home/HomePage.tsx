@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { EngagementId } from "@workbench/core";
 import { api, qk } from "../../api/index.js";
 import { openHome } from "../../shell/nav.js";
 import { useApplyPreferences } from "../../state/preferences.js";
@@ -28,6 +29,39 @@ export function HomePage() {
       openHome(summary.id);
     },
   });
+
+  const [selected, setSelected] = useState<ReadonlySet<EngagementId>>(new Set());
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // Sequential, collecting failures: one refused delete (an agent still running) must not stop the rest.
+  const remove = useMutation({
+    mutationFn: async (ids: EngagementId[]) => {
+      const failed: { id: EngagementId; message: string }[] = [];
+      for (const id of ids) {
+        try {
+          await api.deleteEngagement(id);
+        } catch (err) {
+          failed.push({ id, message: (err as Error).message });
+        }
+      }
+      return failed;
+    },
+    onSuccess: (failed) => {
+      setSelected(new Set(failed.map((f) => f.id)));
+      setConfirmingDelete(false);
+      void queryClient.invalidateQueries({ queryKey: qk.engagements() });
+    },
+  });
+
+  // Only ids still listed count (another tab may have deleted some).
+  const selectedIds = engagements.data?.filter((e) => selected.has(e.id)).map((e) => e.id) ?? [];
+  const allSelected = engagements.data !== undefined && engagements.data.length > 0 && selectedIds.length === engagements.data.length;
+  const toggle = (id: EngagementId) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const visibleSeeds = seeds.data?.filter((s) => s.id !== BLANK_SEED_ID) ?? [];
 
@@ -62,9 +96,39 @@ export function HomePage() {
       </section>
 
       <section aria-labelledby="engagements-heading">
-        <div className="home-col-h">
+        <div className="home-col-h home-col-h-bar">
           <span className="label">Engagements</span>
+          {selectedIds.length > 0 && !confirmingDelete && (
+            <Button variant="danger" size="sm" data-testid="delete-engagements-button" onClick={() => setConfirmingDelete(true)}>
+              Delete selected ({selectedIds.length})
+            </Button>
+          )}
         </div>
+        {confirmingDelete && selectedIds.length > 0 && (
+          <div className="home-confirm" role="alertdialog" aria-label="Confirm delete" data-testid="delete-engagements-confirm">
+            <p>
+              Permanently delete {selectedIds.length === 1 ? "this engagement" : `these ${selectedIds.length} engagements`}? Their plan, outputs, conversation and history
+              are removed from disk. This cannot be undone.
+            </p>
+            <div className="home-confirm-actions">
+              <Button variant="danger" size="sm" data-testid="delete-engagements-confirm-button" disabled={remove.isPending} onClick={() => remove.mutate(selectedIds)}>
+                {remove.isPending ? "Deleting…" : "Delete permanently"}
+              </Button>
+              <Button variant="ghost" size="sm" disabled={remove.isPending} onClick={() => setConfirmingDelete(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+        {remove.data && remove.data.length > 0 && (
+          <div role="alert" className="home-error">
+            {remove.data.map((f) => (
+              <p key={f.id}>
+                Could not delete {f.id}: {f.message}
+              </p>
+            ))}
+          </div>
+        )}
         {engagements.status === "pending" && <p className="muted">Loading…</p>}
         {engagements.status === "error" && (
           <p role="alert" className="home-error">
@@ -76,6 +140,15 @@ export function HomePage() {
           <table className="tracker home-portfolio">
             <thead>
               <tr>
+                <th className="home-select">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all engagements"
+                    data-testid="select-all-engagements"
+                    checked={allSelected}
+                    onChange={() => setSelected(allSelected ? new Set() : new Set(engagements.data.map((e) => e.id)))}
+                  />
+                </th>
                 <th>Engagement</th>
                 <th>Progress</th>
                 <th>Needs you</th>
@@ -86,6 +159,9 @@ export function HomePage() {
             <tbody>
               {engagements.data.map((eng) => (
                 <tr key={eng.id} className="tracker-clickable" data-testid="engagement-card" data-engagement-id={eng.id} onClick={() => openHome(eng.id)}>
+                  <td className="home-select" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" aria-label={`Select ${eng.name}`} data-testid="select-engagement" checked={selected.has(eng.id)} onChange={() => toggle(eng.id)} />
+                  </td>
                   <td>
                     <b>{eng.name}</b>
                     <div className="id">plan v{eng.planVersion}</div>

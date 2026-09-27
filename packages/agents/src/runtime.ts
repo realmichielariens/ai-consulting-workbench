@@ -18,7 +18,7 @@ import { sdkEnv, type WorkspacePaths } from "@workbench/core/node";
 import { ActivityBuilder } from "./activity.js";
 import { forWorkAgent, type GuardScope } from "./guards.js";
 import { promptHash, renderRunPrompt, renderSystemPrompt, resolvePlacement } from "./prompts.js";
-import { CostCapExceededError, runOnce, WORK_AGENT_ALLOWED_TOOLS, WORK_AGENT_TOOLS, type RunOnceArgs, type RunOnceResult } from "./sdk.js";
+import { runOnce, WORK_AGENT_ALLOWED_TOOLS, WORK_AGENT_TOOLS, type RunOnceArgs, type RunOnceResult } from "./sdk.js";
 import { createWorkToolset } from "./workToolset.js";
 
 /** Injectable so runtime.test.ts can drive the nudge/termination loop with a scripted query(), with no SDK calls. */
@@ -29,8 +29,6 @@ export interface RuntimeConfig {
   promptsDir: string;
   /** Absolute path to the workbench-skills plugin dir (config.resolved.skillsPlugin). */
   skillsPluginPath: string;
-  /** config.dev.totalCapUsd — the dev cost guard's cap. */
-  devCapUsd: number;
   /** Repo root, for sdkEnv()'s API-key resolution (env.ts). */
   repoRoot: string;
 }
@@ -102,46 +100,33 @@ async function executeRun(
 
   try {
     for (;;) {
-      let result;
-      try {
-        result = await deps.runOnce({
-          runId: req.runId,
-          itemId: item.id,
-          prompt: currentPrompt,
-          resume: resumeThisCall ? (sessionId ?? undefined) : undefined,
-          model,
-          cwd: workDir,
-          additionalDirectories: [paths.root],
-          systemPrompt,
-          tools: WORK_AGENT_TOOLS,
-          allowedTools: WORK_AGENT_ALLOWED_TOOLS,
-          skillsPluginPath: config.skillsPluginPath,
-          skills,
-          mcpServers: { work: workServer },
-          hooks: guards.hooks,
-          maxTurns,
-          env: deps.buildEnv(),
-          abortController,
-          runStreamPath: paths.runStream(req.runId),
-          onMessage: (message) => {
-            if (message.type === "system" && message.subtype === "init") {
-              observer.onSession(message.session_id);
-            }
-            for (const activityItem of activity.fromSdkMessage(message, guards.decisions)) observer.onActivity(activityItem);
-          },
-          onPid: (pid) => observer.onPid(pid),
-          workspace,
-          devCapUsd: config.devCapUsd,
-        });
-      } catch (err) {
-        if (err instanceof CostCapExceededError) {
-          outcome = "error";
-          error = err.message;
-          observer.onActivity(activity.error(err.message));
-          break;
-        }
-        throw err;
-      }
+      const result = await deps.runOnce({
+        runId: req.runId,
+        itemId: item.id,
+        prompt: currentPrompt,
+        resume: resumeThisCall ? (sessionId ?? undefined) : undefined,
+        model,
+        cwd: workDir,
+        additionalDirectories: [paths.root],
+        systemPrompt,
+        tools: WORK_AGENT_TOOLS,
+        allowedTools: WORK_AGENT_ALLOWED_TOOLS,
+        skillsPluginPath: config.skillsPluginPath,
+        skills,
+        mcpServers: { work: workServer },
+        hooks: guards.hooks,
+        maxTurns,
+        env: deps.buildEnv(),
+        abortController,
+        runStreamPath: paths.runStream(req.runId),
+        onMessage: (message) => {
+          if (message.type === "system" && message.subtype === "init") {
+            observer.onSession(message.session_id);
+          }
+          for (const activityItem of activity.fromSdkMessage(message, guards.decisions)) observer.onActivity(activityItem);
+        },
+        onPid: (pid) => observer.onPid(pid),
+      });
 
       totalCost += result.costUsd;
       totalTurns += result.turns;

@@ -101,7 +101,6 @@ function buildRuntimeConfig(root: string) {
   return {
     promptsDir: config.resolved.promptsDir,
     skillsPluginPath: config.resolved.skillsPlugin,
-    devCapUsd: config.dev.totalCapUsd,
     repoRoot: root,
   };
 }

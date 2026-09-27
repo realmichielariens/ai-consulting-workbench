@@ -30,7 +30,7 @@ import {
 } from "./prompts.js";
 import { createPlanToolset } from "./planToolset.js";
 import type { RuntimeConfig, RuntimeDeps } from "./runtime.js";
-import { APPROACH_AGENT_ALLOWED_TOOLS, APPROACH_AGENT_TOOLS, CostCapExceededError, runOnce, type RunOnceResult } from "./sdk.js";
+import { APPROACH_AGENT_ALLOWED_TOOLS, APPROACH_AGENT_TOOLS, runOnce, type RunOnceResult } from "./sdk.js";
 
 interface ApproachSessionArgs {
   runId: RunId;
@@ -103,12 +103,10 @@ async function executeApproachSession(
         for (const activityItem of activity.fromSdkMessage(message, guards.decisions)) observer.onActivity(activityItem);
       },
       onPid: (pid) => observer.onPid(pid),
-      workspace,
-      devCapUsd: config.devCapUsd,
     });
   } catch (err) {
     thrown = true;
-    error = err instanceof CostCapExceededError ? err.message : err instanceof Error ? err.message : String(err);
+    error = err instanceof Error ? err.message : String(err);
     observer.onActivity(activity.error(error));
   }
 

@@ -49,6 +49,7 @@ export interface WsClient {
   readonly readyState: number;
   readonly OPEN: number;
   send(data: string): void;
+  close(): void;
 }
 
 /** Process-wide server context: config, workspace, and the open engagement registry. */
@@ -119,7 +120,6 @@ function buildRuntime(server: ServerContext): AgentRuntime {
     {
       promptsDir: server.config.resolved.promptsDir,
       skillsPluginPath: server.config.resolved.skillsPlugin,
-      devCapUsd: server.config.dev.totalCapUsd,
       repoRoot: server.repoRoot,
     },
     server.workspace,
@@ -132,7 +132,6 @@ function buildApproachRuntime(server: ServerContext): ApproachRuntime {
     {
       promptsDir: server.config.resolved.promptsDir,
       skillsPluginPath: server.config.resolved.skillsPlugin,
-      devCapUsd: server.config.dev.totalCapUsd,
       repoRoot: server.repoRoot,
     },
     server.workspace,

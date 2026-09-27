@@ -54,7 +54,7 @@ If a contract is wrong or missing something, **do not edit it**. Work around it 
 6. **After "go"**, run the validation plan from your look report. Write `iterations/I1/reports/W<n>-<package>.md` (verdict, results with evidence, cost, surprises, deviations, open issues) and return it.
 7. **Evidence.** Mark something as passing only with evidence: command output, a transcript line, a hash comparison. Never report an expected result as observed.
 8. **Secrets.** Never print, log or commit the API key. Everything written to a transcript or log goes through `redact()`.
-9. **Cost.** Respect your package's cap. The dev cost guard refuses runs over the cap; when that happens, stop and report what you have.
+9. **Cost.** Respect your package's cap. Nothing enforces it for you, so track the cost each run reports and stop before you go over.
 10. **Leave nothing running.** Stop every dev server, browser and Claude Code child process you started. Tell the user how to start things; don't leave them running.
 11. **Windows.** Use `path` and the helpers in `layout.ts` / `paths.ts`, never string concatenation. Scripts in `package.json` must work from both PowerShell and Git Bash. To spawn Node scripts, use `process.execPath` with `--import tsx`, not `.cmd` shims.
 12. **Architecture invariants**:

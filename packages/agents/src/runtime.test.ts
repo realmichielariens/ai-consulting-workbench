@@ -107,7 +107,6 @@ describe("runtime nudge/termination loop", () => {
     const config: RuntimeConfig = {
       promptsDir,
       skillsPluginPath: "C:/fake/skills",
-      devCapUsd: 100,
       repoRoot: "C:/fake/repo",
     };
     const runtime = createSdkRuntime(config, workspace, { runOnce, buildEnv: () => ({}) });
@@ -151,7 +150,7 @@ describe("runtime nudge/termination loop", () => {
       return { sessionId: "sess-original", subtype: "success", isError: false, costUsd: 0.01, turns: 2, lastMessageText: "", retries: 0 };
     });
 
-    const config: RuntimeConfig = { promptsDir, skillsPluginPath: "C:/fake/skills", devCapUsd: 100, repoRoot: "C:/fake/repo" };
+    const config: RuntimeConfig = { promptsDir, skillsPluginPath: "C:/fake/skills", repoRoot: "C:/fake/repo" };
     const runtime = createSdkRuntime(config, workspace, { runOnce, buildEnv: () => ({}) });
     // submitOutputs never called by this workPort -> ends as no_submit after one nudge, same as above;
     // the point of this test is only the resume wiring, asserted inside the mock.

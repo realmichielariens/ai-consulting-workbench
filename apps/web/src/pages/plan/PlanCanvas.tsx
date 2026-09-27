@@ -38,7 +38,9 @@ function CompositeNode({ data }: NodeProps<Node<FlowNodeData, "composite">>) {
   return (
     <div className={`node composite${mark ? ` ghost pv-mark-${mark}` : ""}`} data-testid={`process-node-${item.id}`}>
       <div className="n-top">
-        <span className="n-title">{item.title}</span>
+        <span className="n-title" title={item.title}>
+          {item.title}
+        </span>
         {rollup && (
           <span className="pv-rollup" data-testid={`process-rollup-${item.id}`}>
             <HarveyBall quarters={harveyFromRatio(rollup.done, rollup.total)} />
@@ -63,7 +65,8 @@ function TaskNode({ data, selected, onSelect, onOpen }: NodeProps<Node<FlowNodeD
         className={`node${selected ? " selected" : ""}${mark ? ` ghost pv-mark-${mark}` : ""}`}
         data-st={status}
         data-testid={`process-node-${item.id}`}
-        title={item.notReadyBecause.length > 0 ? describeBlockers(item) : undefined}
+        title={item.notReadyBecause.length > 0 ? `${item.title}
+${describeBlockers(item)}` : item.title}
         onClick={() => onSelect(item.id)}
         onDoubleClick={() => onOpen(item.id)}
       >

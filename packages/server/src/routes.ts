@@ -49,6 +49,12 @@ export function registerRoutes(app: FastifyInstance, server: ServerContext): voi
     return views.getEngagementView(ctxFor(server, eid));
   });
 
+  app.delete(routes.deleteEngagement.path, async (req) => {
+    const { eid } = routes.deleteEngagement.params.parse(req.params);
+    await services.deleteEngagement(server, eid);
+    return { ok: true as const };
+  });
+
   app.get(routes.getPlan.path, async (req) => {
     const { eid } = routes.getPlan.params.parse(req.params);
     return views.getPlanView(ctxFor(server, eid));
@@ -235,7 +241,7 @@ export function registerRoutes(app: FastifyInstance, server: ServerContext): voi
 
   app.patch(routes.patchProfile.path, async (req) => {
     const body = routes.patchProfile.body.parse(req.body);
-    return services.patchProfile(server, body.profile);
+    return services.patchProfile(server, body);
   });
 
   // I2 — D4: approach journal

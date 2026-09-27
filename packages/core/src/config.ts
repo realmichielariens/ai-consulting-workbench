@@ -16,6 +16,18 @@ export const ModelProfile = z.object({
 });
 export type ModelProfile = z.infer<typeof ModelProfile>;
 
+/**
+ * The models Settings offers as a per-role override of the active profile.
+ * A closed list, so the UI cannot send a model id the SDK would reject mid-run.
+ */
+export const MODEL_CHOICES = [
+  { id: "claude-haiku-4-5", label: "Haiku 4.5" },
+  { id: "claude-sonnet-5", label: "Sonnet 5" },
+  { id: "claude-opus-5-5", label: "Opus 5.5" },
+] as const;
+export const ModelChoiceId = z.enum(MODEL_CHOICES.map((m) => m.id) as [string, ...string[]]);
+export type ModelChoiceId = z.infer<typeof ModelChoiceId>;
+
 export const WorkbenchConfig = z
   .object({
     /** Workbench home, relative to the repo root or absolute. Git-ignored by default. */
@@ -33,12 +45,6 @@ export const WorkbenchConfig = z
         webPort: z.number().int().default(5317),
       })
       .default({ port: 4317, webPort: 5317 }),
-    dev: z
-      .object({
-        /** Total API spend the dev cost guard allows across the ledger (I1 plan §9). */
-        totalCapUsd: z.number().positive().default(16),
-      })
-      .default({ totalCapUsd: 16 }),
   })
   .refine((c) => c.profile in c.profiles, { message: "profile must name an entry in profiles" });
 export type WorkbenchConfig = z.infer<typeof WorkbenchConfig>;
@@ -57,7 +63,6 @@ profiles:
 skillsPlugin: ./workbench-skills
 promptsDir: ./packages/agents/prompts
 server: { port: 4317, webPort: 5317 }
-dev: { totalCapUsd: 16 }
 `;
 
 export const activeProfile = (c: WorkbenchConfig): ModelProfile => c.profiles[c.profile]!;

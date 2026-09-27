@@ -29,7 +29,14 @@ vi.mock("./api/index.js", () => ({
     }),
     getPlan: vi.fn().mockResolvedValue({ engagementId: "acme", planVersion: 1, items: [{ id: "ENG" }], slots: [] }),
     listThreads: vi.fn().mockResolvedValue([]),
-    getProfile: vi.fn().mockResolvedValue({ active: "test", available: ["test"], models: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" } }),
+    getProfile: vi.fn().mockResolvedValue({
+      active: "test",
+      available: ["test"],
+      models: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" },
+      profileModels: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" },
+      overrides: { approach: null, work: null },
+      choices: [{ id: "claude-haiku-4-5", label: "Haiku 4.5" }],
+    }),
     connectWs: vi.fn().mockReturnValue(() => {}),
   },
   qk: {

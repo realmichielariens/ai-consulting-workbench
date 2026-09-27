@@ -96,10 +96,29 @@
   justify-content: space-between;
   align-items: center;
 }
+/* Titles are free text from the plan: clamp them to the node's box and
+   leave the full title to the node's hover tooltip. */
 .node .n-title {
   font-weight: 600;
   line-height: 1.3;
   color: var(--ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  flex: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.node.composite .n-title {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.node.composite .pv-rollup {
+  flex: none;
 }
 .node.selected {
   border-color: var(--accent);

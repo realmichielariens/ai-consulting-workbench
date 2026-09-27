@@ -9,10 +9,31 @@
 }
 
 .doc-main {
-  padding: var(--sp-6) var(--sp-8) 110px var(--sp-10);
+  padding: var(--sp-6) var(--sp-8) 110px;
   overflow-y: auto;
 }
+
+/* The header, toolbar and body share one centered column whose breadth the
+   reader picks (shell/contentWidth.ts). It is sized in the reading face's ch,
+   so Narrow is exactly the measure the body text is set at. */
+.doc-column {
+  margin: 0 auto;
+  font-family: var(--font-read);
+  font-size: var(--fs-read);
+  max-width: var(--measure);
+}
+.doc-column[data-width="wide"] {
+  max-width: 120ch;
+}
+.doc-column[data-width="full"] {
+  max-width: none;
+}
+.doc-column .doc {
+  max-width: none;
+}
+
 .doc-meta {
+  font-family: var(--font-ui);
   display: flex;
   gap: 10px;
   align-items: center;
@@ -21,6 +42,8 @@
   color: var(--ink-3);
 }
 .doc-toolbar {
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
   display: flex;
   gap: 8px;
   align-items: center;
@@ -30,9 +53,6 @@
   flex-wrap: wrap;
 }
 
-.doc {
-  max-width: var(--measure);
-}
 .doc h1 {
   font-size: 28px;
 }
@@ -60,6 +80,45 @@
   padding: 6px 10px;
   border-bottom: 1px solid var(--rule);
 }
+/* CSV: the table scrolls inside its own box so the header can stay pinned
+   and a wide file never pushes the page sideways. */
+.csv-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 280px);
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+}
+.doc .csv table {
+  margin: 0;
+}
+.doc .csv th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  border-bottom: 0;
+  box-shadow: inset 0 -2px 0 var(--ink);
+  white-space: nowrap;
+}
+.doc .csv td {
+  vertical-align: top;
+  white-space: pre-wrap;
+}
+.doc .csv tbody tr:hover td {
+  background: var(--sunken);
+}
+.doc .csv .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.csv-count {
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin-top: var(--sp-2);
+}
+
 .doc-source {
   font-family: var(--font-mono);
   font-size: var(--fs-sm);

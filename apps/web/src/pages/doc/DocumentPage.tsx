@@ -13,13 +13,16 @@ import { openDoc, openItem } from "../../shell/nav.js";
 import { Button, ExecGlyph, Segmented, SourceChip, Status, Tag } from "../../ui/index.js";
 import { findReviewEntry, type ReviewEntry } from "./reviewEntry.js";
 import { ReviewBar } from "./ReviewBar.js";
+import { CsvTable } from "./CsvTable.js";
 import "./DocumentPage.css";
 import { focusComposer } from "../../shell/rail.js";
+import { CONTENT_WIDTH_OPTIONS, useContentWidth } from "../../shell/contentWidth.js";
 
 type Mode = "read" | "source";
 
 export function DocumentPage({ eid, itemId, slot, version }: { eid: EngagementId; itemId: ItemId; slot: SlotName; version: VersionT | null }) {
   const [mode, setMode] = useState<Mode>("read");
+  const { width, setWidth } = useContentWidth();
   const slotRef = `${itemId}/${slot}`;
 
   const versions = useQuery({ queryKey: qk.assetVersions(eid, itemId, slot), queryFn: () => api.getAssetVersions(eid, itemId, slot) });
@@ -43,52 +46,55 @@ export function DocumentPage({ eid, itemId, slot, version }: { eid: EngagementId
   return (
     <div className="doc-page" data-testid="asset-viewer" data-slot={slotRef}>
       <div className="doc-main">
-        <div className="doc-meta">
-          <span className="mono">{phase ? `${phase.id} › ${versions.data.owner}` : versions.data.owner}</span>
-          {ownerNode && (
-            <>
-              <span>·</span>
-              <ExecGlyph executor={ownerNode.executor ?? "agent"} />
-              <span>{ownerNode.title}</span>
-            </>
-          )}
-          <span>·</span>
-          <Tag>{versions.data.scope}</Tag>
-          {ownerNode?.status && <Status status={ownerNode.status} />}
-        </div>
+        <div className="doc-column" data-width={width}>
+          <div className="doc-meta">
+            <span className="mono">{phase ? `${phase.id} › ${versions.data.owner}` : versions.data.owner}</span>
+            {ownerNode && (
+              <>
+                <span>·</span>
+                <ExecGlyph executor={ownerNode.executor ?? "agent"} />
+                <span>{ownerNode.title}</span>
+              </>
+            )}
+            <span>·</span>
+            <Tag>{versions.data.scope}</Tag>
+            {ownerNode?.status && <Status status={ownerNode.status} />}
+          </div>
 
-        <div className="doc-toolbar">
-          <Segmented value={mode} onChange={setMode} options={[{ value: "read", label: "Read" }, { value: "source", label: "Source" }]} aria-label="Document mode" />
-          <span className="pv-spacer" />
-          {resolvedVersion && (
-            <a className="btn btn-ghost btn-sm" href={api.getAssetRawUrl(eid, itemId, slot, resolvedVersion)} download data-testid="asset-download">
-              Download
-            </a>
-          )}
-          <Button variant="ghost" size="sm" data-testid="doc-ask" onClick={focusComposer}>
-            Ask about this
-          </Button>
-        </div>
+          <div className="doc-toolbar">
+            <Segmented value={mode} onChange={setMode} options={[{ value: "read", label: "Read" }, { value: "source", label: "Source" }]} aria-label="Document mode" />
+            <span className="pv-spacer" />
+            <Segmented value={width} onChange={setWidth} options={CONTENT_WIDTH_OPTIONS} aria-label="Content width" />
+            {resolvedVersion && (
+              <a className="btn btn-ghost btn-sm" href={api.getAssetRawUrl(eid, itemId, slot, resolvedVersion)} download data-testid="asset-download">
+                Download
+              </a>
+            )}
+            <Button variant="ghost" size="sm" data-testid="doc-ask" onClick={focusComposer}>
+              Ask about this
+            </Button>
+          </div>
 
-        <article className="doc reading">
-          {content.status === "pending" && <p>Loading version…</p>}
-          {content.status === "error" && <p role="alert">Could not load this version: {(content.error as Error).message}</p>}
-          {content.status === "success" &&
-            (content.data.text != null ? (
-              mode === "source" ? (
-                <pre className="doc-source">{content.data.text}</pre>
+          <article className="doc reading">
+            {content.status === "pending" && <p>Loading version…</p>}
+            {content.status === "error" && <p role="alert">Could not load this version: {(content.error as Error).message}</p>}
+            {content.status === "success" &&
+              (content.data.text != null ? (
+                mode === "source" ? (
+                  <pre className="doc-source">{content.data.text}</pre>
+                ) : (
+                  <ReadView format={content.data.version.format} text={content.data.text} />
+                )
               ) : (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content.data.text}</ReactMarkdown>
-              )
-            ) : (
-              <p>
-                Binary file —{" "}
-                <a href={api.getAssetRawUrl(eid, itemId, slot, content.data.version.version)} download>
-                  download
-                </a>
-              </p>
-            ))}
-        </article>
+                <p>
+                  Binary file —{" "}
+                  <a href={api.getAssetRawUrl(eid, itemId, slot, content.data.version.version)} download>
+                    download
+                  </a>
+                </p>
+              ))}
+          </article>
+        </div>
       </div>
 
       <aside className="doc-side">
@@ -146,4 +152,11 @@ export function DocumentPage({ eid, itemId, slot, version }: { eid: EngagementId
       {reviewEntry && <ReviewBar eid={eid} slotRef={slotRef} entry={reviewEntry} />}
     </div>
   );
+}
+
+/** Markdown is rendered, CSV becomes a table, and other text formats (json, yaml, txt) read best as they are. */
+function ReadView({ format, text }: { format: string; text: string }) {
+  if (format === "csv") return <CsvTable text={text} />;
+  if (format === "md") return <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>;
+  return <pre className="doc-source">{text}</pre>;
 }

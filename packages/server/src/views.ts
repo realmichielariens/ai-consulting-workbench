@@ -39,6 +39,7 @@ import { readItemMd, readJournal, readVersion, readVersionText } from "@workbenc
 import { notFound } from "./errors.js";
 import { buildPlanView } from "./checkpoint.js";
 import type { EngagementContext } from "./engagementContext.js";
+import { activeProfileName, currentModelProfile } from "./profileService.js";
 import { getProposalView } from "./proposalService.js";
 import { ensureThread } from "./threadService.js";
 
@@ -232,9 +233,10 @@ export function getEngagementView(ctx: EngagementContext): EngagementView {
     settings: ctx.meta.settings,
     folderPath: ctx.paths.root,
     runtime: ctx.runtime.kind,
-    profile: ctx.server.config.profile,
-    workModel: ctx.profile.models.work,
-    approachModel: ctx.profile.models.approach,
+    // What a new run would use now (J2.8), not the profile the server booted with.
+    profile: activeProfileName(ctx.server),
+    workModel: currentModelProfile(ctx.server).models.work,
+    approachModel: currentModelProfile(ctx.server).models.approach,
   };
 }
 

@@ -3,7 +3,7 @@
 // density, dev strip) that are never sent to the server.
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { EngagementId, EngagementView } from "@workbench/core";
+import type { EngagementId, EngagementView, PatchProfileBody, ProfileView } from "@workbench/core";
 import { api, qk } from "../api/index.js";
 import { useUiStore } from "../state/ui.js";
 import { usePreferencesStore, type Density, type Theme } from "../state/preferences.js";
@@ -22,8 +22,12 @@ export function SettingsPanel({ eid, engagement }: { eid: EngagementId; engageme
 
   const profile = useQuery({ queryKey: qk.profile(), queryFn: () => api.getProfile() });
   const patchProfile = useMutation({
-    mutationFn: (p: string) => api.patchProfile({ profile: p }),
-    onSuccess: (updated) => qc.setQueryData(qk.profile(), updated),
+    mutationFn: (body: PatchProfileBody) => api.patchProfile(body),
+    onSuccess: (updated) => {
+      qc.setQueryData(qk.profile(), updated);
+      // The engagement view carries the models new runs will use (dev strip).
+      void qc.invalidateQueries({ queryKey: qk.engagement(eid) });
+    },
   });
 
   const theme = usePreferencesStore((s) => s.theme);
@@ -123,7 +127,7 @@ export function SettingsPanel({ eid, engagement }: { eid: EngagementId; engageme
                   data-testid="setting-profile"
                   value={profile.data.active}
                   disabled={patchProfile.isPending}
-                  onChange={(e) => patchProfile.mutate(e.target.value)}
+                  onChange={(e) => patchProfile.mutate({ profile: e.target.value })}
                 >
                   {profile.data.available.map((p) => (
                     <option key={p} value={p}>
@@ -133,16 +137,57 @@ export function SettingsPanel({ eid, engagement }: { eid: EngagementId; engageme
                 </select>
               )}
             </label>
+            {profile.status === "success" && (
+              <>
+                <ModelSelect role="approach" label="Approach Agent model" view={profile.data} disabled={patchProfile.isPending} onChange={(models) => patchProfile.mutate({ models })} />
+                <ModelSelect role="work" label="Work agent model" view={profile.data} disabled={patchProfile.isPending} onChange={(models) => patchProfile.mutate({ models })} />
+              </>
+            )}
             <p className="muted settings-helper">Applies to new sessions — the current run keeps its model.</p>
           </section>
 
-          {patch.isError && (
+          {(patch.isError || patchProfile.isError) && (
             <p role="alert" className="settings-error">
-              {(patch.error as Error).message}
+              {((patch.error ?? patchProfile.error) as Error).message}
             </p>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+const PROFILE_DEFAULT = "";
+
+function ModelSelect({
+  role,
+  label,
+  view,
+  disabled,
+  onChange,
+}: {
+  role: "approach" | "work";
+  label: string;
+  view: ProfileView;
+  disabled: boolean;
+  onChange: (models: NonNullable<PatchProfileBody["models"]>) => void;
+}) {
+  return (
+    <label className="settings-field">
+      {label}
+      <select
+        data-testid={`setting-model-${role}`}
+        value={view.overrides[role] ?? PROFILE_DEFAULT}
+        disabled={disabled}
+        onChange={(e) => onChange({ [role]: e.target.value === PROFILE_DEFAULT ? null : e.target.value })}
+      >
+        <option value={PROFILE_DEFAULT}>Profile default ({view.profileModels[role]})</option>
+        {view.choices.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

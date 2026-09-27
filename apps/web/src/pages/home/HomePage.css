@@ -63,8 +63,42 @@
 .home-portfolio td {
   cursor: pointer;
 }
-.home-portfolio td:last-child {
+.home-portfolio td:last-child,
+.home-portfolio td.home-select {
   cursor: default;
+}
+.home-select {
+  width: 1%;
+}
+.home-select input {
+  cursor: pointer;
+}
+
+.home-col-h-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.home-confirm {
+  border: 1px solid var(--critical);
+  border-radius: var(--r);
+  background: var(--critical-weak);
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.home-confirm p {
+  margin: 0;
+}
+.home-confirm-actions {
+  display: flex;
+  gap: var(--sp-2);
+  flex-shrink: 0;
 }
 
 .home-seed-list {

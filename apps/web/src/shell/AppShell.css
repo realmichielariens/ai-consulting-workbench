@@ -225,7 +225,13 @@
   color: var(--ink);
   box-shadow: inset 0 2px 0 var(--accent);
 }
+.stage-tab-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .stage-tab-close {
+  flex: none;
   opacity: 0.45;
   font-size: 11px;
   margin-left: 4px;

@@ -10,7 +10,7 @@ const elk = new ELK();
 
 // UX1 brief B §Build 1: task nodes are 188px wide in the Exhibit canvas node spec (EXHIBIT §7.4).
 export const TASK_W = 188;
-export const TASK_H = 74;
+export const TASK_H = 94;
 export const DATA_W = 150;
 export const DATA_H = 52;
 

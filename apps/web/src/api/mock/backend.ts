@@ -20,6 +20,7 @@ import {
   computeReadiness,
   formatVersion,
   initialStatus,
+  MODEL_CHOICES,
   nextVersionParts,
   rollupFor,
   parseSlotRef,
@@ -51,6 +52,7 @@ import {
   type PlanPreviewView,
   type PlanView,
   type PostMessageResult,
+  type PatchProfileBody,
   type ProfileView,
   type ProposalId,
   type ProposalView,
@@ -86,6 +88,19 @@ const pad = (n: number): string => String(n).padStart(4, "0");
 /** I2: one general conversation thread per engagement, created with it. */
 const THREAD_ID = "T-0001" as ThreadId;
 let mockProfile = "test";
+const mockOverrides: { approach: string | null; work: string | null } = { approach: null, work: null };
+const MOCK_PROFILE_MODEL = "claude-haiku-4-5";
+
+function mockProfileView(): ProfileView {
+  return {
+    active: mockProfile,
+    available: ["test", "dev", "demo"],
+    models: { approach: mockOverrides.approach ?? MOCK_PROFILE_MODEL, work: mockOverrides.work ?? MOCK_PROFILE_MODEL },
+    profileModels: { approach: MOCK_PROFILE_MODEL, work: MOCK_PROFILE_MODEL },
+    overrides: { ...mockOverrides },
+    choices: MODEL_CHOICES.map((m) => ({ id: m.id, label: m.label })),
+  };
+}
 
 function slugify(name: string): string {
   const base = name
@@ -861,9 +876,16 @@ export const mockBackend = {
 
   createEngagement: async (body: { seedId: string; name: string }): Promise<EngagementSummary> => createEngagementInternal(body.seedId, body.name),
 
+  deleteEngagement: async (eid: EngagementId): Promise<{ ok: true }> => {
+    // Unlike the server (409 while running), the mock just stops its scripted timers.
+    for (const token of findEng(eid).cancelTokens.values()) token.cancel();
+    engagements.delete(eid);
+    return { ok: true };
+  },
+
   getEngagement: async (eid: EngagementId): Promise<EngagementView> => {
     const eng = findEng(eid);
-    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", approachModel: "claude-haiku-4-5" };
+    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: mockProfile, workModel: mockProfileView().models.work, approachModel: mockProfileView().models.approach };
   },
 
   getPlan: async (eid: EngagementId): Promise<PlanView> => buildPlan(findEng(eid)),
@@ -1124,14 +1146,16 @@ export const mockBackend = {
     const eng = findEng(eid);
     eng.settings = { ...eng.settings, ...body };
     emitEvent(eng, "human", { type: "SettingsChanged", payload: { changes: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, String(v)])) } });
-    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: "test", workModel: "claude-haiku-4-5", approachModel: "claude-haiku-4-5" };
+    return { ...toSummary(eng), settings: eng.settings, folderPath: `workspace\\engagements\\${eng.id}`, runtime: "fake", profile: mockProfile, workModel: mockProfileView().models.work, approachModel: mockProfileView().models.approach };
   },
 
-  getProfile: async (): Promise<ProfileView> => ({ active: mockProfile, available: ["test", "dev", "demo"], models: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" } }),
+  getProfile: async (): Promise<ProfileView> => mockProfileView(),
 
-  patchProfile: async (body: { profile: string }): Promise<ProfileView> => {
-    mockProfile = body.profile;
-    return { active: mockProfile, available: ["test", "dev", "demo"], models: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" } };
+  patchProfile: async (body: PatchProfileBody): Promise<ProfileView> => {
+    if (body.profile !== undefined) mockProfile = body.profile;
+    if (body.models?.approach !== undefined) mockOverrides.approach = body.models.approach;
+    if (body.models?.work !== undefined) mockOverrides.work = body.models.work;
+    return mockProfileView();
   },
 
   getJournal: async (eid: EngagementId): Promise<JournalView> => {

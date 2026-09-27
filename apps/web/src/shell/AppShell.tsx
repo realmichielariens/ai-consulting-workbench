@@ -202,10 +202,11 @@ export function AppShell({ eid }: { eid: EngagementId }) {
               key={tab.key}
               data-testid={`stage-tab-${tab.key}`}
               aria-selected={activeKey === tab.key}
+              title={tab.label}
               onClick={() => navigateToKey(tab.key)}
             >
               {tab.kind === "doc" && <DocGlyph filled />}
-              {tab.label}
+              <span className="stage-tab-label">{tab.label}</span>
               <span
                 className="stage-tab-close"
                 data-testid={`stage-tab-close-${tab.key}`}

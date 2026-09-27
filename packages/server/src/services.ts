@@ -10,6 +10,7 @@ import fs from "node:fs";
 import {
   applyItemEvent,
   computeItemActions,
+  MODEL_CHOICES,
   nextVersion,
   resolveGateVerdict,
   withdrawGateStep,
@@ -23,6 +24,7 @@ import {
   type ItemId,
   type NotificationId,
   type ProfileView,
+  type PatchProfileBody,
   type Request,
   type RequestId,
   type Run,
@@ -43,7 +45,15 @@ import { wireApproachHooks } from "./approachRunner.js";
 import { checkpointCommit } from "./checkpoint.js";
 import { conflict, illegalTransition, invalid, notFound } from "./errors.js";
 import { emitEvent, openEngagement, reloadMeta, type EngagementContext, type ServerContext } from "./engagementContext.js";
-import { activeProfileName, listProfileNames, setActiveProfile } from "./profileService.js";
+import {
+  activeProfileName,
+  baseModelProfile,
+  currentModelProfile,
+  listProfileNames,
+  modelOverrides,
+  setActiveProfile,
+  setModelOverrides,
+} from "./profileService.js";
 import { resolveQuestionAnswer } from "./questionAnswering.js";
 import { launchRun, wireAutostart } from "./runService.js";
 import { recomputeReadiness, scheduleAutostart, syncPlanState } from "./scheduler.js";
@@ -412,13 +422,21 @@ export async function patchSettings(ctx: EngagementContext, patch: Partial<Setti
 }
 
 export function getProfile(server: ServerContext): ProfileView {
-  const active = activeProfileName(server);
-  const models = server.config.profiles[active]!.models;
-  return { active, available: listProfileNames(server), models: { approach: models.approach, work: models.work } };
+  const base = baseModelProfile(server).models;
+  const effective = currentModelProfile(server).models;
+  return {
+    active: activeProfileName(server),
+    available: listProfileNames(server),
+    models: { approach: effective.approach, work: effective.work },
+    profileModels: { approach: base.approach, work: base.work },
+    overrides: modelOverrides(server),
+    choices: MODEL_CHOICES.map((m) => ({ id: m.id, label: m.label })),
+  };
 }
 
-export function patchProfile(server: ServerContext, profile: string): ProfileView {
-  setActiveProfile(server, profile);
+export function patchProfile(server: ServerContext, body: PatchProfileBody): ProfileView {
+  if (body.profile !== undefined) setActiveProfile(server, body.profile);
+  if (body.models !== undefined) setModelOverrides(server, body.models);
   return getProfile(server);
 }
 
@@ -443,4 +461,51 @@ export function listEngagementIds(server: ServerContext): EngagementId[] {
     .readdirSync(server.workspace.engagementsDir, { withFileTypes: true })
     .filter((e) => e.isDirectory())
     .map((e) => e.name as EngagementId);
+}
+
+/**
+ * Deletes an engagement for good. Refused while any agent runs in it: a run
+ * finishing after its DB is closed would fail mid-write. The folder is first
+ * renamed into the trash (atomic, and on Windows it fails cleanly while a
+ * file is held open), so a delete that fails halfway never leaves a
+ * half-removed engagement in the listing.
+ */
+export async function deleteEngagement(server: ServerContext, id: EngagementId): Promise<void> {
+  if (!listEngagementIds(server).includes(id)) throw notFound(`no such engagement: ${id}`);
+
+  const ctx = server.engagements.get(id);
+  if (ctx) {
+    assertIdle(ctx);
+    await ctx.writeQueue.run(() => undefined); // let an in-flight checkpoint commit finish
+    assertIdle(ctx); // a run may have started while we waited
+    // From here on everything is synchronous, so no request can reopen the context mid-delete.
+    server.engagements.delete(id);
+    for (const client of ctx.wsClients) client.close();
+    ctx.dbCtx.close();
+  }
+
+  fs.mkdirSync(server.workspace.trashDir, { recursive: true });
+  const trashed = path.join(server.workspace.trashDir, `${id}-${Date.now()}`);
+  try {
+    fs.renameSync(server.workspace.engagement(id), trashed);
+  } catch (err) {
+    throw conflict(`could not delete ${id}; is a file in its folder open elsewhere? (${(err as Error).message})`);
+  }
+  emptyTrash(server);
+}
+
+function assertIdle(ctx: EngagementContext): void {
+  const running = ctx.activeRuns.size + ctx.approachRuns.size;
+  if (running > 0) throw conflict(`${running} agent run(s) are active in ${ctx.id}; stop them before deleting`);
+}
+
+/** Best effort: whatever is still locked stays in the trash and is retried on the next delete. */
+function emptyTrash(server: ServerContext): void {
+  for (const entry of fs.readdirSync(server.workspace.trashDir)) {
+    try {
+      fs.rmSync(path.join(server.workspace.trashDir, entry), { recursive: true, force: true, maxRetries: 3 });
+    } catch {
+      /* retried next time */
+    }
+  }
 }

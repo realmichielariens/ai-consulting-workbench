@@ -176,6 +176,7 @@ export const httpApi: WorkbenchApi = {
   listSeeds: () => call("listSeeds") as Promise<SeedSummary[]>,
   listEngagements: () => call("listEngagements") as Promise<EngagementSummary[]>,
   createEngagement: (body) => call("createEngagement", { body }) as Promise<EngagementSummary>,
+  deleteEngagement: (eid) => call("deleteEngagement", { params: { eid } }) as Promise<{ ok: true }>,
   getEngagement: (eid) => call("getEngagement", { params: { eid } }) as Promise<EngagementView>,
 
   getPlan: (eid) => call("getPlan", { params: { eid } }) as Promise<PlanView>,

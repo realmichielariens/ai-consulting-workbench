@@ -45,6 +45,7 @@ import {
   ThreadId,
 } from "./domain.js";
 import { WorkbenchEvent } from "./events.js";
+import { ModelChoiceId } from "./config.js";
 
 // ---------------------------------------------------------------------------
 // Views
@@ -234,9 +235,26 @@ export type PostMessageResult = z.infer<typeof PostMessageResult>;
 export const ProfileView = z.object({
   active: z.string(),
   available: z.array(z.string()),
+  /** The models new runs use: the override where one is set, else the profile's. */
   models: z.object({ approach: z.string(), work: z.string() }),
+  /** The active profile's own models, shown as the "profile default" choice. */
+  profileModels: z.object({ approach: z.string(), work: z.string() }),
+  /** Per-role overrides of the profile (null = use the profile's model). */
+  overrides: z.object({ approach: z.string().nullable(), work: z.string().nullable() }),
+  choices: z.array(z.object({ id: z.string(), label: z.string() })),
 });
 export type ProfileView = z.infer<typeof ProfileView>;
+
+export const PatchProfileBody = z
+  .object({
+    profile: z.string().min(1).optional(),
+    /** null clears the override (back to the profile's model). */
+    models: z
+      .object({ approach: ModelChoiceId.nullable().optional(), work: ModelChoiceId.nullable().optional() })
+      .optional(),
+  })
+  .refine((b) => b.profile !== undefined || b.models !== undefined, { message: "nothing to change" });
+export type PatchProfileBody = z.infer<typeof PatchProfileBody>;
 
 export const JournalView = z.object({ markdown: z.string() });
 export type JournalView = z.infer<typeof JournalView>;
@@ -333,7 +351,7 @@ export type ApiError = z.infer<typeof ApiError>;
 // ---------------------------------------------------------------------------
 
 export interface RouteDef {
-  method: "GET" | "POST" | "PATCH";
+  method: "GET" | "POST" | "PATCH" | "DELETE";
   path: string;
   params?: z.ZodObject;
   query?: z.ZodObject;
@@ -365,6 +383,8 @@ export const routes = {
     response: EngagementSummary,
   },
   getEngagement: { method: "GET", path: "/api/engagements/:eid", params: E, response: EngagementView },
+  /** Removes the engagement folder (files, DB, git history) for good. 409 while any agent is running in it. */
+  deleteEngagement: { method: "DELETE", path: "/api/engagements/:eid", params: E, response: Ok },
 
   // J1.2
   getPlan: { method: "GET", path: "/api/engagements/:eid/plan", params: E, response: PlanView },
@@ -508,7 +528,7 @@ export const routes = {
     response: EngagementView,
   },
   getProfile: { method: "GET", path: "/api/profile", response: ProfileView },
-  patchProfile: { method: "PATCH", path: "/api/profile", body: z.object({ profile: z.string().min(1) }), response: ProfileView },
+  patchProfile: { method: "PATCH", path: "/api/profile", body: PatchProfileBody, response: ProfileView },
 
   // I2 — D4: the approach journal (ENG/work/approach-journal.md), read-only
   getJournal: { method: "GET", path: "/api/engagements/:eid/journal", params: E, response: JournalView },
