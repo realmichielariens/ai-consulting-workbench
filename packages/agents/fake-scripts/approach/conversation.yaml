@@ -1,0 +1,362 @@
+# Fake conversation script for the Approach Agent (I2-PLAN §4.1). Turns are
+# chosen by the first matching `match` regex on the human's message, else the
+# next unused kick-off turn in sequence: turn 1 asks a few clarifying
+# questions, turn 2 writes + publishes context/stakeholders and proposes the
+# acme-discovery seed's plan (packages/agents/src/fake/approachScripts.ts).
+
+turns:
+  - steps:
+      - text: "Happy to help shape this. A few quick things first: who's the sponsor and what's driving this now, is there a deadline the board or steerco is expecting? What's the current state of the systems or processes in scope, and is there anything already flagged as urgent? And who should we plan on interviewing?"
+  - steps:
+      - write:
+          path: context.md
+          content: |
+            # Acme Manufacturing Corp. — Engagement Context
+
+            Acme Manufacturing Corp. is a mid-size industrial manufacturer (approximately
+            1,800 employees, $410M annual revenue), headquartered in Dayton, Ohio, with
+            three plants in the US Midwest and a smaller contract-manufacturing site in
+            Monterrey, Mexico. Acme makes precision-machined components for the
+            agricultural and construction equipment industries, selling mostly through
+            long-term supply contracts with three large OEM customers who together
+            account for roughly 70% of revenue.
+
+            ## Why this engagement
+
+            The CEO, Frank Delgado, has asked us to develop an IT strategy for Acme: a
+            board deck, due in **six weeks**, that the steering committee can endorse.
+            The scope is the whole of IT, not a single system decision — but four
+            pressures are what put IT strategy on the board's agenda this year, and they
+            will shape most of what Discovery and Synthesis surface:
+
+            1. **ERP end-of-support.** The incumbent vendor has announced
+               end-of-mainstream-support for Acme's core ERP in three years. The
+               instance is a heavily customized, 14-year-old on-premise deployment,
+               integrated over the years with a patchwork of shop-floor MES systems, a
+               homegrown quoting tool, and a separate finance/GL system that does not
+               share a common customer or part master with the ERP.
+            2. **OEM real-time visibility.** One of the three large OEM customers has
+               started asking about real-time production-status visibility as a
+               condition of contract renewal. Acme's current systems were not built to
+               report that way.
+            3. **Plant-level workarounds.** Plant managers at each site have, over
+               time, built their own spreadsheet-based workarounds for scheduling and
+               inventory visibility, because the ERP's own modules for those functions
+               were judged too slow or too rigid. This keeps the plants running, but it
+               is fragile and it hides risk from the center.
+            4. **A fourth product line.** The board wants to expand into a fourth
+               product line. The current systems cannot support that expansion without
+               significant custom development, on top of the customization Acme is
+               already carrying.
+
+            ## Sponsor and stance
+
+            Priya Raman, the CIO, has been in the role for **three months**. She was
+            hired from a larger automotive-parts supplier specifically to bring a more
+            disciplined approach to IT; she inherited the ERP landscape and its
+            customizations rather than having built them. She has asked for a
+            fact-based, structured strategy rather than a vendor-led sales process, and
+            she is explicit that she wants to avoid another multi-year, over-customized
+            implementation like the one she inherited.
+
+            ## Deliverable and timeline
+
+            A board deck presenting the IT strategy — the major themes from Discovery,
+            the initiatives that follow from them, and a prioritized roadmap — endorsed
+            by the steering committee, in six weeks from kickoff. Discovery (interview
+            guide, then the CEO/CFO/COO/CIO interviews) needs to move quickly to leave
+            enough runway for synthesis, initiative-shaping and roadmap work before the
+            steerco date.
+      - publish:
+          slot: context
+          sourcePath: context.md
+          kind: material
+          note: Initial engagement context, from the kick-off conversation.
+      - write:
+          path: stakeholders.md
+          content: |
+            # Acme Manufacturing Corp. — Stakeholders
+
+            | Name | Role | Notes |
+            |---|---|---|
+            | Frank Delgado | CEO | Commissioned the engagement on the board's behalf. Primary exposure is the OEM renewal risk and the board's patience for a multi-year, expensive program. Interviewed. |
+            | Grace Whitfield | CFO | Owns the separate finance/GL system, which does not share a common customer or part master with the ERP. Watches capital discipline closely, especially after past IT projects ran over. Interviewed. |
+            | Marta Ilić | COO | Owns all three US plants. Most exposed to any disruption during the harvest-season production peak. Values the plant-level workarounds for keeping things running, even while flagging their fragility. Interviewed. |
+            | Priya Raman | CIO (three months in the role) | Sponsor of the IT strategy scoping. Came from a larger automotive-parts supplier; wants a fact-based approach and is explicit about not wanting to repeat the current landscape's over-customization. Interviewed. |
+            | Owen Butler | Plant Manager, Dayton HQ plant | Built the most extensive spreadsheet workaround; informally influential with the other plant managers. Not interviewed in Discovery, but referenced by the COO and CIO. |
+            | Dev Anand | Director of IT, Applications | Reports to the CIO. Deep institutional knowledge of the ERP's customizations, but limited bandwidth. Joined part of the CIO interview. |
+            | (OEM contact, unnamed) | Procurement lead at the largest OEM customer | External. The source of the real-time production-visibility condition referenced in the context. Not interviewed. |
+
+            **Interviewed in Discovery (WI-003):** Frank Delgado (CEO), Grace Whitfield
+            (CFO), Marta Ilić (COO), Priya Raman (CIO).
+      - publish:
+          slot: stakeholders
+          sourcePath: stakeholders.md
+          kind: material
+          note: Initial stakeholder list, from the kick-off conversation.
+      - propose:
+          rationale: Discovery needs the interview guide and the four CxO interviews before Synthesis can turn them into themes; splitting Discovery and Synthesis into their own phases keeps each item's scope tight and lets Synthesis start on whatever interview notes are ready rather than waiting for all four.
+          ops:
+            - op: update_brief
+              itemId: ENG
+              title: IT Strategy for Acme Manufacturing Corp.
+              brief: |
+                IT strategy for Acme Manufacturing Corp., commissioned by the CEO on the
+                board's behalf. Discovery runs the interview guide and the four C-suite
+                interviews that ground everything downstream; Synthesis turns those into
+                the themes, initiatives and roadmap that go into a board deck due in six
+                weeks, for steerco endorsement.
+
+                `context` and `stakeholders` are the shared ground truth for every item
+                in this engagement — keep them current if anything material changes.
+            - op: add_item
+              def:
+                id: PH-1
+                title: Discovery
+                parent: null
+                order: 1
+                executor: null
+                gate: []
+                autostart: true
+                brief: |
+                  Discovery: build the interview guide, then run the four C-suite
+                  interviews that everything else in this engagement builds on.
+            - op: add_item
+              def:
+                id: WI-002
+                title: Prepare interview guide
+                parent: PH-1
+                order: 1
+                executor: agent
+                inputs:
+                  - slot: ENG/context
+                    required: true
+                  - slot: ENG/stakeholders
+                    required: true
+                outputs:
+                  - slot: interview-guide
+                    format: md
+                    scope: project
+                    description: A single guide covering the CEO, CFO, COO and CIO interviews
+                    required: true
+                skills:
+                  - interview-guide-design
+                gate:
+                  - type: human-review
+                acceptance:
+                  - A distinct, targeted set of questions for each of the CEO, CFO, COO and CIO, reflecting their own remit and stake rather than one generic list repeated four times
+                  - Each interview opens with a short warm-up and closes with an open "anything we haven't covered" question
+                  - Questions are phrased to surface pain points, ambitions and constraints, not to lead toward a specific technology or vendor answer
+                  - A suggested running order and a realistic time budget (45-60 minutes) per interview
+                  - Reflects at least one stakeholder-specific detail from stakeholders.md for each executive (e.g. the CFO's ownership of the GL system, the COO's harvest-season exposure)
+                autostart: true
+                brief: |
+                  We need one interview guide that anchors all four Discovery
+                  conversations: with the CEO, the CFO, the COO and the CIO. The board
+                  has asked for an IT strategy in six weeks, endorsed by the steerco, so
+                  this guide needs to get the team straight to what matters in a single
+                  sitting with each executive — no second round is budgeted.
+
+                  Ground it in `ENG/context` and `ENG/stakeholders`. Each executive
+                  should get their own section of targeted questions that reflects their
+                  remit and their stake in the outcome, not a generic list repeated four
+                  times: the CEO's exposure is the OEM contract and the board's patience
+                  for a multi-year program; the CFO's is the funding model and the
+                  discipline around new capital, on top of a GL system that already
+                  doesn't reconcile cleanly with the ERP; the COO's is production
+                  continuity across three plants heading into harvest-season peak, and
+                  how much of that is currently held together by the plants' own
+                  spreadsheets; the CIO's is the landscape she now owns.
+
+                  That last one needs some thought. Priya Raman is three months into the
+                  CIO role. She didn't make the decisions that built the current
+                  ERP/MES/GL patchwork, but she now has to answer for where it goes
+                  next, and the board is waiting on her scoping. A good interview could
+                  spend its time either way: drawing out the vision and priorities she's
+                  forming for IT now that she's had a quarter to look around, or drawing
+                  out the history — why the ERP was customized the way it was, what
+                  previous attempts at change ran into, what she's inherited that she
+                  didn't choose. Both are useful for the strategy; a single 45-60 minute
+                  slot probably can't do both justice, so the guide should be deliberate
+                  about which one it leans on for her, rather than splitting the time
+                  thinly across both.
+
+                  Keep the questions open enough to surface pain points, ambitions and
+                  constraints, not technology wish-lists — we're scoping a strategy, not
+                  a vendor shortlist. Interviews are the only input to synthesis, so
+                  anything not asked here won't be in `themes` either.
+            - op: add_item
+              def:
+                id: WI-003
+                title: Conduct CxO interviews
+                parent: PH-1
+                order: 2
+                executor: human
+                inputs:
+                  - slot: WI-002/interview-guide
+                    required: true
+                outputs:
+                  - slot: notes-ceo
+                    format: md
+                    scope: project
+                    description: Notes from the CEO interview (Frank Delgado)
+                    required: true
+                  - slot: notes-cfo
+                    format: md
+                    scope: project
+                    description: Notes from the CFO interview (Grace Whitfield)
+                    required: true
+                  - slot: notes-coo
+                    format: md
+                    scope: project
+                    description: Notes from the COO interview (Marta Ilić)
+                    required: true
+                  - slot: notes-cio
+                    format: md
+                    scope: project
+                    description: Notes from the CIO interview (Priya Raman)
+                    required: true
+                gate: []
+                autostart: true
+                brief: |
+                  Run the four CxO interviews using the guide WI-002 produced. Each
+                  interview gets its own output slot below — upload your notes (typed
+                  up, not necessarily verbatim) as soon as each conversation is done,
+                  rather than waiting until all four are finished, so Synthesis can
+                  start on whatever is ready.
+
+                  Keep the notes close to what was actually said: direct quotes where
+                  they're telling, and note where two executives land in different
+                  places on the same topic — that's exactly the kind of thing Synthesis
+                  needs to see, not something to smooth over while writing up.
+            - op: add_item
+              def:
+                id: PH-2
+                title: Synthesis
+                parent: null
+                order: 2
+                executor: null
+                gate: []
+                autostart: true
+                brief: |
+                  Synthesis: turn the interview notes into the cross-cutting themes the
+                  rest of the strategy — initiatives, roadmap, board deck — builds on.
+            - op: add_item
+              def:
+                id: WI-004
+                title: Consolidate interview themes
+                parent: PH-2
+                order: 1
+                executor: agent
+                inputs:
+                  - slot: WI-003/notes-ceo
+                    required: true
+                  - slot: WI-003/notes-cfo
+                    required: true
+                  - slot: WI-003/notes-coo
+                    required: true
+                  - slot: WI-003/notes-cio
+                    required: true
+                  - slot: ENG/context
+                    required: true
+                outputs:
+                  - slot: themes
+                    format: md
+                    scope: project
+                    description: 5-10 cross-cutting themes, each with evidence quotes and source interviews
+                    required: true
+                skills:
+                  - thematic-synthesis
+                gate:
+                  - type: human-review
+                acceptance:
+                  - Every theme is backed by at least two interviews
+                  - Contradictions between executives are called out explicitly
+                  - Each theme is illustrated with at least one direct quote and its source interview
+                  - Themes are prioritised by business impact, not by the order the interviews happened in
+                autostart: true
+                brief: |
+                  Synthesize the four interviews into the major themes for Acme's IT
+                  strategy, using `ENG/context` to keep the business framing straight.
+                  Focus on business pain points, ambitions and constraints rather than
+                  technology wish-lists — the initiatives and roadmap steps come later
+                  and will build on what you produce here.
+
+                  Where the executives agree, say so plainly. Where they don't — and on
+                  a topic like this, they won't agree on everything — call it out
+                  explicitly rather than averaging it into a single soft statement; the
+                  steerco will want to know where the tension actually is.
+      - text: "Proposed the plan: Discovery (interview guide, then the four CxO interviews) and Synthesis (theming). Take a look and let me know if anything needs adjusting."
+matches:
+  - match: stakeholder|correct
+    steps:
+      - write:
+          path: stakeholders.md
+          content: |
+            # Acme Manufacturing Corp. — Stakeholders
+
+            | Name | Role | Notes |
+            |---|---|---|
+            | Frank Delgado | CEO | Commissioned the engagement on the board's behalf. Primary exposure is the OEM renewal risk and the board's patience for a multi-year, expensive program. Interviewed. |
+            | Grace Whitfield | CFO | Owns the separate finance/GL system, which does not share a common customer or part master with the ERP. Watches capital discipline closely, especially after past IT projects ran over. Interviewed. |
+            | Marta Ilić | COO | Owns all three US plants. Most exposed to any disruption during the harvest-season production peak. Values the plant-level workarounds for keeping things running, even while flagging their fragility. Interviewed. |
+            | Priya Raman | CIO (three months in the role) | Sponsor of the IT strategy scoping. Came from a larger automotive-parts supplier; wants a fact-based approach and is explicit about not wanting to repeat the current landscape's over-customization. Interviewed. |
+            | Owen Butler | Plant Manager, Dayton HQ plant | Built the most extensive spreadsheet workaround; informally influential with the other plant managers. Not interviewed in Discovery, but referenced by the COO and CIO. |
+            | Dev Anand | Director of IT, Applications | Reports to the CIO. Deep institutional knowledge of the ERP's customizations, but limited bandwidth. Joined part of the CIO interview. |
+            | (OEM contact, unnamed) | Procurement lead at the largest OEM customer | External. The source of the real-time production-visibility condition referenced in the context. Not interviewed. |
+
+            **Interviewed in Discovery (WI-003):** Frank Delgado (CEO), Grace Whitfield
+            (CFO), Marta Ilić (COO), Priya Raman (CIO).
+      - publish:
+          slot: stakeholders
+          sourcePath: stakeholders.md
+          kind: minor
+          note: Corrected per the human's note.
+      - text: Updated the stakeholders list, thanks for the correction.
+  - match: benchmark
+    steps:
+      - propose:
+          rationale: >-
+            A short benchmarking scan would ground the roadmap's recommendations
+            against how comparable manufacturers have approached similar ERP/MES
+            modernization, without holding up Synthesis. It is a research task,
+            so it gets the desk-research skill and two sources — Open Web (free)
+            and Manufacturing IT Benchmarks (licensed, €450 per engagement, demo
+            pricing), whose fixed-edition peer panel is the most direct evidence
+            for phasing and OEM-visibility questions. Themes and the roadmap stay
+            on engagement inputs only.
+          ops:
+            - op: add_item
+              def:
+                id: WI-005
+                title: Short benchmarking scan
+                parent: PH-2
+                order: 2
+                executor: agent
+                inputs:
+                  - slot: ENG/context
+                    required: true
+                outputs:
+                  - slot: benchmark
+                    format: md
+                    scope: project
+                    description: A short scan of how comparable manufacturers approached similar IT modernization
+                    required: true
+                skills: [desk-research]
+                sources:
+                  - id: open-web
+                    purpose: Find public case studies of comparable manufacturers to corroborate the panel figures
+                  - id: mfg-it-benchmarks
+                    purpose: Peer benchmarks on ERP phasing, durations and OEM-visibility responses (fixed edition 2026.1)
+                gate: []
+                autostart: true
+                acceptance:
+                  - Cites at least two comparable organizations or credible sources
+                brief: |
+                  A short scan (not a full study) of how comparable mid-size manufacturers have approached ERP/MES modernization, fourth-product-line expansion or similar IT strategy decisions, to ground the roadmap's recommendations against outside precedent.
+      - text: Proposed a short benchmarking scan under Synthesis.
+  - match: where are we|status
+    steps:
+      - status: true
+fallback:
+  - text: Got it, noted. Let me know if there's anything else before we lock in the plan.

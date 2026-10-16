@@ -1,0 +1,17 @@
+id: workbench-library
+title: Workbench Library
+publisher: This workspace
+kind: library
+summary: Playbooks and reusable patterns captured from earlier engagements.
+description: >-
+  The workspace's own library: approaches that worked before, captured as
+  playbooks. Versioned with the workspace. (The full Library with capture and
+  promotion arrives in M7; this listing serves a small starter set.)
+freshness: snapshot
+edition: starter
+offer: { tier: free, label: "Free — included" }
+usage: >-
+  Use `search` for a playbook that matches the kind of work, then `get` it.
+  Adapt the pattern to this client; don't copy it wholesale. Cite the
+  playbook id.
+connection: { type: mock, dataset: workbench-library.yaml }

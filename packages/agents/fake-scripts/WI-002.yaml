@@ -1,0 +1,224 @@
+# Fake script for WI-002 "Prepare interview guide" (I1-PLAN §6 W1).
+# start: reads inputs, drafts a full interview guide, publishes it as v1.0
+# (material), then raises the CIO-focus ambiguity as a BLOCKING question with
+# a hypothesis, exactly like a real Haiku run following the protocol should.
+start:
+  - text: >-
+      Reading ENG/context and ENG/stakeholders to ground the guide in Acme's
+      actual situation before drafting.
+  - read: ENG/context
+  - read: ENG/stakeholders
+  - write:
+      path: interview-guide.md
+      content: |
+        # Acme Manufacturing Corp. — Executive Interview Guide
+
+        One guide, four sittings: CEO, CFO, COO, CIO. Each section is scoped
+        to that executive's remit and stake, not a repeated generic list.
+        Suggested running order below leaves room for a short warm-up and a
+        closing "anything we haven't covered" question in every session
+        (45-60 minutes each).
+
+        ## Running order and time budget
+
+        1. CEO — Frank Delgado (45-60 min)
+        2. CFO — Grace Whitfield (45-60 min)
+        3. COO — Marta Ilić (45-60 min)
+        4. CIO — Priya Raman (45-60 min)
+
+        ---
+
+        ## 1. CEO — Frank Delgado (45-60 min)
+
+        **Warm-up:** What's changed most in how you think about IT strategy
+        since we were asked to scope this?
+
+        1. The OEM customer raising real-time production visibility — how
+           real is the risk that this becomes contract language before we
+           have an answer?
+        2. The board approved scoping this, but is wary of the prior
+           systems initiative that ran long. What would make this one
+           different, in your view?
+        3. How many "bets" can the board actually absorb in the deck — a
+           short list you can defend, or a fuller roadmap?
+        4. The fourth product line: is the systems question inseparable
+           from the ERP decision, or can it be sequenced independently?
+        5. How do you want the steerco endorsement to work — a formality,
+           or a real test of the recommendation?
+        6. Closing: Anything we haven't covered that the board will ask you
+           about directly?
+
+        ## 2. CFO — Grace Whitfield (45-60 min)
+
+        **Warm-up:** Walk me through what a normal month-end close looks
+        like today, system by system.
+
+        1. The GL system doesn't share a customer or part master with the
+           ERP — where does that cost you the most: time, risk, or both?
+        2. What would "good" look like for capital discipline on an
+           initiative this size, given past overruns elsewhere at Acme?
+        3. The fourth product line is financially significant — what
+           financial case would you need to see before backing it?
+        4. Whatever changes, what does the audit trail need to preserve?
+        5. Closing: Anything about how this gets funded or staged that
+           we should be asking you, that we haven't?
+
+        ## 3. COO — Marta Ilić (45-60 min)
+
+        **Warm-up:** Describe how the three plants coordinate scheduling
+        and inventory today — officially, and in practice.
+
+        1. Where do the plant-level spreadsheet workarounds actually save
+           you, and where are they starting to hide risk?
+        2. What would make a system change safe to run during the
+           harvest-season peak — or is that window simply off-limits?
+        3. The OEM's real-time visibility ask — what would it take from the
+           plant floor to answer it without adding unfunded work for your
+           teams?
+        4. Who else at the plants should we be talking to before anything
+           is finalized?
+        5. Closing: What's the one thing you'd want the board deck to get
+           right about how the plants actually run?
+
+        ## 4. CIO — Priya Raman (45-60 min)
+
+        **Warm-up:** Three months in, what's your read on how the current
+        landscape actually got this way?
+
+        1. What's your early vision for where the core systems should head,
+           and what's still open?
+        2. What do you most want to understand about the ERP's history and
+           past change attempts before committing to a direction?
+        3. Where do the ERP, MES and GL master-data gaps hurt the most
+           today?
+        4. How should the roadmap be sequenced, given the three-year
+           end-of-support clock?
+        5. Closing: What haven't we asked that you'd want the strategy to
+           address?
+  - publish:
+      slot: interview-guide
+      sourcePath: interview-guide.md
+      kind: material
+      note: Initial guide covering CEO, CFO, COO and CIO, each with a scoped question set.
+  - worklog: >-
+      Drafted one interview guide with four stakeholder-scoped sections,
+      built from ENG/context (OEM renewal, ERP end-of-support, plant
+      workarounds, fourth product line) and ENG/stakeholders (each
+      executive's ownership and exposure). Published v1.0 as material.
+      Before finalizing the CIO section I want to check one thing: she is
+      only three months into the role, and the brief flags this needs
+      deliberate thought.
+  - question:
+      question: >-
+        For the CIO section (Priya Raman, three months in role): should the
+        45-60 minute slot lean into the vision and priorities she's forming
+        now, or into the history of how the ERP landscape got this way
+        (past customizations, the earlier failed replacement attempt)? The
+        brief says a single slot probably can't do both justice.
+      hypothesis: >-
+        Lean into her forming vision and priorities, with only enough
+        history to anchor it (e.g. one question on the failed prior
+        attempt, not a detailed retrospective). Reasoning: she is the
+        sponsor of this scoping and the board is waiting on her
+        recommendation, so what she wants to do next is more decision-
+        relevant to the strategy than a full history — Dev Anand and
+        existing documentation can fill history gaps later if needed,
+        but nobody else can tell us her intended direction.
+      alternatives:
+        - >-
+          Lean into history instead: she explicitly wants to understand why
+          past attempts failed before committing to a direction, so
+          drawing that out first might produce a more defensible
+          recommendation later.
+        - >-
+          Split the slot evenly between vision and history, accepting that
+          neither gets full depth.
+      blocking: true
+
+# resume-answer: incorporate the human's answer, publish a revision, submit.
+resume-answer:
+  - text: Incorporating the answer on the CIO section's focus into the guide.
+  - write:
+      path: interview-guide.md
+      content: |
+        # Acme Manufacturing Corp. — Executive Interview Guide
+
+        (Full guide as v1.0, CEO/CFO/COO sections unchanged. CIO section
+        revised below per the answered question.)
+
+        ## 4. CIO — Priya Raman (45-60 min) — revised per the human's answer
+
+        **Warm-up:** Three months in, what's the vision for IT you're
+        starting to form — and what's still open?
+
+        1. Where do you want the core systems to head, and why does that
+           direction fit Acme better than the alternatives?
+        2. What would "avoiding a repeat of the prior over-customized
+           build" concretely mean for how this program runs?
+        3. One question on history to anchor the vision: what's the single
+           biggest lesson from the earlier replacement attempt that you're
+           carrying into this one?
+        4. Where do the ERP/MES/GL master-data gaps hurt your priorities
+           most today?
+        5. How should the roadmap sequence relative to the three-year
+           end-of-support clock?
+        6. Closing: What haven't we asked that you'd want the strategy to
+           address?
+  - publish:
+      slot: interview-guide
+      sourcePath: interview-guide.md
+      kind: minor
+      note: Revised the CIO section per the answered question (lean into vision, one anchoring history question).
+  - worklog: >-
+      Revised the CIO section only, per the answer: leans into her forming
+      vision and priorities, keeps one question anchoring the history
+      (the prior failed attempt) rather than a full retrospective. No other
+      section changed, so published as minor.
+  - submit:
+      summary: >-
+        Published the interview guide (v1.1) with four stakeholder-scoped
+        sections, CEO/CFO/COO/CIO, each with a warm-up, targeted questions
+        grounded in ENG/context and ENG/stakeholders, and a closing
+        catch-all question. The CIO section was revised per the answered
+        question on vision vs. history.
+      selfCheck:
+        - criterion: A distinct, targeted set of questions for each of the CEO, CFO, COO and CIO, reflecting their own remit and stake rather than one generic list repeated four times
+          met: "yes"
+          note: Each section is grounded in that executive's specific exposure from context/stakeholders.
+        - criterion: Each interview opens with a short warm-up and closes with an open "anything we haven't covered" question
+          met: "yes"
+          note: All four sections follow this structure.
+        - criterion: Questions are phrased to surface pain points, ambitions and constraints, not to lead toward a specific technology or vendor answer
+          met: "yes"
+          note: No vendor or technology names appear in any question.
+        - criterion: A suggested running order and a realistic time budget (45-60 minutes) per interview
+          met: "yes"
+          note: Running order and 45-60 min budget given at the top and per section.
+        - criterion: Reflects at least one stakeholder-specific detail from stakeholders.md for each executive
+          met: "yes"
+          note: OEM renewal (CEO), GL/ERP mismatch (CFO), harvest-season exposure (COO), three-months-in framing (CIO).
+      openIssues: []
+
+# changes-requested: revise per reviewer feedback, publish, submit again.
+changes-requested:
+  - text: Revising the guide per the reviewer's comments.
+  - write:
+      path: interview-guide.md
+      content: |
+        # Acme Manufacturing Corp. — Executive Interview Guide (revised)
+
+        (Guide revised per the reviewer's comments — see the worklog entry
+        for what changed.)
+  - publish:
+      slot: interview-guide
+      sourcePath: interview-guide.md
+      kind: minor
+      note: Revised per the reviewer's requested changes.
+  - worklog: Addressed the reviewer's comments and republished.
+  - submit:
+      summary: Revised the interview guide per the requested changes and republished.
+      selfCheck:
+        - criterion: Reviewer comments addressed
+          met: "yes"
+          note: See worklog for the specific changes made.
+      openIssues: []

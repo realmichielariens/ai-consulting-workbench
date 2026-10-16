@@ -1,0 +1,18 @@
+id: open-web
+title: Open Web
+publisher: Public internet, via Claude web search
+kind: web
+summary: Search the public web and read pages — news, company sites, case studies, public reports.
+description: >-
+  Broad and current, but uneven in quality, and it changes over time: the
+  same query next month can return different pages. Good for discovering
+  what exists; weak as the only basis for a figure in a board deck.
+freshness: live
+offer: { tier: free, label: Free }
+usage: >-
+  Search narrowly (3-6 targeted queries), fetch the 2-5 most relevant pages
+  and read them before citing. Prefer primary sources (the organization
+  itself, regulators, established trade press) over aggregators and SEO
+  pages. Treat vendor case studies as claims by the vendor. Cite the URL and
+  the date you accessed it.
+connection: { type: builtin-web }

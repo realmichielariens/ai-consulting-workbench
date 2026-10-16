@@ -1,0 +1,175 @@
+# Fake script for WI-005 "Short benchmarking scan" (I2, added by the
+# conversation fake script's "benchmark" match — see
+# fake-scripts/approach/conversation.yaml). start: reads ENG/context, then
+# raises a BLOCKING question about which peer set to benchmark against, with
+# a hypothesis, since that materially changes what "comparable" means here.
+#
+# Sources: the proposal attaches Open Web and Manufacturing IT Benchmarks.
+# sourceSearch/sourceGet query the listing's real mock dataset
+# (workbench-sources/data); webSearch/webFetch are scripted (no network;
+# example.com URLs make it obvious these are not real sources). The output
+# cites both and ends with a Sources section.
+start:
+  - text: >-
+      Reading ENG/context before deciding what "comparable" should mean for
+      this scan.
+  - read: ENG/context
+  - sourceSearch:
+      source: mfg-it-benchmarks
+      query: erp replacement phased oem visibility
+  - webSearch:
+      query: mid-size manufacturer ERP modernization case study OEM real-time visibility
+      results:
+        - title: "Phased ERP replacement at a tier-1 components maker (case study)"
+          url: https://example.com/case-studies/phased-erp-replacement-tier1
+        - title: "Meeting OEM production-visibility requirements without replacing the ERP"
+          url: https://example.org/insights/oem-visibility-reporting-layer
+        - title: "Agricultural equipment suppliers: digital supply chain survey"
+          url: https://example.net/research/ag-equipment-supplier-survey
+  - worklog: >-
+      Before drafting, I need to settle the peer set: Acme is a mid-size
+      industrial manufacturer with long-term OEM supply contracts, so
+      "comparable" could mean same-size manufacturers regardless of
+      industry, or same-industry (agricultural/construction equipment
+      component supply) regardless of size. The Northfield panel is matched
+      on size; the web results mix both. That choice changes which
+      precedents are actually useful here, so I'm raising it rather than
+      guessing.
+  - question:
+      question: >-
+        For the benchmarking scan: should "comparable" mean other mid-size
+        industrial manufacturers generally (matched on scale and on facing
+        a similar ERP end-of-support / plant-workaround situation), or
+        specifically other suppliers in the agricultural/construction
+        equipment supply chain (matched on industry and OEM contract
+        structure)? The two produce different precedent sets.
+      hypothesis: >-
+        Match on scale and situation (mid-size manufacturer modernizing a
+        14-year-old customized ERP under an OEM real-time-visibility ask),
+        not narrowly on industry. Reasoning: the IT modernization patterns
+        (ERP end-of-support, plant-level workarounds, a new product line
+        straining current systems) are common across industrial
+        manufacturers and are what the roadmap actually needs precedent
+        for; narrowing to agricultural/construction equipment specifically
+        would shrink the usable precedent set for little added relevance.
+      alternatives:
+        - >-
+          Match narrowly on industry (agricultural/construction equipment
+          component suppliers) instead, on the reasoning that OEM contract
+          dynamics and supply-chain expectations are industry-specific and
+          a same-industry peer's response to the OEM ask is more directly
+          comparable.
+      blocking: true
+
+# resume-answer: incorporate the answer, read the records and pages to cite, publish, submit.
+resume-answer:
+  - text: Incorporating the answer on the peer set; reading the benchmark records first, then corroborating on the web.
+  - sourceGet:
+      source: mfg-it-benchmarks
+      id: MB-104
+  - sourceGet:
+      source: mfg-it-benchmarks
+      id: MB-112
+  - sourceSearch:
+      source: mfg-it-benchmarks
+      query: spreadsheet workarounds plants
+  - sourceGet:
+      source: mfg-it-benchmarks
+      id: MB-107
+  - webFetch:
+      url: https://example.com/case-studies/phased-erp-replacement-tier1
+      answer: >-
+        Three-year, plant-by-plant ERP replacement after an earlier big-bang
+        cutover at a sister site disrupted shipments for several weeks.
+        Plant scheduling spreadsheets were formalized as an interim bridge
+        tool until the new scheduling module was proven at the pilot site.
+  - webFetch:
+      url: https://example.org/insights/oem-visibility-reporting-layer
+      answer: >-
+        A components manufacturer with OEM-concentrated revenue built a
+        reporting layer on its existing ERP to meet an OEM real-time
+        visibility clause inside the renewal window, and deferred the ERP
+        decision by about eighteen months.
+  - write:
+      path: benchmark.md
+      content: |
+        # Short Benchmarking Scan — Comparable IT Modernization Approaches
+
+        Scoped per the answered question: peers matched on scale and
+        situation (mid-size industrial manufacturers modernizing a
+        long-customized ERP under real-time-visibility or similar OEM
+        pressure), not narrowed to agricultural/construction equipment.
+
+        ## 1. Phase the ERP replacement plant by plant
+
+        Across the Northfield peer panel, phased (site-by-site) replacements
+        at 2–4 plants took a median of 30 months, against 19 months for a
+        single cutover — but 38% of single cutovers caused a shipment
+        disruption of more than two weeks, against 9% for phased
+        programmes [1]. A public case of a tier-1 components maker shows the
+        same pattern: a three-year, plant-by-plant replacement chosen after
+        a big-bang cutover at a sister site disrupted shipments [4].
+
+        **For Acme:** with three plants heading into harvest-season peak, the
+        disruption risk matters more than the extra year. This supports the
+        COO's sequencing caution.
+
+        ## 2. Meet the OEM visibility ask first, with a layer on today's systems
+
+        57% of panel suppliers facing an OEM real-time visibility requirement
+        met it first with a reporting/integration layer on the existing ERP
+        and MES (median 7 months), and kept the ERP decision open; the rest
+        waited a median of 26 months for a new ERP [2]. A public case
+        describes a components maker doing exactly this inside its renewal
+        window, deferring the ERP decision by about eighteen months [5].
+
+        **For Acme:** this decouples the CEO's urgent OEM renewal from the
+        multi-year platform question.
+
+        ## 3. Formalize the plant spreadsheets before cutover
+
+        64% of panel firms with a ten-year-plus ERP schedule partly in
+        plant-owned spreadsheets; those that formalized them as an interim
+        tool had fewer scheduling incidents at cutover [3].
+
+        **For Acme:** treat Dayton's spreadsheet as a bridge with a
+        retirement date, not something to switch off at go-live.
+
+        ## Open issues
+
+        The panel figures are medians for mid-size manufacturers, not
+        agricultural/construction-equipment suppliers specifically. The two
+        public cases are vendor-neutral write-ups but single examples; treat
+        them as illustrations, not evidence on their own.
+
+        ## Sources
+
+        1. [MB-104 ERP replacement duration by approach](https://example.com/northfield/2026.1/MB-104) — Northfield Industry Research (demo), edition 2026.1
+        2. [MB-112 Meeting OEM real-time production-visibility requirements](https://example.com/northfield/2026.1/MB-112) — Northfield Industry Research (demo), edition 2026.1
+        3. [MB-107 Plant-level spreadsheet workarounds](https://example.com/northfield/2026.1/MB-107) — Northfield Industry Research (demo), edition 2026.1
+        4. [Phased ERP replacement at a tier-1 components maker (case study)](https://example.com/case-studies/phased-erp-replacement-tier1) — example.com, accessed 2026-10-05
+        5. [Meeting OEM production-visibility requirements without replacing the ERP](https://example.org/insights/oem-visibility-reporting-layer) — example.org, accessed 2026-10-05
+  - publish:
+      slot: benchmark
+      sourcePath: benchmark.md
+      kind: material
+      note: Benchmarking scan from the Northfield 2026.1 panel, corroborated by two public cases, scoped per the answered question.
+  - worklog: >-
+      Scoped the peer set per the answered question (scale/situation, not
+      narrow industry match). Started with the attached benchmark source
+      (Northfield 2026.1: search "erp replacement phased oem visibility",
+      "spreadsheet workarounds plants"; read MB-104, MB-112, MB-107), then
+      corroborated on the open web with two public cases. Three findings,
+      each related back to Acme. Panel figures are a fixed edition, so
+      they can be re-checked; the web cases are live and may change.
+  - submit:
+      summary: >-
+        Published a benchmarking scan (v1.0) with three findings from the
+        Northfield 2026.1 peer panel, corroborated by two public cases, each
+        related back to Acme's situation.
+      selfCheck:
+        - criterion: Cites at least two comparable organizations or credible sources
+          met: "yes"
+          note: Three benchmark records (fixed edition) and two public cases, all linked in the Sources section.
+      openIssues:
+        - Panel medians are for mid-size manufacturers generally, not agricultural/construction-equipment suppliers specifically.

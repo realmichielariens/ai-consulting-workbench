@@ -1,0 +1,19 @@
+{
+  "name": "@workbench/store",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "seed:try": "tsx src/seed-try.ts"
+  },
+  "dependencies": {
+    "@workbench/core": "workspace:*",
+    "gray-matter": "^4.0.3",
+    "simple-git": "^3.36.0",
+    "yaml": "^2.8.1"
+  }
+}

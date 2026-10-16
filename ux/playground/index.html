@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="cobalt" data-type="exhibit" data-density="comfortable" data-radius="sharp">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Exhibit Style Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Libre+Franklin:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   EXHIBIT — design language tokens (v0.1)
+   Every visual decision lives in these variables. The controls in
+   the top bar only flip data-attributes on <html>; "Copy tokens"
+   exports whatever is currently resolved.
+   ============================================================ */
+:root {
+  /* paper & ink (light) */
+  --paper: #F6F7F9;
+  --surface: #FFFFFF;
+  --sunken: #EDF0F4;
+  --ink: #0E1B2E;
+  --ink-2: #3B4859;
+  --ink-3: #5F6A7A;
+  --rule: #DDE2E9;
+  --rule-strong: #B8C0CB;
+
+  /* semantic */
+  --positive: #1D7A4C;
+  --positive-weak: #E4F2EA;
+  --caution: #956009;
+  --caution-weak: #FBF0DC;
+  --critical: #BF3328;
+  --critical-weak: #FBE7E5;
+  --gate: #5B3FD6;
+  --gate-weak: #ECE8FC;
+
+  /* accent (overridden per data-accent) */
+  --accent: #1F4FD8;
+  --accent-ink: #FFFFFF;
+  --accent-weak: #E7EDFC;
+  --accent-strong: #163DA8;
+
+  /* type */
+  --font-ui: "IBM Plex Sans", system-ui, sans-serif;
+  --font-read: "Source Serif 4", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-title: var(--font-ui);
+  --title-weight: 600;
+  --fs-xs: 11px;
+  --fs-sm: 12.5px;
+  --fs-base: 14px;
+  --fs-md: 16px;
+  --fs-lg: 20px;
+  --fs-xl: 26px;
+  --fs-xxl: 36px;
+
+  /* shape & space */
+  --r: 2px;
+  --r-lg: 4px;
+  --d: 1;
+  --shadow-float: 0 1px 2px rgba(14, 27, 46, .06), 0 8px 24px rgba(14, 27, 46, .10);
+}
+
+:root[data-accent="teal"]    { --accent: #0B6E6A; --accent-weak: #E1F1F0; --accent-strong: #08524F; }
+:root[data-accent="oxblood"] { --accent: #8E1B2F; --accent-weak: #F6E6E9; --accent-strong: #6C1323; }
+:root[data-accent="midnight"]{ --accent: #13306B; --accent-weak: #E6EBF5; --accent-strong: #0C2150; }
+:root[data-accent="forest"]  { --accent: #1E5E3F; --accent-weak: #E4F0E9; --accent-strong: #154630; }
+
+:root[data-theme="dark"] {
+  --paper: #0B111A;
+  --surface: #111925;
+  --sunken: #080D14;
+  --ink: #E6EBF2;
+  --ink-2: #B0BAC8;
+  --ink-3: #7D8899;
+  --rule: #222D3C;
+  --rule-strong: #364459;
+  --positive: #4CC08A;  --positive-weak: #11291E;
+  --caution: #E3A63B;   --caution-weak: #2D2210;
+  --critical: #F07167;  --critical-weak: #321614;
+  --gate: #A18CFF;      --gate-weak: #1F1A3A;
+  --accent: #7C9BFF; --accent-ink: #0B111A; --accent-weak: #16213F; --accent-strong: #A9BDFF;
+  --shadow-float: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45);
+}
+:root[data-theme="dark"][data-accent="teal"]    { --accent: #4FC7BF; --accent-weak: #0F2A29; --accent-strong: #8ADCD6; }
+:root[data-theme="dark"][data-accent="oxblood"] { --accent: #F0798C; --accent-weak: #2E141A; --accent-strong: #F7A9B6; }
+:root[data-theme="dark"][data-accent="midnight"]{ --accent: #8FA8E8; --accent-weak: #172240; --accent-strong: #B8C9F2; }
+:root[data-theme="dark"][data-accent="forest"]  { --accent: #6CC495; --accent-weak: #11281C; --accent-strong: #9ED9B8; }
+
+:root[data-type="swiss"] {
+  --font-ui: "Inter Tight", system-ui, sans-serif;
+  --font-read: "Inter Tight", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-title: var(--font-ui);
+  --title-weight: 700;
+}
+:root[data-type="broadsheet"] {
+  --font-ui: "Libre Franklin", system-ui, sans-serif;
+  --font-read: "Newsreader", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-title: "Newsreader", Georgia, serif;
+  --title-weight: 600;
+}
+
+:root[data-density="compact"] { --d: .78; --fs-base: 13px; --fs-sm: 12px; }
+:root[data-radius="soft"]  { --r: 6px; --r-lg: 10px; }
+
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; font-family: var(--font-title); font-weight: var(--title-weight); letter-spacing: -.01em; }
+p { margin: 0; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+code, .mono { font-family: var(--font-mono); font-size: .92em; }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.muted { color: var(--ink-3); }
+.ink2 { color: var(--ink-2); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   Playground chrome (not part of the language itself)
+   ============================================================ */
+.pg-bar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+  padding: 10px 24px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.pg-brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.pg-brand b { font-family: var(--font-title); font-size: 17px; letter-spacing: -.01em; }
+.pg-ctrl { display: flex; align-items: center; gap: 8px; }
+.pg-ctrl .label { white-space: nowrap; }
+.swatch-btn {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--rule-strong);
+  cursor: pointer; padding: 0;
+}
+.swatch-btn[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+
+.pg-wrap { max-width: 1320px; margin: 0 auto; padding: 32px 24px 120px; }
+.pg-toc { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 22px; padding-bottom: 20px; }
+.pg-toc a { display: flex; gap: 8px; padding: 4px 0; color: var(--ink-2); text-decoration: none; font-size: var(--fs-sm); border-bottom: 1px solid transparent; }
+.pg-toc a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+.pg-toc a span { font-family: var(--font-mono); color: var(--ink-3); }
+
+section.pg { padding: 56px 0 8px; border-top: 1px solid var(--ink); margin-top: 56px; }
+section.pg:first-of-type { margin-top: 0; }
+.sec-head { display: grid; grid-template-columns: 64px 1fr; gap: 0 16px; margin-bottom: 28px; }
+.sec-num { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--accent); padding-top: 6px; }
+.sec-head h2 { font-size: var(--fs-xl); line-height: 1.2; max-width: 34ch; }
+.sec-head p { grid-column: 2; margin-top: 8px; color: var(--ink-2); max-width: 72ch; }
+.sub-h { margin: 36px 0 14px; display: flex; align-items: baseline; gap: 12px; }
+.sub-h h3 { font-size: var(--fs-md); }
+
+@media (max-width: 1080px) {
+  .pg-wrap { padding: 24px 16px 96px; }
+  .pg-bar { padding: 10px 16px; }
+  .sec-head { grid-template-columns: 1fr; }
+  .sec-head p { grid-column: 1; }
+}
+
+/* ============================================================
+   Components
+   ============================================================ */
+.btn {
+  --bh: calc(var(--d) * 34px);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: var(--bh); padding: 0 calc(var(--d) * 14px);
+  border: 1px solid var(--rule-strong); border-radius: var(--r);
+  background: var(--surface); color: var(--ink);
+  font-weight: 500; font-size: var(--fs-sm); cursor: pointer; white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+.btn:hover { border-color: var(--ink-3); background: var(--sunken); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+.btn.ink { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+.btn.ghost:hover { background: var(--sunken); color: var(--ink); }
+.btn.danger { color: var(--critical); }
+.btn.danger:hover { border-color: var(--critical); background: var(--critical-weak); }
+.btn.sm { --bh: calc(var(--d) * 28px); padding: 0 calc(var(--d) * 10px); font-size: var(--fs-xs); }
+.btn .kbd { font-family: var(--font-mono); font-size: 10px; opacity: .65; }
+
+.seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+.seg button {
+  border: 0; background: transparent; padding: calc(var(--d) * 5px) calc(var(--d) * 11px);
+  font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; border-right: 1px solid var(--rule);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.input, .textarea {
+  width: 100%; border: 1px solid var(--rule-strong); border-radius: var(--r);
+  background: var(--surface); padding: calc(var(--d) * 8px) calc(var(--d) * 10px);
+}
+.input:focus, .textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak); }
+.textarea { resize: vertical; min-height: 64px; line-height: 1.45; }
+
+.tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--rule); }
+.tabs button {
+  border: 0; background: none; padding: 10px 0; margin-bottom: -1px; cursor: pointer;
+  color: var(--ink-3); font-weight: 500; border-bottom: 2px solid transparent;
+}
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 22px; padding: 0 8px; border-radius: var(--r);
+  font-size: var(--fs-xs); font-weight: 500; white-space: nowrap;
+  background: var(--sunken); color: var(--ink-2); border: 1px solid transparent;
+}
+.tag.outline { background: transparent; border-color: var(--rule-strong); }
+.tag.accent { background: var(--accent-weak); color: var(--accent-strong); }
+.tag.src { font-family: var(--font-mono); font-size: 10.5px; background: transparent; border: 1px solid var(--rule); color: var(--ink-2); cursor: pointer; }
+.tag.src:hover { border-color: var(--accent); color: var(--accent); }
+
+.id { font-family: var(--font-mono); font-size: .86em; color: var(--ink-3); letter-spacing: -.01em; }
+
+/* status: glyph + label, never colour alone */
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 500; white-space: nowrap; }
+.status svg { flex: none; }
+.s-draft, .s-waiting, .s-cancelled { color: var(--ink-3); }
+.s-ready, .s-in_progress { color: var(--accent); }
+.s-blocked { color: var(--critical); }
+.s-at_gate { color: var(--gate); }
+.s-done { color: var(--positive); }
+.s-stale { color: var(--caution); }
+.s-cancelled { text-decoration: line-through; }
+.status .t { color: var(--ink); }
+.s-cancelled .t, .s-draft .t, .s-waiting .t { color: var(--ink-3); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.s-in_progress svg .spin { transform-origin: 7px 7px; animation: spin 2.4s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .s-in_progress svg .spin { animation: none; } }
+
+.ver { font-family: var(--font-mono); font-size: var(--fs-xs); padding: 1px 6px; border-radius: var(--r); border: 1px solid var(--rule-strong); color: var(--ink-2); }
+.ver.material { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 500; }
+
+/* cards */
+.card {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg);
+  padding: calc(var(--d) * 18px) calc(var(--d) * 20px);
+}
+.card-kicker { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--fs-xs); color: var(--ink-3); margin-bottom: 8px; }
+.card-kicker .kind { font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.card-title { font-family: var(--font-title); font-weight: var(--title-weight); font-size: var(--fs-md); line-height: 1.3; }
+.card-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.card-actions .spacer { flex: 1; }
+
+.hypo {
+  margin-top: 12px; padding: calc(var(--d) * 12px) calc(var(--d) * 14px);
+  border-left: 3px solid var(--accent); background: var(--accent-weak);
+  border-radius: 0 var(--r) var(--r) 0;
+}
+.hypo .label { color: var(--accent-strong); }
+.hypo p { margin-top: 4px; font-family: var(--font-read); font-size: var(--fs-md); line-height: 1.45; color: var(--ink); }
+.why { margin-top: 10px; font-size: var(--fs-sm); color: var(--ink-2); }
+.amend { display: none; margin-top: 12px; }
+.amend.open { display: block; }
+
+.diff { list-style: none; margin: 12px 0 0; padding: 0; border-top: 1px solid var(--rule); }
+.diff li { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
+.diff .op { font-family: var(--font-mono); font-weight: 600; text-align: center; }
+.diff .add { color: var(--positive); }
+.diff .chg { color: var(--caution); }
+.diff .del { color: var(--critical); }
+.impact { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; font-size: var(--fs-sm); }
+.impact div { display: flex; flex-direction: column; }
+.impact b { font-size: var(--fs-md); font-variant-numeric: tabular-nums; }
+
+/* tables — tracker style */
+table.tracker { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.tracker th { text-align: left; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding: 8px 10px; border-bottom: 1px solid var(--ink); }
+.tracker td { padding: calc(var(--d) * 10px) 10px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+.tracker tr.group td { background: var(--sunken); font-weight: 600; font-size: var(--fs-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); padding-top: 6px; padding-bottom: 6px; }
+.tracker tbody tr:not(.group):hover td { background: color-mix(in srgb, var(--accent-weak) 50%, transparent); }
+.tracker .r { text-align: right; }
+
+/* exec glyph */
+.exec { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: var(--ink-2); }
+
+/* activity stream */
+.stream { list-style: none; margin: 0; padding: 0; font-size: var(--fs-sm); }
+.stream li { display: grid; grid-template-columns: 44px 16px 1fr; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px dashed var(--rule); }
+.stream time { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-3); }
+.stream .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rule-strong); transform: translateY(-1px); }
+.stream .dot.read { background: var(--ink-3); }
+.stream .dot.implicit { background: transparent; border: 1.5px dotted var(--caution); width: 9px; height: 9px; }
+.stream .dot.write { background: var(--accent); }
+.stream .dot.ask { background: var(--gate); border-radius: 1px; transform: rotate(45deg); }
+
+/* chat — the Approach Agent speaks in memos, not bubbles */
+.msg { padding: 14px 0; border-bottom: 1px solid var(--rule); }
+.msg-head { display: flex; align-items: center; gap: 8px; font-size: var(--fs-xs); color: var(--ink-3); margin-bottom: 6px; }
+.msg-head b { color: var(--ink); font-size: var(--fs-sm); }
+.msg.human .msg-body { color: var(--ink-2); }
+.msg-body { font-size: var(--fs-base); line-height: 1.55; }
+.msg-body ul { margin: 6px 0 0; padding-left: 18px; }
+.msg-body li { margin: 3px 0; }
+.msg-body strong { font-weight: 600; }
+.msg-srcs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.avatar { width: 20px; height: 20px; border-radius: var(--r); display: grid; place-items: center; font-size: 10px; font-weight: 700; flex: none; }
+.avatar.aa { background: var(--ink); color: var(--paper); }
+.avatar.hu { background: var(--sunken); color: var(--ink-2); border: 1px solid var(--rule-strong); border-radius: 50%; }
+.inline-prop { margin-top: 10px; border: 1px solid var(--rule-strong); border-radius: var(--r); padding: 10px 12px; background: var(--paper); }
+.inline-prop .row { display: flex; gap: 8px; margin-top: 8px; }
+.context-chip { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--sunken); border-radius: var(--r); font-size: var(--fs-xs); color: var(--ink-2); }
+.context-chip b { color: var(--ink); font-weight: 600; }
+.composer { border: 1px solid var(--rule-strong); border-radius: var(--r-lg); background: var(--surface); padding: 8px; }
+.composer textarea { width: 100%; border: 0; resize: none; background: transparent; min-height: 44px; outline: none; }
+.composer .row { display: flex; align-items: center; gap: 6px; }
+.composer .row .spacer { flex: 1; }
+
+/* process nodes (BPMN-lite) */
+.node {
+  position: relative; display: flex; flex-direction: column; gap: 6px;
+  width: 188px; padding: 10px 12px 10px 14px;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: var(--r-lg);
+  font-size: var(--fs-sm);
+}
+.node::before { content: ""; position: absolute; left: -1px; top: -1px; bottom: -1px; width: 4px; border-radius: var(--r-lg) 0 0 var(--r-lg); background: var(--st, var(--rule-strong)); }
+.node .n-top { display: flex; justify-content: space-between; align-items: center; }
+.node .n-title { font-weight: 600; line-height: 1.3; color: var(--ink); }
+.node.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak); }
+.node.composite { border-style: solid; border-width: 1px; background: var(--sunken); }
+.node.ghost { border-style: dashed; background: transparent; opacity: .85; }
+.node[data-st="done"] { --st: var(--positive); }
+.node[data-st="in_progress"], .node[data-st="ready"] { --st: var(--accent); }
+.node[data-st="at_gate"] { --st: var(--gate); }
+.node[data-st="stale"] { --st: var(--caution); }
+.node[data-st="blocked"] { --st: var(--critical); }
+.dataobj { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--ink-2); }
+.dataobj svg { flex: none; }
+.gw { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: var(--fs-xs); color: var(--gate); font-weight: 500; }
+
+/* grids */
+.grid { display: grid; gap: 20px; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .g2, .g3 { grid-template-columns: minmax(0, 1fr); } .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.row-wrap { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* ============================================================
+   Section-specific
+   ============================================================ */
+/* 01 journey: the consultant's chevron */
+.chevrons { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.chev {
+  position: relative; padding: 12px 18px 12px 22px; background: var(--ink); color: var(--paper);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%);
+  font-weight: 600; font-size: var(--fs-sm);
+}
+.chev:first-child { clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%); padding-left: 14px; }
+.chev span { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 10px; opacity: .6; }
+.chev.hot { background: var(--accent); color: var(--accent-ink); }
+.chev-cols { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: 0; }
+.chev-cols > div { padding: 14px 12px 14px 0; border-right: 1px solid var(--rule); font-size: var(--fs-sm); }
+.chev-cols > div:last-child { border-right: 0; }
+.chev-cols .label { display: block; margin: 0 0 4px; }
+.chev-cols p + .label { margin-top: 12px; }
+.chev-cols p { color: var(--ink-2); }
+.chev-cols .now { color: var(--critical); }
+@media (max-width: 900px) {
+  .chevrons, .chev-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chev, .chev:first-child { clip-path: none; padding-left: 14px; }
+}
+
+.shifts { counter-reset: shift; display: grid; gap: 0; border-top: 1px solid var(--rule); }
+.shift { display: grid; grid-template-columns: 48px minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
+.shift::before { counter-increment: shift; content: counter(shift, decimal-leading-zero); font-family: var(--font-mono); color: var(--accent); font-size: var(--fs-sm); padding-top: 2px; }
+.shift h4 { font-size: var(--fs-md); margin-bottom: 4px; }
+.shift p { color: var(--ink-2); font-size: var(--fs-sm); }
+.shift .from { font-size: var(--fs-sm); color: var(--ink-3); }
+.shift .from s { text-decoration-color: var(--critical); }
+@media (max-width: 900px) { .shift { grid-template-columns: 36px minmax(0, 1fr); } .shift .from { grid-column: 2; } }
+
+/* 02 principles */
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
+.principle { padding: 18px 18px 22px 0; border-bottom: 1px solid var(--rule); }
+.principle h4 { font-size: var(--fs-md); margin: 6px 0 6px; }
+.principle p { font-size: var(--fs-sm); color: var(--ink-2); max-width: 36ch; }
+.contrast { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 24px; }
+.contrast > div { padding: 16px 18px; border-radius: var(--r-lg); }
+.contrast .theirs { background: #F4EFE6; color: #3D3929; font-family: Georgia, serif; border: 1px solid #E5DccB; }
+.contrast .theirs .label { color: #9A6B4C; font-family: var(--font-ui); }
+.contrast .ours { background: var(--surface); border: 1px solid var(--ink); }
+.contrast ul { margin: 8px 0 0; padding-left: 18px; font-size: var(--fs-sm); }
+.contrast li { margin: 3px 0; }
+@media (max-width: 700px) { .contrast { grid-template-columns: 1fr; } }
+
+/* 03 colour */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.sw { border: 1px solid var(--rule); border-radius: var(--r-lg); overflow: hidden; background: var(--surface); }
+.sw .chip { height: 56px; border-bottom: 1px solid var(--rule); }
+.sw .meta { padding: 8px 10px; font-size: var(--fs-xs); }
+.sw .meta b { display: block; font-size: var(--fs-sm); font-weight: 600; }
+.sw .meta code { color: var(--ink-3); }
+
+/* 04 type */
+.specimen { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px 24px; align-items: baseline; border-top: 1px solid var(--rule); }
+.specimen > div { padding: 14px 0; border-bottom: 1px solid var(--rule); }
+.specimen .meta { font-size: var(--fs-xs); color: var(--ink-3); }
+.specimen .meta b { display: block; color: var(--ink); font-size: var(--fs-sm); }
+.t-display { font-family: var(--font-title); font-weight: var(--title-weight); font-size: var(--fs-xxl); line-height: 1.1; letter-spacing: -.02em; }
+.t-title { font-family: var(--font-title); font-weight: var(--title-weight); font-size: var(--fs-xl); line-height: 1.2; letter-spacing: -.01em; }
+.t-h { font-family: var(--font-title); font-weight: var(--title-weight); font-size: var(--fs-lg); }
+.t-read { font-family: var(--font-read); font-size: 17px; line-height: 1.6; max-width: 64ch; }
+.t-ui { font-size: var(--fs-base); }
+.t-num { font-size: var(--fs-xl); font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+@media (max-width: 700px) { .specimen { grid-template-columns: 1fr; } .specimen > div.meta { border-bottom: 0; padding-bottom: 0; } }
+
+/* 05 status legend */
+.legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0 24px; border-top: 1px solid var(--rule); }
+.legend > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
+.legend .muted { font-size: var(--fs-xs); text-align: right; }
+
+/* ============================================================
+   07 Screen concept — the app shell
+   ============================================================ */
+.frame { border: 1px solid var(--rule-strong); border-radius: var(--r-lg); overflow: auto; background: var(--paper); box-shadow: var(--shadow-float); }
+.shell { display: grid; grid-template-columns: 56px minmax(0, 1fr) 360px; grid-template-rows: 52px minmax(0, 1fr); height: 780px; min-width: 1180px; }
+.shell.rail-closed { grid-template-columns: 56px minmax(0, 1fr) 0; }
+.shell.rail-closed .aa-rail { display: none; }
+.nav { grid-row: 1 / 3; background: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0; }
+:root[data-theme="dark"] .nav { background: var(--sunken); border-right: 1px solid var(--rule); }
+.nav .logo { width: 30px; height: 30px; border: 1.5px solid var(--paper); display: grid; place-items: center; color: var(--paper); font-family: var(--font-title); font-weight: 700; font-size: 13px; margin-bottom: 14px; border-radius: var(--r); }
+:root[data-theme="dark"] .nav .logo { border-color: var(--ink); color: var(--ink); }
+.nav button { position: relative; width: 40px; height: 40px; border: 0; background: transparent; color: color-mix(in srgb, var(--paper) 60%, transparent); border-radius: var(--r); cursor: pointer; display: grid; place-items: center; }
+:root[data-theme="dark"] .nav button { color: var(--ink-3); }
+.nav button:hover { background: rgba(255,255,255,.08); color: var(--paper); }
+.nav button[aria-current="true"] { color: var(--paper); background: rgba(255,255,255,.12); }
+:root[data-theme="dark"] .nav button[aria-current="true"] { color: var(--ink); }
+.nav button .badge { position: absolute; top: 4px; right: 3px; min-width: 15px; height: 15px; border-radius: 8px; background: var(--critical); color: #fff; font-size: 9.5px; font-weight: 700; display: grid; place-items: center; padding: 0 3px; }
+.nav .spacer { flex: 1; }
+.nav button[title]:hover::after { content: attr(title); position: absolute; left: 46px; top: 50%; transform: translateY(-50%); background: var(--ink); color: var(--paper); padding: 4px 8px; border-radius: var(--r); font-size: 11px; white-space: nowrap; z-index: 5; box-shadow: var(--shadow-float); }
+
+.topbar { grid-column: 2 / 4; display: flex; align-items: center; gap: 16px; padding: 0 16px 0 20px; border-bottom: 1px solid var(--rule); background: var(--surface); }
+.topbar .eng { display: flex; flex-direction: column; line-height: 1.2; }
+.topbar .eng b { font-family: var(--font-title); font-weight: var(--title-weight); font-size: 15px; }
+.topbar .eng span { font-size: var(--fs-xs); color: var(--ink-3); }
+.topbar .sep { width: 1px; height: 24px; background: var(--rule); }
+.topbar .kpi { display: flex; flex-direction: column; line-height: 1.15; font-size: var(--fs-xs); color: var(--ink-3); }
+.topbar .kpi b { color: var(--ink); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+.topbar .spacer { flex: 1; }
+.live { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-xs); padding: 3px 8px; border: 1px solid var(--rule-strong); border-radius: 20px; color: var(--ink-2); }
+.live i { width: 7px; height: 7px; border-radius: 50%; background: var(--positive); box-shadow: 0 0 0 3px var(--positive-weak); }
+
+.stage { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--rule); }
+.stage-tabs { display: flex; align-items: stretch; gap: 0; background: var(--sunken); border-bottom: 1px solid var(--rule); height: 38px; padding-left: 8px; }
+.stage-tabs button {
+  display: flex; align-items: center; gap: 7px; border: 0; background: transparent; padding: 0 14px; font-size: var(--fs-sm); color: var(--ink-3); cursor: pointer;
+  border-right: 1px solid var(--rule); max-width: 240px;
+}
+.stage-tabs button[aria-selected="true"] { background: var(--paper); color: var(--ink); box-shadow: inset 0 2px 0 var(--accent); margin-bottom: -1px; }
+.stage-tabs .x { opacity: .45; font-size: 11px; margin-left: 4px; }
+.stage-tabs .add { color: var(--ink-3); border-right: 0; }
+.stage-body { flex: 1; overflow: auto; min-height: 0; }
+.pane { display: none; }
+.pane.on { display: block; }
+
+/* document reading room */
+.doc-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 240px; min-height: 100%; }
+.doc-main { padding: 28px 40px 110px 56px; }
+.doc-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: var(--fs-xs); color: var(--ink-3); }
+.doc-toolbar { display: flex; gap: 8px; align-items: center; margin: 14px 0 26px; padding-bottom: 14px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.doc-toolbar .spacer { flex: 1; }
+.doc { font-family: var(--font-read); font-size: 16.5px; line-height: 1.62; max-width: 68ch; color: var(--ink); }
+.doc h1 { font-family: var(--font-title); font-size: 28px; line-height: 1.2; margin-bottom: 6px; letter-spacing: -.015em; }
+.doc .standfirst { font-size: 18px; color: var(--ink-2); margin-bottom: 26px; }
+.doc h2 { font-family: var(--font-title); font-size: 18px; margin: 30px 0 8px; display: flex; gap: 10px; align-items: baseline; }
+.doc h2 .n { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 400; }
+.doc p { margin: 0 0 14px; }
+.doc .changed { position: relative; background: linear-gradient(to right, var(--positive-weak), transparent 70%); margin-left: -16px; padding-left: 16px; }
+.doc .changed::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; background: var(--positive); }
+.doc .changed .tag { position: absolute; left: -76px; top: 4px; font-family: var(--font-ui); background: var(--positive-weak); color: var(--positive); }
+.exhibit { margin: 22px 0 22px; font-family: var(--font-ui); }
+.exhibit .ex-head { display: flex; gap: 10px; align-items: baseline; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+.exhibit .ex-head .label { color: var(--accent); }
+.exhibit .ex-head b { font-size: var(--fs-base); }
+.exhibit .ex-src { margin-top: 8px; font-size: var(--fs-xs); color: var(--ink-3); }
+.doc-side { border-left: 1px solid var(--rule); padding: 28px 18px; font-size: var(--fs-sm); background: var(--paper); }
+.doc-side h5 { margin: 0 0 10px; }
+.doc-side .block { margin-bottom: 26px; }
+.vlist { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule-strong); }
+.vlist li { position: relative; padding: 0 0 14px 14px; }
+.vlist li::before { content: ""; position: absolute; left: -4px; top: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--ink-3); }
+.vlist li.cur::before { background: var(--accent); border-color: var(--accent); }
+.vlist li.mat::before { width: 9px; height: 9px; left: -5px; top: 4px; border-radius: 1px; }
+.vlist li p { font-size: var(--fs-xs); color: var(--ink-3); margin-top: 2px; }
+.review-bar {
+  position: sticky; bottom: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 20px 12px 56px; background: var(--surface); border-top: 1px solid var(--ink); flex-wrap: nowrap;
+}
+.review-bar .spacer { flex: 1; }
+.crit { display: flex; flex-wrap: wrap; gap: 4px 12px; min-width: 0; font-size: var(--fs-xs); color: var(--ink-2); }
+.crit span { display: inline-flex; align-items: center; gap: 4px; }
+
+/* brief (home) */
+.brief { padding: 28px 40px 48px; max-width: 1000px; }
+.brief .kicker { font-size: var(--fs-xs); color: var(--ink-3); font-family: var(--font-mono); }
+.brief h1 { font-size: var(--fs-xl); line-height: 1.2; margin: 6px 0 6px; max-width: 30ch; }
+.brief .stand { color: var(--ink-2); max-width: 70ch; }
+.brief-cols { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px; margin-top: 26px; }
+.brief .col-h { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 8px; border-bottom: 2px solid var(--ink); margin-bottom: 12px; }
+.brief .stack { display: flex; flex-direction: column; gap: 12px; }
+.running { display: flex; flex-direction: column; gap: 0; }
+.running > div { padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: var(--fs-sm); }
+.running .line { color: var(--ink-3); font-size: var(--fs-xs); margin-top: 3px; font-family: var(--font-mono); }
+.bar { height: 3px; background: var(--rule); margin-top: 6px; position: relative; overflow: hidden; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+
+/* plan canvas */
+.canvas { position: relative; padding: 16px 20px; min-width: 900px; }
+.canvas-tools { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.canvas-tools .spacer { flex: 1; }
+.lanes { position: relative; display: grid; grid-template-columns: 70px repeat(3, minmax(0, 1fr)); border: 1px solid var(--rule); background: var(--surface); }
+.lanes .ph { padding: 8px 12px; border-bottom: 1px solid var(--ink); border-left: 1px solid var(--rule); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+.lanes .ph .status { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.lanes .ln { writing-mode: vertical-rl; transform: rotate(180deg); display: grid; place-items: center; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--rule); background: var(--sunken); }
+.lanes .cell { position: relative; border-left: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 18px 14px; display: flex; flex-direction: column; gap: 14px; min-height: 170px; }
+.lanes .cell.agents { min-height: 320px; }
+.lanes .corner { border-bottom: 1px solid var(--ink); background: var(--sunken); }
+.harvey-row { display: inline-flex; gap: 6px; align-items: center; font-size: var(--fs-xs); color: var(--ink-3); }
+
+/* approach rail */
+.aa-rail { display: flex; flex-direction: column; min-height: 0; background: var(--surface); }
+.aa-head { display: flex; align-items: center; gap: 8px; padding: 0 14px; height: 38px; border-bottom: 1px solid var(--rule); background: var(--sunken); }
+.aa-head b { font-size: var(--fs-sm); }
+.aa-head .spacer { flex: 1; }
+.aa-body { flex: 1; overflow: auto; padding: 4px 16px 12px; min-height: 0; }
+.aa-foot { padding: 12px 14px 14px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 8px; }
+
+/* token dialog */
+dialog { border: 1px solid var(--ink); border-radius: var(--r-lg); padding: 0; background: var(--surface); color: var(--ink); width: min(680px, calc(100vw - 32px)); box-shadow: var(--shadow-float); }
+dialog::backdrop { background: rgba(8, 13, 20, .45); }
+dialog header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--rule); }
+dialog pre { margin: 0; padding: 16px 18px; max-height: 60vh; overflow: auto; font-family: var(--font-mono); font-size: 12px; background: var(--sunken); }
+
+.note { margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--rule-strong); border-radius: var(--r); font-size: var(--fs-sm); color: var(--ink-2); }
+.note b { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<!-- ============ Playground controls ============ -->
+<div class="pg-bar" role="toolbar" aria-label="Design language controls">
+  <div class="pg-brand"><b>Exhibit</b><span class="muted mono" style="font-size:11px">v1.0</span></div>
+  <div class="pg-ctrl"><span class="label">Theme</span>
+    <div class="seg" data-ctl="theme"><button data-v="light">Light</button><button data-v="dark">Dark</button></div></div>
+  <div class="pg-ctrl"><span class="label">Accent</span>
+    <div class="row-wrap" data-ctl="accent" style="gap:6px">
+      <button class="swatch-btn" data-v="cobalt" title="Cobalt" style="background:#1F4FD8"></button>
+      <button class="swatch-btn" data-v="midnight" title="Midnight" style="background:#13306B"></button>
+      <button class="swatch-btn" data-v="teal" title="Teal" style="background:#0B6E6A"></button>
+      <button class="swatch-btn" data-v="forest" title="Forest" style="background:#1E5E3F"></button>
+      <button class="swatch-btn" data-v="oxblood" title="Oxblood" style="background:#8E1B2F"></button>
+    </div></div>
+  <div class="pg-ctrl"><span class="label">Type</span>
+    <div class="seg" data-ctl="type"><button data-v="exhibit">Exhibit</button><button data-v="swiss">Swiss</button><button data-v="broadsheet">Broadsheet</button></div></div>
+  <div class="pg-ctrl"><span class="label">Density</span>
+    <div class="seg" data-ctl="density"><button data-v="comfortable">Comfy</button><button data-v="compact">Compact</button></div></div>
+  <div class="pg-ctrl"><span class="label">Corners</span>
+    <div class="seg" data-ctl="radius"><button data-v="sharp">Sharp</button><button data-v="soft">Soft</button></div></div>
+  <button class="btn sm ink" id="copyTokens">Copy tokens</button>
+</div>
+
+<div class="pg-wrap">
+  <nav class="pg-toc" aria-label="Sections">
+    <span class="label">Contents</span>
+    <a href="#journey"><span>01</span>Journey &amp; UX shifts</a>
+    <a href="#principles"><span>02</span>Principles</a>
+    <a href="#colour"><span>03</span>Colour</a>
+    <a href="#type"><span>04</span>Typography</a>
+    <a href="#signals"><span>05</span>Status &amp; signals</a>
+    <a href="#components"><span>06</span>Components</a>
+    <a href="#screen"><span>07</span>Screen concept</a>
+  </nav>
+
+  <main>
+
+<!-- ============ 01 JOURNEY ============ -->
+<section class="pg" id="journey">
+  <div class="sec-head">
+    <div class="sec-num">01</div>
+    <h2>The consultant spends most time reading and deciding, so the layout should favour those</h2>
+    <p>The current three-column layout gives chat, plan and documents the same weight, all at once. So the thing a consultant spends most time on, reading and judging work, ends up in the narrowest column. Below is the journey from the demo script, and what each stage needs from the screen.</p>
+  </div>
+
+  <div class="chevrons">
+    <div class="chev"><span>Step 1</span>Frame</div>
+    <div class="chev"><span>Step 2</span>Shape the plan</div>
+    <div class="chev hot"><span>Steps 3–7</span>Steer</div>
+    <div class="chev hot"><span>Steps 4, 8</span>Review</div>
+    <div class="chev"><span>Step 9</span>Endorse</div>
+    <div class="chev"><span>Steps 11–12</span>Capture</div>
+  </div>
+  <div class="chev-cols">
+    <div><span class="label">Job</span><p>Brief the Approach Agent, drop in the intake pack.</p><span class="label">Needs</span><p>A wide conversation with room for files.</p><span class="label">Today</span><p class="now">Chat squeezed in a side tab.</p></div>
+    <div><span class="label">Job</span><p>Read a proposed plan and approve or push back.</p><span class="label">Needs</span><p>The plan big, and the proposal diff next to it.</p><span class="label">Today</span><p class="now">The proposal and the canvas sit in different columns.</p></div>
+    <div><span class="label">Job</span><p>Answer questions, clear blockers, and keep work moving. Several times a day, often only for a minute.</p><span class="label">Needs</span><p>One place with everything that needs me, sorted by consequence.</p><span class="label">Today</span><p class="now">An Inbox tab with no priority order.</p></div>
+    <div><span class="label">Job</span><p>Read a deliverable, see what changed, approve or request changes.</p><span class="label">Needs</span><p>A full-width reading room with diffs and sources.</p><span class="label">Today</span><p class="now">Documents open in the narrow right panel.</p></div>
+    <div><span class="label">Job</span><p>Record a steerco decision, its conditions and the minutes.</p><span class="label">Needs</span><p>A formal, form-like moment that looks official.</p><span class="label">Today</span><p class="muted">Not yet built.</p></div>
+    <div><span class="label">Job</span><p>Look back through the history, then save the approach as a playbook.</p><span class="label">Needs</span><p>A timeline and a library.</p><span class="label">Today</span><p class="muted">Not yet built.</p></div>
+  </div>
+
+  <div class="sub-h"><h3>Five UX shifts I propose</h3><span class="muted">each is shown in 07 Screen concept</span></div>
+  <div class="shifts">
+    <div class="shift"><div><h4>Documents get the stage</h4><p>Assets, items and the plan open as <b>tabs in the main stage</b>, the way documents open in an editor. A deliverable is never read in a side panel.</p></div><div class="from"><s>Right-hand detail panel</s> → stage tab with a version rail and a review bar</div></div>
+    <div class="shift"><div><h4>The Approach Agent is a rail, not a tab</h4><p>The conversation stays docked on the right and can be collapsed. It always knows what you are looking at ("Viewing themes.md v2.0"), so "what changed here?" needs no extra context.</p></div><div class="from"><s>Chat / Inbox / Approach tabs</s> → persistent rail with context and an agenda toggle</div></div>
+    <div class="shift"><div><h4>Home is a Brief, not a canvas</h4><p>Opening an engagement shows <b>what needs you</b>, with the consequence first ("Synthesis is blocked on 1 answer"), then work in flight, then what was published recently.</p></div><div class="from"><s>Plan canvas with empty detail panel</s> → Brief page with action titles</div></div>
+    <div class="shift"><div><h4>Every decision takes one action</h4><p>Questions come with the agent's hypothesis, and one keystroke approves, amends or replaces it. Proposals show the plan diff and its impact on dates and cost.</p></div><div class="from"><s>Free-form answer box</s> → a hypothesis card with Approve · Amend · Replace</div></div>
+    <div class="shift"><div><h4>Canvas for structure, tracker for status</h4><p>The BPMN-lite canvas explains the plan. A consultant-style tracker table (Harvey balls, owners, gates) is where you scan progress. Both views show the same data and share the same selection.</p></div><div class="from"><s>Canvas only</s> → canvas ⇄ tracker toggle</div></div>
+  </div>
+</section>
+
+<!-- ============ 02 PRINCIPLES ============ -->
+<section class="pg" id="principles">
+  <div class="sec-head">
+    <div class="sec-num">02</div>
+    <h2>Exhibit: the workbench should look like a finished client deliverable</h2>
+    <p>Consultants trust work that looks like a finished deliverable: action titles, numbered exhibits, a source under every chart, hairline tables, one disciplined accent. The language borrows that visual grammar, so what agents produce looks board-ready without extra formatting.</p>
+  </div>
+  <div class="principles">
+    <div class="principle"><span class="label">P1</span><h4>Action titles</h4><p>Headlines state the so-what: "3 decisions block Synthesis", not "Inbox". Labels go in small caps above the headline.</p></div>
+    <div class="principle"><span class="label">P2</span><h4>Ink on paper</h4><p>Cool white paper, navy ink and a single accent. Colour carries meaning (status, change, gate) and is never decoration.</p></div>
+    <div class="principle"><span class="label">P3</span><h4>Rules, not boxes</h4><p>Structure comes from 1px hairlines, a heavy rule under headers, and whitespace. Shadows are only for things that float.</p></div>
+    <div class="principle"><span class="label">P4</span><h4>Numbers are first-class</h4><p>Tabular figures everywhere. Ids in mono. Harvey balls for progress, as on a real tracker.</p></div>
+    <div class="principle"><span class="label">P5</span><h4>Source everything</h4><p>Every agent claim cites its assets and versions, the way an exhibit carries a source line. Click a source to open it.</p></div>
+  </div>
+
+  <div class="contrast">
+    <div class="theirs">
+      <span class="label">Default assistant look (what we move away from)</span>
+      <ul>
+        <li>Warm cream background, clay-orange accent</li>
+        <li>Soft, rounded, conversational; the chat is the product</li>
+        <li>Answers appear in speech bubbles</li>
+        <li>Few visible numbers, little visible structure</li>
+      </ul>
+    </div>
+    <div class="ours">
+      <span class="label">Exhibit</span>
+      <ul>
+        <li>Cool paper, navy ink, one cobalt accent (switchable)</li>
+        <li>Crisp and gridded; <b>the work is the product</b>, the agent is staff</li>
+        <li>The agent writes memos with sources, not chat bubbles</li>
+        <li>Trackers, Harvey balls, versions and costs are always visible</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 COLOUR ============ -->
+<section class="pg" id="colour">
+  <div class="sec-head">
+    <div class="sec-num">03</div>
+    <h2>Four neutrals do most of the work; colour is kept for meaning</h2>
+    <p>Hex values below are read live from the resolved tokens, so they change with the theme and accent controls. Semantic colours map one-to-one to engine concepts: done, stale, blocked and at gate.</p>
+  </div>
+  <div class="sub-h"><h3>Paper &amp; ink</h3></div>
+  <div class="swatches" id="sw-neutral"></div>
+  <div class="sub-h"><h3>Accent</h3><span class="muted">interaction, selection, "in progress"</span></div>
+  <div class="swatches" id="sw-accent"></div>
+  <div class="sub-h"><h3>Semantic</h3><span class="muted">always paired with a glyph and a label</span></div>
+  <div class="swatches" id="sw-sem"></div>
+</section>
+
+<!-- ============ 04 TYPE ============ -->
+<section class="pg" id="type">
+  <div class="sec-head">
+    <div class="sec-num">04</div>
+    <h2>A sans for working and a serif for reading</h2>
+    <p>The UI (lists, controls, trackers) uses a sober grotesk. Deliverables use a reading face, so switching from "operating the tool" to "reading the work" feels different. Try the three pairings in the top bar.</p>
+  </div>
+  <div class="specimen">
+    <div class="meta"><b>Display</b>Action title, page level</div>
+    <div class="t-display">Five themes emerge; funding model is new</div>
+    <div class="meta"><b>Title</b>Card and section headline</div>
+    <div class="t-title">Add a CFO follow-up before re-running synthesis</div>
+    <div class="meta"><b>Heading</b>Within a document</div>
+    <div class="t-h">Operating model strain</div>
+    <div class="meta"><b>Label</b>11px, caps, tracked</div>
+    <div><span class="label">Human review · PH-2 Synthesis</span></div>
+    <div class="meta"><b>Reading</b>Deliverables, hypotheses</div>
+    <div class="t-read">All four executives name the ERP estate as the main constraint on growth. They disagree about sequencing: the COO wants stabilisation first, while the CFO would fund replacement only against a clear consolidation case.</div>
+    <div class="meta"><b>UI body</b>Everything operational</div>
+    <div class="t-ui">WI-004 read 5 assets, including 1 that was not declared as an input, and published themes.md 2.0 as a material version.</div>
+    <div class="meta"><b>Figures &amp; ids</b>Tabular + mono</div>
+    <div class="row-wrap" style="gap:28px"><span class="t-num">$1.84</span><span class="t-num">4/7</span><span class="t-num">12:04</span><span class="id" style="font-size:16px">WI-003e · themes.md@2.0</span></div>
+  </div>
+</section>
+
+<!-- ============ 05 SIGNALS ============ -->
+<section class="pg" id="signals">
+  <div class="sec-head">
+    <div class="sec-num">05</div>
+    <h2>Every status has its own shape, so it reads in greyscale and on a projector</h2>
+    <p>Each of the nine engine statuses has a distinct glyph, a colour and a word. Together with Harvey balls, version marks and gate diamonds, they give a small, closed set of signals the team learns once.</p>
+  </div>
+  <div class="legend" id="legend"></div>
+
+  <div class="grid g3" style="margin-top:28px">
+    <div>
+      <div class="sub-h" style="margin-top:0"><h3>Harvey balls</h3></div>
+      <div class="row-wrap" style="gap:18px" id="harveys"></div>
+      <p class="muted" style="font-size:12px;margin-top:8px">Roll-up of a composite: share of children done.</p>
+    </div>
+    <div>
+      <div class="sub-h" style="margin-top:0"><h3>Versions</h3></div>
+      <div class="row-wrap"><span class="ver">1.1</span><span class="muted" style="font-size:12px">minor: notify only</span></div>
+      <div class="row-wrap" style="margin-top:8px"><span class="ver material">2.0</span><span class="muted" style="font-size:12px">material: downstream goes stale</span></div>
+    </div>
+    <div>
+      <div class="sub-h" style="margin-top:0"><h3>Executor &amp; gates</h3></div>
+      <div class="row-wrap" style="gap:14px">
+        <span class="exec" data-exec="agent">Agent</span>
+        <span class="exec" data-exec="human">Human</span>
+      </div>
+      <div class="row-wrap" style="gap:14px;margin-top:8px">
+        <span class="gw" data-gate="review">Human review</span>
+        <span class="gw" data-gate="endorse">Steerco endorsement</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 COMPONENTS ============ -->
+<section class="pg" id="components">
+  <div class="sec-head">
+    <div class="sec-num">06</div>
+    <h2>Components are built around decisions, not around data types</h2>
+    <p>The cards are the moments where the consultant adds value: answering, approving, endorsing. They share one anatomy: a kicker (what and from where), an action title, the evidence, then the actions.</p>
+  </div>
+
+  <div class="sub-h"><h3>Controls</h3></div>
+  <div class="row-wrap">
+    <button class="btn primary">Approve <span class="kbd">A</span></button>
+    <button class="btn">Amend <span class="kbd">E</span></button>
+    <button class="btn">Replace <span class="kbd">R</span></button>
+    <button class="btn ghost">Discuss</button>
+    <button class="btn danger">Reject</button>
+    <button class="btn ink">Run item</button>
+    <button class="btn sm">Compare versions</button>
+  </div>
+  <div class="row-wrap" style="margin-top:14px">
+    <div class="seg" data-local><button aria-pressed="true">Canvas</button><button>Tracker</button></div>
+    <div class="seg" data-local><button>Depth 1</button><button aria-pressed="true">2</button><button>All</button></div>
+    <span class="tag">project scope</span><span class="tag outline">local</span><span class="tag accent">playbook: IT Strategy</span><span class="tag src">themes.md@2.0 §3</span>
+  </div>
+  <div class="grid g2" style="margin-top:16px;max-width:760px">
+    <label class="field"><span class="label">Forum</span><input class="input" value="Steering committee" /></label>
+    <label class="field"><span class="label">Decision date</span><input class="input" value="2026-10-14" /></label>
+  </div>
+
+  <div class="sub-h"><h3>Decision cards</h3><span class="muted">try Amend</span></div>
+  <div class="grid g3">
+    <!-- Question -->
+    <article class="card">
+      <div class="card-kicker"><span class="kind">Question</span><span class="id">WI-002</span><span>Prepare interview guide</span><span>· 12 min</span></div>
+      <h4 class="card-title">How should the CIO section be framed?</h4>
+      <div class="hypo"><span class="label">Agent's hypothesis</span><p>Focus on vision and first impressions rather than history. The CIO has been in the role for 3 months.</p></div>
+      <p class="why">Shapes 6 of 14 questions in the guide. The Approach Agent escalated this because it is a judgement call on a stakeholder.</p>
+      <div class="amend"><textarea class="textarea" placeholder="Amend the hypothesis…">…and ask explicitly about inherited commitments.</textarea></div>
+      <div class="card-actions"><button class="btn primary sm">Approve</button><button class="btn sm js-amend">Amend</button><button class="btn sm">Replace</button><span class="spacer"></span><button class="btn ghost sm">Wrong question</button></div>
+    </article>
+
+    <!-- Proposal -->
+    <article class="card">
+      <div class="card-kicker"><span class="kind">Proposal #7</span><span>Plan change · Approach Agent</span></div>
+      <h4 class="card-title">Add a CFO follow-up before re-running synthesis</h4>
+      <ul class="diff">
+        <li><span class="op add">+</span><span><span class="id">WI-003e</span> CFO follow-up interview</span><span class="exec" data-exec="human"></span></li>
+        <li><span class="op chg">↻</span><span><span class="id">WI-004</span> Re-run after WI-003e</span><span class="exec" data-exec="agent"></span></li>
+        <li><span class="op chg">~</span><span><span class="id">WI-005</span> Input now themes.md@2.x</span><span></span></li>
+      </ul>
+      <div class="impact"><div><span class="label">Synthesis</span><b>+3 days</b></div><div><span class="label">Board date</span><b>unchanged</b></div><div><span class="label">Est. cost</span><b>+$0.40</b></div></div>
+      <div class="card-actions"><button class="btn primary sm">Approve</button><button class="btn sm">Discuss</button><span class="spacer"></span><button class="btn ghost sm danger">Reject</button></div>
+    </article>
+
+    <!-- Endorsement -->
+    <article class="card" style="border-top:3px solid var(--gate)">
+      <div class="card-kicker"><span class="gw" data-gate="endorse"><span class="kind" style="color:var(--gate)">Endorsement</span></span><span class="id">WI-006</span><span>roadmap.md <span class="ver material">1.2</span></span></div>
+      <h4 class="card-title">Record the steerco decision on the roadmap</h4>
+      <div class="field" style="margin-top:12px"><span class="label">Outcome</span>
+        <div class="seg" data-local><button>Endorsed</button><button aria-pressed="true">With conditions</button><button>Not endorsed</button></div></div>
+      <label class="field" style="margin-top:10px"><span class="label">Conditions</span><textarea class="textarea" style="min-height:52px">ERP consolidation moves to year 2.</textarea></label>
+      <div class="card-actions"><button class="btn ink sm">Record decision</button><button class="btn sm">Attach minutes</button></div>
+    </article>
+  </div>
+
+  <div class="grid g2" style="margin-top:28px">
+    <div>
+      <div class="sub-h" style="margin-top:0"><h3>Tracker</h3><span class="muted">the consultant's status view</span></div>
+      <table class="tracker">
+        <thead><tr><th>Item</th><th>Owner</th><th>Status</th><th class="r">Done</th></tr></thead>
+        <tbody>
+          <tr class="group"><td colspan="4">PH-1 Discovery</td></tr>
+          <tr><td><span class="id">WI-001</span> Analyse intake documents</td><td><span class="exec" data-exec="agent">Agent</span></td><td><span data-status="done"></span></td><td class="r"><span data-harvey="4"></span></td></tr>
+          <tr><td><span class="id">WI-002</span> Prepare interview guide</td><td><span class="exec" data-exec="agent">Agent</span></td><td><span data-status="done"></span></td><td class="r"><span data-harvey="4"></span></td></tr>
+          <tr><td><span class="id">WI-003</span> Conduct CxO interviews <span class="muted">≡ 5</span></td><td><span class="exec" data-exec="human">You</span></td><td><span data-status="in_progress"></span></td><td class="r"><span data-harvey="3"></span></td></tr>
+          <tr class="group"><td colspan="4">PH-2 Synthesis</td></tr>
+          <tr><td><span class="id">WI-004</span> Consolidate themes</td><td><span class="exec" data-exec="agent">Agent</span></td><td><span data-status="at_gate"></span></td><td class="r"><span data-harvey="3"></span></td></tr>
+          <tr><td><span class="id">WI-005</span> Identify initiatives</td><td><span class="exec" data-exec="agent">Agent</span></td><td><span data-status="stale"></span></td><td class="r"><span data-harvey="2"></span></td></tr>
+          <tr><td><span class="id">WI-006</span> Prioritise &amp; roadmap</td><td><span class="exec" data-exec="agent">Agent</span></td><td><span data-status="waiting"></span></td><td class="r"><span data-harvey="0"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="sub-h" style="margin-top:0"><h3>Activity stream</h3><span class="muted">a live run, written as prose</span></div>
+      <ul class="stream">
+        <li><time>09:41</time><i class="dot read"></i><span>Read <span class="tag src">current-state-summary.md@1.0</span></span></li>
+        <li><time>09:42</time><i class="dot read"></i><span>Read 4 interview notes (declared inputs)</span></li>
+        <li><time>09:42</time><i class="dot implicit"></i><span>Read <span class="tag src">stakeholders.md@1.1</span> <span class="muted">(not a declared input, so recorded as implicit)</span></span></li>
+        <li><time>09:44</time><i class="dot write"></i><span>Drafted 5 themes in <span class="id">work/themes.md</span></span></li>
+        <li><time>09:46</time><i class="dot ask"></i><span>Raised a follow-up with the Approach Agent: CFO budget appetite not covered</span></li>
+        <li><time>09:47</time><i class="dot write"></i><span>Published <span class="tag src">themes.md@2.0</span> <span class="ver material">material</span> and requested human review</span></li>
+      </ul>
+
+      <div class="sub-h"><h3>Approach Agent memo</h3></div>
+      <div class="msg" style="border-top:1px solid var(--rule)">
+        <div class="msg-head"><span class="avatar aa">A</span><b>Approach Agent</b><span>· 09:52</span></div>
+        <div class="msg-body">themes.md 2.0 adds <strong>Funding model</strong> as a fifth theme, based on the CFO follow-up. Two consequences:
+          <ul><li>WI-005 is now stale and should re-run.</li><li>Roadmap sequencing may shift if the CFO's funding condition holds.</li></ul></div>
+        <div class="msg-srcs"><span class="tag src">themes.md@2.0 §5</span><span class="tag src">interview-notes-cfo.md@1.0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-h"><h3>Canvas nodes</h3><span class="muted">BPMN-lite, restyled</span></div>
+  <div class="row-wrap" style="gap:16px;align-items:flex-start">
+    <div class="node" data-st="done"><div class="n-top"><span class="id">WI-001</span><span class="exec" data-exec="agent"></span></div><div class="n-title">Analyse intake documents</div><span data-status="done"></span></div>
+    <div class="node selected" data-st="at_gate"><div class="n-top"><span class="id">WI-004</span><span class="exec" data-exec="agent"></span></div><div class="n-title">Consolidate themes</div><span data-status="at_gate"></span></div>
+    <div class="node composite" data-st="in_progress"><div class="n-top"><span class="id">WI-003 ≡</span><span class="exec" data-exec="human"></span></div><div class="n-title">Conduct CxO interviews</div><span class="harvey-row"><span data-harvey="3"></span>4/5 done</span></div>
+    <div class="node ghost"><div class="n-top"><span class="id">WI-003e</span><span class="tag accent" style="height:18px">proposed</span></div><div class="n-title">CFO follow-up</div><span data-status="draft"></span></div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:6px">
+      <span class="dataobj" data-doc="filled">themes.md <span class="ver material">2.0</span></span>
+      <span class="dataobj" data-doc="empty">roadmap.md <span class="muted">—</span></span>
+      <span class="gw" data-gate="review">review</span>
+      <span class="gw" data-gate="endorse">steerco</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 SCREEN ============ -->
+<section class="pg" id="screen">
+  <div class="sec-head">
+    <div class="sec-num">07</div>
+    <h2>Screen concept: a stage with tabs and the Approach Agent in a rail</h2>
+    <p>This is a first look at the shell, to test the language on a real screen. It is not the final layout yet. Click the stage tabs (Brief, Plan, themes.md) and the nav rail, and collapse the rail with its × button.</p>
+  </div>
+
+  <div class="frame">
+    <div class="shell" id="shell">
+      <nav class="nav" aria-label="Engagement">
+        <div class="logo">W</div>
+        <button title="Brief" data-go="brief"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h12v12H3z"/><path d="M6 7h6M6 10h6M6 13h3"/></svg><span class="badge">3</span></button>
+        <button title="Plan" data-go="plan"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="5" height="4"/><rect x="11" y="3" width="5" height="4"/><rect x="6.5" y="11" width="5" height="4"/><path d="M7 5h4M4.5 7v2.5H9V11M13.5 7v2.5H9"/></svg></button>
+        <button title="Documents" data-go="doc" aria-current="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h7l3 3v11H4z"/><path d="M11 2v3h3M6.5 9h5M6.5 12h5"/></svg></button>
+        <button title="Decisions"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2l7 7-7 7-7-7z"/><path d="M6.5 9l2 2 3-4"/></svg></button>
+        <button title="Timeline"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 9h14"/><circle cx="5" cy="9" r="1.6"/><circle cx="10" cy="9" r="1.6"/><path d="M14 6v6"/></svg></button>
+        <button title="Library"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v12M6.5 3v12M10 3.5l4 11"/></svg></button>
+        <span class="spacer"></span>
+        <button title="Settings"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="9" r="2.5"/><path d="M9 1.5v2.5M9 14v2.5M1.5 9H4M14 9h2.5M3.7 3.7l1.8 1.8M12.5 12.5l1.8 1.8M3.7 14.3l1.8-1.8M12.5 5.5l1.8-1.8"/></svg></button>
+      </nav>
+
+      <header class="topbar">
+        <div class="eng"><b>IT Strategy — Acme</b><span>Board deck in 6 weeks · steerco endorsement</span></div>
+        <span class="sep"></span>
+        <div class="kpi"><span>Progress</span><b><span data-harvey="2"></span>4 / 11</b></div>
+        <div class="kpi"><span>Week</span><b>3 of 6</b></div>
+        <div class="kpi"><span>Plan</span><b>v6</b></div>
+        <div class="kpi"><span>Spend</span><b>$1.84</b></div>
+        <span class="spacer"></span>
+        <span class="live"><i></i>2 agents running</span>
+        <button class="btn sm ghost" id="railToggle">Approach ⟩</button>
+      </header>
+
+      <div class="stage">
+        <div class="stage-tabs" role="tablist">
+          <button role="tab" data-pane="brief">Brief</button>
+          <button role="tab" data-pane="plan">Plan</button>
+          <button role="tab" data-pane="doc" aria-selected="true"><svg width="12" height="12" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 2h7l3 3v11H4z"/></svg>themes.md <span class="ver material" style="font-size:9.5px;padding:0 4px">2.0</span><span class="x">✕</span></button>
+          <button class="add" aria-label="Open">＋</button>
+        </div>
+
+        <div class="stage-body">
+          <!-- BRIEF -->
+          <div class="pane" data-pane="brief">
+            <div class="brief">
+              <div class="kicker">Thu 25 Sep · Week 3 of 6</div>
+              <h1>3 decisions need you. Synthesis is waiting on your review.</h1>
+              <p class="stand">Discovery is 4/5 done. The CFO follow-up changed the themes materially, so the initiatives list will re-run once you approve them.</p>
+              <div class="brief-cols">
+                <div>
+                  <div class="col-h"><span class="label">Needs you · by consequence</span><span class="muted" style="font-size:12px">3</span></div>
+                  <div class="stack">
+                    <article class="card">
+                      <div class="card-kicker"><span class="gw" data-gate="review"><span class="kind" style="color:var(--gate)">Review</span></span><span class="id">WI-004</span><span>blocks 2 items</span></div>
+                      <h4 class="card-title">Approve themes.md 2.0, which adds "Funding model"</h4>
+                      <div class="card-actions" style="margin-top:12px;padding-top:12px"><button class="btn primary sm" data-open="doc">Open &amp; review</button><span class="spacer"></span><span class="crit"><span data-status="done">2 criteria met</span></span></div>
+                    </article>
+                    <article class="card">
+                      <div class="card-kicker"><span class="kind">Proposal #7</span><span>Plan change</span></div>
+                      <h4 class="card-title">Add a CFO follow-up; +3 days on Synthesis, board date unchanged</h4>
+                      <div class="card-actions" style="margin-top:12px;padding-top:12px"><button class="btn primary sm">Approve</button><button class="btn sm" data-open="plan">See on plan</button></div>
+                    </article>
+                    <article class="card">
+                      <div class="card-kicker"><span class="kind">Question</span><span class="id">WI-001</span></div>
+                      <h4 class="card-title">How should the inventory's cost figures be weighted?</h4>
+                      <div class="hypo" style="margin-top:8px"><span class="label">Hypothesis</span><p style="font-size:15px">Use licence cost only and flag the rest as unknown.</p></div>
+                      <div class="card-actions" style="margin-top:12px;padding-top:12px"><button class="btn primary sm">Approve</button><button class="btn sm">Amend</button><button class="btn sm">Replace</button><span class="spacer"></span><button class="btn ghost sm">Wrong question</button></div>
+                    </article>
+                  </div>
+                </div>
+                <div>
+                  <div class="col-h"><span class="label">In flight</span><span class="muted" style="font-size:12px">2</span></div>
+                  <div class="running">
+                    <div><span class="id">WI-005</span> Identify initiatives <span data-status="in_progress" style="float:right"></span><div class="line">reading themes.md@2.0 …</div><div class="bar"><i style="width:40%"></i></div></div>
+                    <div><span class="id">WI-003d</span> Interview COO <span class="exec" data-exec="human" style="float:right">You</span><div class="line">notes due Fri</div></div>
+                  </div>
+                  <div class="col-h" style="margin-top:26px"><span class="label">Published recently</span></div>
+                  <div class="running">
+                    <div>themes.md <span class="ver material">2.0</span> <span class="muted" style="float:right;font-size:12px">09:47</span></div>
+                    <div>themes.md <span class="ver">1.1</span> <span class="muted" style="float:right;font-size:12px">yesterday</span></div>
+                    <div>interview-guide.md <span class="ver material">1.0</span> <span class="muted" style="float:right;font-size:12px">Mon</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PLAN -->
+          <div class="pane" data-pane="plan">
+            <div class="canvas">
+              <div class="canvas-tools">
+                <div class="seg" data-local><button aria-pressed="true">Canvas</button><button>Tracker</button></div>
+                <div class="seg" data-local><button>Depth 1</button><button aria-pressed="true">2</button><button>All</button></div>
+                <span class="spacer"></span>
+                <span class="tag accent">1 pending proposal shown as ghost</span>
+              </div>
+              <div class="lanes">
+                <div class="corner"></div>
+                <div class="ph">PH-1 Discovery <span class="harvey-row"><span data-harvey="3"></span>4/5</span></div>
+                <div class="ph">PH-2 Synthesis <span class="harvey-row"><span data-harvey="1"></span>1/3</span></div>
+                <div class="ph">PH-3 Deliverable <span class="harvey-row"><span data-harvey="0"></span>0/1</span></div>
+
+                <div class="ln">Human</div>
+                <div class="cell">
+                  <div class="node composite" data-st="in_progress"><div class="n-top"><span class="id">WI-003 ≡</span><span class="exec" data-exec="human"></span></div><div class="n-title">Conduct CxO interviews</div><span class="harvey-row"><span data-harvey="3"></span>4/5 · COO pending</span></div>
+                  <div class="node ghost"><div class="n-top"><span class="id">WI-003e</span><span class="tag accent" style="height:18px">#7</span></div><div class="n-title">CFO follow-up</div></div>
+                </div>
+                <div class="cell"><span class="gw" data-gate="review">You review themes.md</span></div>
+                <div class="cell"><span class="gw" data-gate="endorse">Steerco endorses roadmap</span></div>
+
+                <div class="ln">Agents</div>
+                <div class="cell agents">
+                  <div class="node" data-st="done"><div class="n-top"><span class="id">WI-001</span><span class="exec" data-exec="agent"></span></div><div class="n-title">Analyse intake documents</div><span class="dataobj" data-doc="filled">current-state-summary.md <span class="ver material">1.0</span></span></div>
+                  <div class="node" data-st="done"><div class="n-top"><span class="id">WI-002</span><span class="exec" data-exec="agent"></span></div><div class="n-title">Prepare interview guide</div><span class="dataobj" data-doc="filled">interview-guide.md <span class="ver material">1.0</span></span></div>
+                </div>
+                <div class="cell agents">
+                  <div class="node selected" data-st="at_gate"><div class="n-top"><span class="id">WI-004</span><span class="exec" data-exec="agent"></span></div><div class="n-title">Consolidate themes</div><span data-status="at_gate"></span><span class="dataobj" data-doc="filled">themes.md <span class="ver material">2.0</span></span></div>
+                  <div class="node" data-st="stale"><div class="n-top"><span class="id">WI-005</span><span class="exec" data-exec="agent"></span></div><div class="n-title">Identify initiatives</div><span data-status="stale"></span></div>
+                  <div class="node" data-st="waiting"><div class="n-top"><span class="id">WI-006</span><span class="exec" data-exec="agent"></span></div><div class="n-title">Prioritise &amp; roadmap</div><span class="dataobj" data-doc="empty">roadmap.md</span></div>
+                </div>
+                <div class="cell agents">
+                  <div class="node" data-st="waiting"><div class="n-top"><span class="id">WI-007</span><span class="exec" data-exec="agent"></span></div><div class="n-title">Board deck</div><span class="dataobj" data-doc="empty">it-strategy.pptx</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DOCUMENT -->
+          <div class="pane on" data-pane="doc">
+            <div class="doc-wrap">
+              <div>
+                <div class="doc-main">
+                  <div class="doc-meta"><span class="id">PH-2 › WI-004</span><span>·</span><span class="exec" data-exec="agent">Consolidate themes</span><span>·</span><span class="tag">project scope</span><span data-status="at_gate">At human review</span></div>
+                  <div class="doc-toolbar">
+                    <div class="seg" data-local><button aria-pressed="true">Read</button><button>Changes since 1.1</button><button>Source</button></div>
+                    <span class="spacer"></span>
+                    <button class="btn sm ghost">Download</button>
+                    <button class="btn sm ghost">Ask about this</button>
+                  </div>
+                  <article class="doc">
+                    <h1>Five themes emerge from the CxO interviews; funding model is new</h1>
+                    <p class="standfirst">Leadership agrees on the constraint (the ERP estate) but not on the sequence. The CFO follow-up adds a funding condition that shapes the roadmap.</p>
+                    <h2><span class="n">01</span>ERP estate is the binding constraint</h2>
+                    <p>All four executives name the fragmented ERP landscape as the main brake on growth. They differ in emphasis: the COO frames it as an operational stability problem, the CIO as a data problem.</p>
+                    <div class="exhibit">
+                      <div class="ex-head"><span class="label">Exhibit 1</span><b>Theme strength by executive</b></div>
+                      <table class="tracker">
+                        <thead><tr><th>Theme</th><th>CEO</th><th>CFO</th><th>COO</th><th>CIO</th></tr></thead>
+                        <tbody>
+                          <tr><td>ERP estate constraint</td><td><span data-harvey="4"></span></td><td><span data-harvey="3"></span></td><td><span data-harvey="4"></span></td><td><span data-harvey="4"></span></td></tr>
+                          <tr><td>Data as a product</td><td><span data-harvey="2"></span></td><td><span data-harvey="1"></span></td><td><span data-harvey="1"></span></td><td><span data-harvey="4"></span></td></tr>
+                          <tr><td>Operating model strain</td><td><span data-harvey="3"></span></td><td><span data-harvey="2"></span></td><td><span data-harvey="4"></span></td><td><span data-harvey="2"></span></td></tr>
+                          <tr><td><b>Funding model</b> <span class="tag" style="background:var(--positive-weak);color:var(--positive)">new</span></td><td><span data-harvey="1"></span></td><td><span data-harvey="4"></span></td><td><span data-harvey="0"></span></td><td><span data-harvey="1"></span></td></tr>
+                        </tbody>
+                      </table>
+                      <div class="ex-src">Source: interview-notes-{ceo,cfo,coo,cio}.md@1.0; interview-notes-cfo-followup.md@1.0</div>
+                    </div>
+                    <h2><span class="n">02</span>Operating model strain</h2>
+                    <p>IT capacity is consumed by keeping the lights on. Only about 15% of spend goes to change, and the COO sees this as the root of the delivery delays.</p>
+                    <h2><span class="n">05</span>Funding model</h2>
+                    <p class="changed"><span class="tag">added 2.0</span>The CFO will fund ERP replacement only against a consolidation case with a payback of three years or less. This makes funding a precondition in the roadmap, not a consequence of it.</p>
+                  </article>
+                </div>
+                <div class="review-bar">
+                  <span class="gw" data-gate="review"><b style="color:var(--ink)">Human review</b></span>
+                  <span class="crit"><span><span data-status="done" data-bare></span>Covers all execs</span><span><span data-status="done" data-bare></span>Cites sources</span><span><span data-status="stale" data-bare></span>Ranked (partial)</span></span>
+                  <span class="spacer"></span>
+                  <button class="btn sm">Request changes</button>
+                  <button class="btn sm primary">Approve 2.0 <span class="kbd">A</span></button>
+                </div>
+              </div>
+              <aside class="doc-side">
+                <div class="block">
+                  <h5 class="label">Versions</h5>
+                  <ul class="vlist">
+                    <li class="cur mat"><b>2.0</b> <span class="ver material">material</span><p>Today 09:47 · adds Funding model</p></li>
+                    <li><b>1.1</b> <span class="ver">minor</span><p>Yesterday · typo fixes</p></li>
+                    <li class="mat"><b>1.0</b> <span class="ver material">material</span><p>Mon · first publish, approved</p></li>
+                  </ul>
+                </div>
+                <div class="block">
+                  <h5 class="label">Used by</h5>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div><span class="id">WI-005</span> Identify initiatives<br><span data-status="stale"></span></div>
+                    <div><span class="id">WI-006</span> Prioritise &amp; roadmap<br><span data-status="waiting"></span></div>
+                  </div>
+                </div>
+                <div class="block">
+                  <h5 class="label">Built from</h5>
+                  <div class="row-wrap" style="gap:6px"><span class="tag src">notes-ceo@1.0</span><span class="tag src">notes-cfo@1.0</span><span class="tag src">notes-coo@1.0</span><span class="tag src">notes-cio@1.0</span><span class="tag src" style="border-style:dotted;border-color:var(--caution)">stakeholders@1.1</span></div>
+                  <p class="muted" style="font-size:11px;margin-top:6px">Dotted: implicit read</p>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPROACH RAIL -->
+      <aside class="aa-rail">
+        <div class="aa-head">
+          <span class="avatar aa">A</span><b>Approach Agent</b>
+          <span class="spacer"></span>
+          <div class="seg" data-local style="transform:scale(.9);transform-origin:right"><button aria-pressed="true">Chat</button><button>Agenda 4</button></div>
+          <button class="btn ghost sm" id="railClose" aria-label="Collapse">✕</button>
+        </div>
+        <div class="aa-body">
+          <div class="msg human">
+            <div class="msg-head"><span class="avatar hu">M</span><b>You</b><span>· 09:50</span></div>
+            <div class="msg-body">What actually changed since 1.1, and does it hit the board date?</div>
+          </div>
+          <div class="msg">
+            <div class="msg-head"><span class="avatar aa">A</span><b>Approach Agent</b><span>· 09:51</span></div>
+            <div class="msg-body">One material change: <strong>theme 05, Funding model</strong>, from the CFO follow-up. Themes 01–04 are unchanged apart from the 1.1 typo fixes.
+              <ul><li>WI-005 is stale and will re-run once you approve.</li><li>The board date holds. Synthesis absorbs the extra 3 days.</li></ul>
+            </div>
+            <div class="msg-srcs"><span class="tag src">themes.md@2.0 §05</span><span class="tag src">diff 1.1→2.0</span></div>
+            <div class="inline-prop">
+              <div class="card-kicker" style="margin:0"><span class="kind">Proposal #8</span><span>after approval</span></div>
+              <div style="font-size:13px;font-weight:500">Re-run WI-005 on themes 2.0 and flag the funding precondition for WI-006.</div>
+              <div class="row"><button class="btn primary sm">Approve</button><button class="btn sm">Discuss</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="aa-foot">
+          <div class="context-chip"><svg width="12" height="12" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 9s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z"/><circle cx="9" cy="9" r="2.5"/></svg>Viewing <b>themes.md 2.0</b> · the agent sees this</div>
+          <div class="composer">
+            <textarea placeholder="Ask, instruct, or @ a document…"></textarea>
+            <div class="row"><button class="btn ghost sm">＋ File</button><button class="btn ghost sm">@ Ref</button><span class="spacer"></span><span class="muted" style="font-size:11px">⌘↵</span><button class="btn primary sm">Send</button></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="note"><b>Open questions for the next round:</b> Should the Brief replace the Plan as the landing page? Should Agenda live in the rail or have its own nav entry? Should human work items (interviews) get a separate "My work" view? Should a review use a sticky bar (shown) or a side-by-side diff mode?</div>
+</section>
+
+  </main>
+</div>
+
+<dialog id="tokDlg">
+  <header><b>Resolved tokens</b><div class="row-wrap"><span class="muted" id="tokMsg" style="font-size:12px"></span><button class="btn sm" id="tokClose">Close</button></div></header>
+  <pre id="tokPre"></pre>
+</dialog>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const KEY = "exhibit-playground";
+
+  /* ---------- glyphs ---------- */
+  const STATUS = {
+    draft:       { label: "Draft",       note: "proposed, not approved" },
+    waiting:     { label: "Waiting",     note: "inputs don't exist yet" },
+    ready:       { label: "Ready",       note: "can start" },
+    in_progress: { label: "In progress", note: "an agent or you is working" },
+    blocked:     { label: "Blocked",     note: "needs an answer" },
+    at_gate:     { label: "At gate",     note: "review or endorsement" },
+    done:        { label: "Done",        note: "outputs accepted" },
+    stale:       { label: "Stale",       note: "an input changed materially" },
+    cancelled:   { label: "Cancelled",   note: "dropped from the plan" },
+  };
+  const svg = (inner) => `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">${inner}</svg>`;
+  const GLYPH = {
+    draft:       svg(`<circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/>`),
+    waiting:     svg(`<circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.4"/>`),
+    ready:       svg(`<circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="2.4"/>`),
+    in_progress: svg(`<circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.4"/><path class="spin" d="M7 1.8A5.2 5.2 0 0 1 7 12.2Z" fill="currentColor"/>`),
+    blocked:     svg(`<rect x="2" y="2" width="10" height="10" rx="1" fill="currentColor"/><path d="M4.5 7h5" stroke="var(--surface)" stroke-width="1.6"/>`),
+    at_gate:     svg(`<path d="M7 1.2 12.8 7 7 12.8 1.2 7Z" stroke="currentColor" stroke-width="1.5"/><path d="M7 4.3 9.7 7 7 9.7 4.3 7Z" fill="currentColor"/>`),
+    done:        svg(`<circle cx="7" cy="7" r="6" fill="currentColor"/><path d="M4.2 7.2 6.1 9 9.8 5.2" stroke="var(--surface)" stroke-width="1.6" fill="none"/>`),
+    stale:       svg(`<path d="M7 1.5 13 12.3H1Z" fill="currentColor"/><path d="M7 5.3v3.2M7 10v.4" stroke="var(--surface)" stroke-width="1.5"/>`),
+    cancelled:   svg(`<circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.4"/><path d="M3.3 10.7 10.7 3.3" stroke="currentColor" stroke-width="1.4"/>`),
+  };
+  const EXEC = {
+    agent: `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="1.5" y="3" width="11" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M7 3V1M4.8 7h.01M9.2 7h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+    human: `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="4.5" r="2.6" stroke="currentColor" stroke-width="1.3"/><path d="M2 13c.6-2.8 2.6-4.3 5-4.3s4.4 1.5 5 4.3" stroke="currentColor" stroke-width="1.3"/></svg>`,
+  };
+  const GATE = {
+    review:  `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1.2 12.8 7 7 12.8 1.2 7Z" stroke="currentColor" stroke-width="1.5"/></svg>`,
+    endorse: `<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.2 12.8 7 7 12.8 1.2 7Z" fill="currentColor"/></svg>`,
+  };
+  const DOC = {
+    filled: `<svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true"><path d="M1 1h6.5L11 4.5V13H1Z" fill="var(--sunken)" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 1v3.5H11" stroke="currentColor" stroke-width="1.2"/></svg>`,
+    empty:  `<svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true"><path d="M1 1h6.5L11 4.5V13H1Z" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 1.6"/></svg>`,
+  };
+  function harvey(q) { // q: 0..4 quarters
+    const r = 6, c = 7;
+    let fill = "";
+    if (q >= 4) fill = `<circle cx="${c}" cy="${c}" r="${r}" fill="currentColor"/>`;
+    else if (q > 0) {
+      const a = (q / 4) * 2 * Math.PI;
+      const x = c + r * Math.sin(a), y = c - r * Math.cos(a);
+      fill = `<path d="M${c} ${c}V${c - r}A${r} ${r} 0 ${q > 2 ? 1 : 0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z" fill="currentColor"/>`;
+    }
+    return `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" role="img" aria-label="${q * 25}% complete" style="color:var(--ink);vertical-align:-2px"><circle cx="${c}" cy="${c}" r="${r}" stroke="currentColor" stroke-width="1.2"/>${fill}</svg>`;
+  }
+
+  function hydrate(scope = document) {
+    scope.querySelectorAll("[data-status]").forEach((el) => {
+      if (el.dataset.done) return; el.dataset.done = 1;
+      const s = el.dataset.status;
+      const text = el.textContent.trim() || STATUS[s].label;
+      el.classList.add("status", "s-" + s);
+      el.innerHTML = "bare" in el.dataset ? GLYPH[s] : GLYPH[s] + `<span class="t">${text}</span>`;
+      if ("bare" in el.dataset) el.title = STATUS[s].label;
+    });
+    scope.querySelectorAll("[data-exec]").forEach((el) => { if (!el.dataset.done) { el.dataset.done = 1; el.insertAdjacentHTML("afterbegin", EXEC[el.dataset.exec]); el.title ||= el.dataset.exec === "agent" ? "Agent executes" : "Human executes"; } });
+    scope.querySelectorAll("[data-gate]").forEach((el) => { if (!el.dataset.done) { el.dataset.done = 1; el.insertAdjacentHTML("afterbegin", GATE[el.dataset.gate]); } });
+    scope.querySelectorAll("[data-doc]").forEach((el) => { if (!el.dataset.done) { el.dataset.done = 1; el.insertAdjacentHTML("afterbegin", DOC[el.dataset.doc]); } });
+    scope.querySelectorAll("[data-harvey]").forEach((el) => { if (!el.dataset.done) { el.dataset.done = 1; el.innerHTML = harvey(+el.dataset.harvey); } });
+  }
+
+  /* legend + harveys */
+  document.getElementById("legend").innerHTML = Object.entries(STATUS)
+    .map(([k, v]) => `<div><span data-status="${k}"></span><span class="muted">${v.note}</span></div>`).join("");
+  document.getElementById("harveys").innerHTML = [0,1,2,3,4].map((q) => `<span class="row-wrap" style="gap:6px"><span data-harvey="${q}"></span><span class="muted num" style="font-size:12px">${q*25}%</span></span>`).join("");
+  hydrate();
+
+  /* ---------- swatches (live values) ---------- */
+  const SW = {
+    "sw-neutral": [["--paper","Paper","page background"],["--surface","Surface","cards, panels"],["--sunken","Sunken","wells, tab strips"],["--rule","Rule","hairlines"],["--rule-strong","Rule strong","inputs, outlines"],["--ink-3","Ink 3","meta, captions"],["--ink-2","Ink 2","secondary text"],["--ink","Ink","text, header rules"]],
+    "sw-accent":  [["--accent","Accent","primary action"],["--accent-strong","Accent strong","hover, text on weak"],["--accent-weak","Accent weak","selection, hypothesis"]],
+    "sw-sem":     [["--positive","Positive","done, added"],["--caution","Caution","stale, partial"],["--critical","Critical","blocked, reject"],["--gate","Gate","review, endorsement"],["--positive-weak","Positive weak",""],["--caution-weak","Caution weak",""],["--critical-weak","Critical weak",""],["--gate-weak","Gate weak",""]],
+  };
+  function paintSwatches() {
+    const cs = getComputedStyle(root);
+    for (const [id, list] of Object.entries(SW)) {
+      document.getElementById(id).innerHTML = list.map(([v, name, use]) =>
+        `<div class="sw"><div class="chip" style="background:var(${v})"></div><div class="meta"><b>${name}</b><code>${cs.getPropertyValue(v).trim()}</code>${use ? `<div class="muted">${use}</div>` : ""}</div></div>`).join("");
+    }
+  }
+
+  /* ---------- controls ---------- */
+  const DEFAULTS = { theme: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light", accent: "cobalt", type: "exhibit", density: "comfortable", radius: "sharp" };
+  let state = { ...DEFAULTS };
+  try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch {}
+  function apply() {
+    for (const [k, v] of Object.entries(state)) {
+      root.dataset[k] = v;
+      document.querySelectorAll(`[data-ctl="${k}"] [data-v]`).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+    }
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+    requestAnimationFrame(paintSwatches);
+  }
+  document.querySelectorAll("[data-ctl]").forEach((group) => group.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-v]"); if (!b) return;
+    state[group.dataset.ctl] = b.dataset.v; apply();
+  }));
+  apply();
+
+  /* local segmented controls are just toggles */
+  document.querySelectorAll(".seg[data-local]").forEach((seg) => seg.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    seg.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+
+  /* amend reveal */
+  document.querySelectorAll(".js-amend").forEach((b) => b.addEventListener("click", () => {
+    const box = b.closest(".card").querySelector(".amend");
+    box.classList.toggle("open");
+    b.textContent = box.classList.contains("open") ? "Send amendment" : "Amend";
+    b.classList.toggle("primary", box.classList.contains("open"));
+    if (box.classList.contains("open")) box.querySelector("textarea").focus();
+  }));
+
+  /* ---------- screen concept ---------- */
+  const shell = document.getElementById("shell");
+  function openPane(name) {
+    shell.querySelectorAll(".stage-tabs [data-pane]").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.pane === name)));
+    shell.querySelectorAll(".pane").forEach((p) => p.classList.toggle("on", p.dataset.pane === name));
+    shell.querySelectorAll(".nav [data-go]").forEach((n) => n.setAttribute("aria-current", String(n.dataset.go === name)));
+  }
+  shell.querySelectorAll(".stage-tabs [data-pane]").forEach((t) => t.addEventListener("click", () => openPane(t.dataset.pane)));
+  shell.querySelectorAll(".nav [data-go]").forEach((n) => n.addEventListener("click", () => openPane(n.dataset.go)));
+  shell.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openPane(b.dataset.open)));
+  const toggleRail = () => {
+    shell.classList.toggle("rail-closed");
+    document.getElementById("railToggle").textContent = shell.classList.contains("rail-closed") ? "⟨ Approach" : "Approach ⟩";
+  };
+  document.getElementById("railToggle").addEventListener("click", toggleRail);
+  document.getElementById("railClose").addEventListener("click", toggleRail);
+
+  /* ---------- token export ---------- */
+  const TOKENS = ["--paper","--surface","--sunken","--ink","--ink-2","--ink-3","--rule","--rule-strong","--accent","--accent-ink","--accent-weak","--accent-strong","--positive","--positive-weak","--caution","--caution-weak","--critical","--critical-weak","--gate","--gate-weak","--font-ui","--font-read","--font-mono","--font-title","--title-weight","--fs-xs","--fs-sm","--fs-base","--fs-md","--fs-lg","--fs-xl","--fs-xxl","--r","--r-lg","--d","--shadow-float"];
+  const dlg = document.getElementById("tokDlg");
+  document.getElementById("copyTokens").addEventListener("click", async () => {
+    const cs = getComputedStyle(root);
+    const css = `/* Exhibit v1.0 — ${Object.entries(state).map(([k, v]) => k + ": " + v).join(", ")} */\n:root {\n` +
+      TOKENS.map((t) => `  ${t}: ${cs.getPropertyValue(t).trim()};`).join("\n") + "\n}";
+    document.getElementById("tokPre").textContent = css;
+    let msg = "";
+    try { await navigator.clipboard.writeText(css); msg = "Copied to clipboard"; } catch { msg = "Select and copy"; }
+    document.getElementById("tokMsg").textContent = msg;
+    dlg.showModal();
+  });
+  document.getElementById("tokClose").addEventListener("click", () => dlg.close());
+})();
+</script>
+</body>
+</html>

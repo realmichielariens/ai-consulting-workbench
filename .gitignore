@@ -5,3 +5,8 @@ spike/results/raw/
 spike/**/.venv/
 workspace/
 *.log
+test-results/
+playwright-report/
+apps/web/dist/
+**/.vite/
+e2e/walks/out/

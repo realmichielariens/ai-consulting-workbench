@@ -1,0 +1,104 @@
+/* REDESIGN-PLAN §6.3 / ux/playground §07 .brief, .brief-cols, .running. */
+
+.brief-page {
+  padding: 28px 40px 48px;
+  max-width: 1080px;
+}
+.brief-kicker {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+}
+.brief-title {
+  font-family: var(--font-title);
+  font-weight: var(--title-weight);
+  font-size: var(--fs-xl);
+  line-height: 1.25;
+  margin: 6px 0 6px;
+  max-width: 46ch;
+}
+.brief-standfirst {
+  color: var(--ink-2);
+  max-width: 70ch;
+}
+.brief-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 32px;
+  margin-top: 26px;
+  align-items: start;
+}
+.col-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 12px;
+}
+.col-h .label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.brief-side-gap {
+  margin-top: 26px;
+}
+
+.running-list {
+  display: flex;
+  flex-direction: column;
+}
+.running-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--fs-sm);
+}
+.running-line {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  margin-top: 3px;
+  font-family: var(--font-mono);
+}
+.running-exec {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+
+.published-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  padding: 10px 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.published-row:hover {
+  color: var(--accent);
+}
+
+.plan-health {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+.plan-health-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}

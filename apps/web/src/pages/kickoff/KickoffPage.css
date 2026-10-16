@@ -1,0 +1,58 @@
+/* REDESIGN-PLAN §6.2: the conversation takes the stage; "Taking shape" is a
+   240px-ish side column, per ux/playground/index.html §07's .doc-side. */
+
+.kickoff-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  height: 100%;
+  min-height: 0;
+}
+.kickoff-main {
+  min-height: 0;
+  border-right: 1px solid var(--rule);
+}
+.kickoff-shape {
+  padding: 24px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.kickoff-shape-title {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0;
+}
+.kickoff-asset {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.kickoff-asset:hover {
+  border-color: var(--accent);
+}
+.kickoff-asset-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+.kickoff-asset-preview {
+  margin: 8px 0 0;
+  font-family: var(--font-read);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+}

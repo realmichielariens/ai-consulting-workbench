@@ -1,0 +1,21 @@
+# Fake script for a "question" task session (I2-PLAN §4.1), keyed by the
+# asking item's id. WI-002's question (see fake-scripts/WI-002.yaml's blocking
+# CIO-focus question) has enough context in ENG/context and ENG/stakeholders
+# for the Approach Agent to answer directly. Any other item is escalated.
+
+byItem:
+  WI-002:
+    - answer:
+        mode: approve
+        text: >-
+          Agreed: lean into her forming vision and priorities, with just
+          enough history to anchor it. She's the sponsor the board is
+          waiting on, so what she wants to do next matters more here than a
+          full retrospective — Dev Anand and the existing documentation can
+          fill in history gaps later if needed.
+
+default:
+  - escalate:
+      view: >-
+        I don't have enough grounding in this item's specifics to settle it
+        confidently myself, so passing it to you with that in mind.

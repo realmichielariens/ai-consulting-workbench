@@ -1,0 +1,4 @@
+# SeedDefaults (packages/core/src/seed.ts). I2 decision D3: aa-first.
+settings:
+  questionHandling: aa-first
+  itemStart: auto

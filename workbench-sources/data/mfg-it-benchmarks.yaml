@@ -1,0 +1,65 @@
+# Illustrative demo data (fictional publisher). Not real research.
+records:
+  - id: MB-101
+    title: IT spend as a share of revenue, mid-size discrete manufacturers
+    url: https://example.com/northfield/2026.1/MB-101
+    date: "2026-03"
+    tags: [it spend, budget, discrete manufacturing]
+    body: >-
+      Panel median IT spend: 2.1% of revenue (interquartile range 1.6–2.8%).
+      Firms mid-way through an ERP replacement run at 3.0–3.6% for the
+      duration of the programme. Run-the-business spend is 71% of the IT
+      budget at the median.
+  - id: MB-104
+    title: ERP replacement duration by approach
+    url: https://example.com/northfield/2026.1/MB-104
+    date: "2026-03"
+    tags: [erp, replacement, phasing, duration, big-bang]
+    body: >-
+      Phased (site-by-site) ERP replacements at 2–4 plants took a median
+      of 30 months to final site go-live (range 22–41). Single-cutover
+      ("big-bang") programmes took a median of 19 months, but 38% of them
+      reported a shipment disruption of more than two weeks at go-live,
+      against 9% for phased programmes.
+  - id: MB-107
+    title: Plant-level spreadsheet workarounds
+    url: https://example.com/northfield/2026.1/MB-107
+    date: "2026-03"
+    tags: [workarounds, spreadsheets, scheduling, plants, mes]
+    body: >-
+      64% of panel firms with an ERP older than ten years run production
+      scheduling at least partly in plant-owned spreadsheets. Firms that
+      formalized these as an interim tool before replacement reported fewer
+      scheduling incidents during cutover than firms that retired them at
+      go-live.
+  - id: MB-112
+    title: Meeting OEM real-time production-visibility requirements
+    url: https://example.com/northfield/2026.1/MB-112
+    date: "2026-03"
+    tags: [oem, visibility, real-time, reporting, mes, integration]
+    body: >-
+      Of panel suppliers that received an OEM real-time visibility
+      requirement, 57% met it first with a reporting/integration layer on
+      the existing ERP and MES (median 7 months to compliance), and 43%
+      waited for a new ERP (median 26 months). Suppliers that chose the
+      layer kept the option of a later ERP decision.
+  - id: MB-118
+    title: Adding a product line on a legacy ERP
+    url: https://example.com/northfield/2026.1/MB-118
+    date: "2026-03"
+    tags: [product line, expansion, erp, customization]
+    body: >-
+      Firms adding a product line on an ERP with heavy customization
+      reported a median of 5 months of configuration and test work per new
+      line, against 2 months on a lightly customized ERP. Customization
+      depth, not ERP age, was the stronger predictor.
+  - id: MB-121
+    title: Finance/GL separate from ERP
+    url: https://example.com/northfield/2026.1/MB-121
+    date: "2026-03"
+    tags: [finance, gl, reconciliation, master data]
+    body: >-
+      Firms whose general ledger runs outside the ERP without a shared
+      customer/part master spend a median of 3.5 extra days on month-end
+      close. Consolidating master data first, before any system
+      replacement, recovered most of that time in 70% of cases.

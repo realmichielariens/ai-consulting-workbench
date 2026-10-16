@@ -1,0 +1,67 @@
+/* EXHIBIT §5.1: colour is never the only signal, but each status still gets
+   its --status-<ItemStatus> colour on the glyph + label pair. */
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.status svg {
+  flex: none;
+}
+.status-t {
+  color: var(--ink);
+}
+.s-draft,
+.s-waiting,
+.s-cancelled {
+  color: var(--status-draft);
+}
+.s-ready,
+.s-in_progress {
+  color: var(--status-ready);
+}
+.s-blocked {
+  color: var(--status-blocked);
+}
+.s-at_gate {
+  color: var(--status-at_gate);
+}
+.s-done {
+  color: var(--status-done);
+}
+.s-stale {
+  color: var(--status-stale);
+}
+.status-struck .status-t {
+  text-decoration: line-through;
+}
+
+@keyframes glyph-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.glyph-spin {
+  transform-origin: 7px 7px;
+  animation: glyph-spin 2.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .glyph-spin {
+    animation: none;
+  }
+}
+
+.harvey-ball {
+  color: var(--ink);
+  vertical-align: -2px;
+}
+
+.exec-glyph {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-2);
+}

@@ -1,0 +1,49 @@
+/* Centred modal overlay, shared shape with the settings drawer's dialog surface. */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  width: 420px;
+  max-width: 90vw;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float);
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.feedback-textarea {
+  width: 100%;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  padding: var(--sp-2);
+  resize: vertical;
+  font-family: var(--font-ui);
+}
+.feedback-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.feedback-error {
+  color: var(--critical);
+  font-size: var(--fs-sm);
+}

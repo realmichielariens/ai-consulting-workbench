@@ -30,7 +30,7 @@
 
 | # | Decision | Rationale |
 |---|---|---|
-| A1 | **TypeScript end to end** (Node 22 LTS server and React UI) | One language and shared Zod schemas across UI, server and agent tools. The Agent SDK has a first-class TypeScript version. |
+| A1 | **TypeScript end to end** (Node 26 server and React UI) | One language and shared Zod schemas across UI, server and agent tools. The Agent SDK has a first-class TypeScript version. |
 | A2 | **Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`) as the agent runtime | It provides built-in file tools, sessions and resume, hooks, permission rules, in-process MCP tools, skills and plugins, and subagents. It runs locally. |
 | A3 | **The Approach Agent is a role with shared state, not one conversation.** It runs as several short or medium SDK sessions: *conversation* sessions (led by the human), a *triage* lane (led by the system) and *task* sessions. All of them work from the same plan, **agenda** and decision log. | This handles inputs that don't arrive one at a time, follows the human's priorities, keeps contexts small (which matters on smaller models), and survives lost sessions. |
 | A4 | **Work Agents run as one SDK session per work item run** | Independent lifecycles, working directories, permissions and resume per item. |
@@ -273,11 +273,12 @@ type Trigger =
 | `asset_versions` | (`slot_ref`, `major`, `minor`) PK, `kind`, `author`, `at`, `note`, `run_id`, `path` | Version registry |
 | `consumptions` | `run_id`, `slot_ref`, `major`, `minor`, `mode` (`declared`/`implicit`/`library`) | Pins and implicit reads. Staleness queries run on this table. |
 | `runs` | `id` PK, `item_id`, `session_id`, `reason`, `outcome`, `cost_usd`, `turns`, `prompt_hash`, `model`, `started_at`, `ended_at` | |
-| `requests` | `id` PK, `type`, `from_actor`, `to_actor`, `item_id`, `status`, `blocking`, `payload` JSON, `response` JSON, `agenda_id`, `thread_id`, timestamps | **The requests between agents** |
-| `threads` / `messages` | `thread.id`, `subject`, `agenda_id` / `msg.id`, `thread_id`, `actor`, `body`, `at` | Conversations: human ↔ AA, discussions |
+| `requests` | `id` PK, `type`, `from_actor`, `to_actor`, `item_id`, `status`, `blocking`, `payload` JSON, `response` JSON, `agenda_id`, `thread_id`, `routed_to`, `escalation` JSON, timestamps | **The requests between agents**. I2: a question routed `aa-first` starts with `to_actor = approach` and moves to `human` when escalated; `routed_to` keeps the first route. |
+| `threads` / `chat_messages` | `thread.id`, `subject`, `session_id`, `last_seen_seq` / `msg.id`, `thread_id`, `role` (`human`/`approach`/`system`), `body`, `run_id`, `proposal_id`, `asset`, `at` | Conversations: human ↔ AA. `last_seen_seq` drives the "since your last turn" delta. (I2) |
+| `notifications` | `id` PK, `from_actor`, `text`, `item_id`, `request_id`, `created_at`, `dismissed_at` | FYI entries in the Inbox, for example an answer given by the Approach Agent, which the human can override (I2) |
 | `agenda_items` | `id` PK, `kind`, `status`, `owner`, `priority`, `human_rank`, `trigger` JSON, `claim_session`, `claim_until`, `resolution` | |
 | `agenda_links` | `agenda_id`, `target_type`, `target_id` | Links to items, requests, proposals, assets |
-| `proposals` | `id` PK, `origin`, `status`, `base_plan_version`, `rationale`, `ops` JSON, `applied_plan_version` | Optimistic concurrency (§7.4) |
+| `proposals` | `id` PK, `origin`, `suggested_by`, `request_id`, `thread_id`, `status`, `base_plan_version`, `rationale`, `ops` JSON, `applied_plan_version`, `reject_reason`, `superseded_by` | Optimistic concurrency (§7.4). In I2 a moved plan version rejects the proposal. |
 | `gate_steps` | `item_id`, `seq`, `type`, `status`, `verdict`, `by`, `asset_versions` JSON, `decision_id` | |
 | `decisions` | `id` PK, `forum`, `date`, `outcome`, `path`, `endorsed_versions` JSON | The content is in `decisions/*.md` |
 | `sessions` | `session_id` PK, `role` (`aa-conversation`/`aa-triage`/`aa-task`/`work`), `scope_key`, `lease_holder`, `lease_until`, `status` | Leases (§8.4) |
@@ -373,6 +374,14 @@ Several kinds of SDK sessions all use the same role prompt and tools:
 - **Claims** stop two sessions from working the same topic. A session claims a topic with `agenda_claim`, which has a lease. A conversation session that discusses a topic claims it too. Triage skips claimed topics and topics linked to items that the human is currently discussing.
 - **Closure**: the Approach Agent calls `agenda_resolve(id, resolution)`. Some topics close automatically when their linked object resolves, for example when the proposal is applied or the request is answered.
 
+**Conversation turns (as built in I2).** A conversation thread is not a long-lived streaming session. **Each human message starts one `query()` that resumes the thread's session** (`resume: <sessionId>`), under the lease `aa-thread:<threadId>`. This gives:
+
+- natural turn boundaries, so a message sent while a turn is running is queued in the UI and sent when the turn ends;
+- restart safety (M0 S5);
+- the same lease mechanism as Work Agents.
+
+Task sessions (a routed question, a Work Agent suggestion) are fresh sessions under `aa-task:<requestId>`. They run one at a time and must end with a deciding tool (`answer_request` / `escalate`, or `propose_ops` / `decline_suggestion`). If one doesn't, the server escalates the question or declines the suggestion. Approach Agent runs are recorded in `runs` with item `ENG` and reason `aa-turn`, `aa-question` or `aa-suggestion`.
+
 **Briefing.** Every Approach Agent session starts with a **situation briefing**. The server builds it deterministically from the DB, with no LLM: a plan summary at depth 2, the top N open topics, changes since this thread was last active, and the topic(s) in scope. Sessions therefore start with the right context even when new, and resumed conversation sessions get a "since we last spoke" delta.
 
 **Consistency across parallel Approach Agent sessions**:
@@ -386,7 +395,7 @@ Several kinds of SDK sessions all use the same role prompt and tools:
 
 - `cwd` = engagement root (read everything published); `additionalDirectories` = `library/`;
 - writes scoped to `items/ENG/work/**`;
-- tools: `Read`, `Glob`, `Grep`, `Write`/`Edit` (scoped), `Skill`, `Agent` (subagents allowed, §8.3), plus the `mcp__plan__*`, `mcp__agenda__*` and `mcp__library__*` toolsets;
+- tools: `Read`, `Glob`, `Grep`, `Write`/`Edit` (scoped), `Skill`, `Task` (subagents allowed, §8.3), plus the `mcp__plan__*`, `mcp__agenda__*` and `mcp__library__*` toolsets;
 - no `Bash`;
 - `permissionMode: "dontAsk"`;
 - `model` from the profile.
@@ -763,7 +772,7 @@ sequenceDiagram
 | Agents don't follow the protocol (they keep working after a blocking question, or forget to submit) | The engine decides termination from tool calls. One nudge, then a `run_issue` topic. |
 | Files and DB drift apart | A single write path through the server. Startup reconciliation rebuilds the definition index from files. The checkpoint commit includes both. |
 | `Bash` bypasses the file guards | `Bash` is enabled only for specific items. Post-run Git audit with revert. |
-| Guards don't apply inside subagents | Spike item 3. Fallback: restrict subagents to predefined read-only definitions. |
+| Guards don't apply inside subagents | Resolved in M0 (S3): hooks fire inside subagents and denials hold. The guard also denies the state-changing toolsets when `agent_id` is present (§8.3). |
 | Readability of the canvas with deep nesting | Two view modes, depth and focus controls, an early UI spike |
 | Agent SDK version drift | Pin the version. A single adapter module (`packages/agents/sdk.ts`) owns every SDK call. |
 
@@ -798,6 +807,8 @@ sequenceDiagram
 ---
 
 ## 18. Milestones
+
+The milestones below are **capability areas**. They are delivered as vertical slices (iterations I1–I7), each ending in a working app with defined user journeys and a human test session. See [ITERATIONS.md](ITERATIONS.md) §11 for which iteration delivers which part of each milestone.
 
 | # | Milestone | Content | Demo-able outcome |
 |---|---|---|---|

@@ -1,0 +1,273 @@
+/* UX1 brief B §Build 1: Plan page (Canvas + Tracker + peek + proposal bar).
+   Node styling ported from ux/playground/index.html §07 (.node, .dataobj, .gw). */
+
+.plan-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.plan-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+/* proposal bar */
+.preview-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--accent-weak);
+  border-bottom: 1px solid var(--accent);
+  font-size: var(--fs-sm);
+  color: var(--accent-strong);
+  font-weight: 500;
+}
+.pv-spacer {
+  flex: 1;
+}
+
+/* canvas */
+.process-view {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+}
+.pv-port {
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.pv-legend {
+  position: absolute;
+  left: var(--sp-3);
+  bottom: var(--sp-3);
+  display: flex;
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  z-index: 5;
+}
+.pv-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* process nodes (BPMN-lite), ported from the playground */
+.node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.node::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 4px;
+  border-radius: var(--r-lg) 0 0 var(--r-lg);
+  background: var(--st, var(--rule-strong));
+}
+.node .n-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* Titles are free text from the plan: clamp them to the node's box and
+   leave the full title to the node's hover tooltip. */
+.node .n-title {
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  flex: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.node.composite .n-title {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.node.composite .pv-rollup {
+  flex: none;
+}
+.node.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
+}
+.node.composite {
+  border-style: solid;
+  border-width: 1px;
+  background: var(--sunken);
+  cursor: default;
+}
+.node.ghost {
+  border-style: dashed;
+  background: transparent;
+  opacity: 0.85;
+}
+.node[data-st="done"] {
+  --st: var(--positive);
+}
+.node[data-st="in_progress"],
+.node[data-st="ready"] {
+  --st: var(--accent);
+}
+.node[data-st="at_gate"] {
+  --st: var(--gate);
+}
+.node[data-st="stale"] {
+  --st: var(--caution);
+}
+.node[data-st="blocked"] {
+  --st: var(--critical);
+}
+.pv-task-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pv-rollup {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+.pv-active-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--positive);
+  box-shadow: 0 0 0 3px var(--positive-weak);
+}
+
+.pv-data {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 0 10px;
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.pv-data:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+.pv-data-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* tracker */
+.plan-tracker {
+  padding: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  overflow: auto;
+}
+.tracker-item-cell {
+  display: inline-block;
+}
+.tracker-row-selected {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+}
+.pv-owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pv-outputs-cell {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* peek card */
+.peek-card {
+  position: fixed;
+  z-index: 20;
+  width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-float);
+  padding: var(--sp-4);
+}
+.peek-close {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+.peek-id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.peek-title {
+  font-weight: 600;
+  margin: 2px 0 8px;
+}
+.peek-brief {
+  font-family: var(--font-read);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.peek-requests {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  margin-top: 6px;
+}
+.peek-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: var(--sp-3);
+}

@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderPlanMd > renders the acme-discovery preview plan (snapshot) 1`] = `
+"# Plan — Acme Manufacturing — IT Strategy
+
+Plan version: 1
+
+## IT Strategy for Acme Manufacturing Corp. (ENG)
+- context: v1.0
+- stakeholders: v1.0
+
+## Discovery (PH-1) (0/2 done)
+  - 🤖 **WI-002** — Prepare interview guide — ready ◇ human-review
+    - interview-guide: not yet published
+  - 👤 **WI-003** — Conduct CxO interviews — waiting
+    - notes-ceo: not yet published
+    - notes-cfo: not yet published
+    - notes-coo: not yet published
+    - notes-cio: not yet published
+
+## Synthesis (PH-2) (0/1 done)
+  - 🤖 **WI-004** — Consolidate interview themes — waiting ◇ human-review
+    - themes: not yet published
+"
+`;

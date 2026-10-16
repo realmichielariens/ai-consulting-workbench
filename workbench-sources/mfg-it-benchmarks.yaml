@@ -1,0 +1,19 @@
+id: mfg-it-benchmarks
+title: Manufacturing IT Benchmarks
+publisher: Northfield Industry Research (demo)
+kind: mcp
+summary: Curated peer benchmarks for mid-size manufacturers — IT spend, ERP/MES programme durations, phasing outcomes.
+description: >-
+  A fixed annual edition of benchmark figures drawn from a peer panel of
+  mid-size discrete and process manufacturers. Because it is a fixed edition,
+  a re-run of the same task sees the same figures, so it can support
+  analysis as well as research.
+freshness: snapshot
+edition: "2026.1"
+offer: { tier: licensed, label: "Licensed — €450 per engagement (demo pricing)" }
+usage: >-
+  Use `search` with a few keywords, then `get` the records you will rely on.
+  Quote figures exactly as given, with the record id and the edition
+  (e.g. "Northfield 2026.1, MB-104"). The panel is mid-size manufacturers;
+  say so when the client differs.
+connection: { type: mock, dataset: mfg-it-benchmarks.yaml }

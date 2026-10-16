@@ -1,0 +1,18 @@
+# Secrets never go into the image; Fly secrets provide them at run time.
+.env
+*.env.local
+
+# Installed and built inside the image (the local ones are Windows builds).
+node_modules
+**/node_modules
+apps/web/dist
+
+# Local state and bulky folders the server never reads.
+.git
+workspace
+spike
+test-results
+playwright-report
+e2e/walks/out
+*.log
+*.png

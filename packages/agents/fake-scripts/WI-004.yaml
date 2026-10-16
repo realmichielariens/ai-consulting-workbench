@@ -1,0 +1,240 @@
+# Fake script for WI-004 "Consolidate interview themes" (I1-PLAN §6 W1).
+# start: reads the four notes plus ENG/context, writes a themes document with
+# evidence quotes and explicit contradictions, publishes v1.0, submits (no
+# question — WI-004 has nothing comparable to WI-002's CIO ambiguity).
+start:
+  - text: Reading the four interview notes and ENG/context before drafting the themes.
+  - read: WI-003/notes-ceo
+  - read: WI-003/notes-cfo
+  - read: WI-003/notes-coo
+  - read: WI-003/notes-cio
+  - read: ENG/context
+  - write:
+      path: themes.md
+      content: |
+        # Acme IT Strategy — Cross-Cutting Themes
+
+        Synthesized from the CEO, CFO, COO and CIO interviews, framed
+        against ENG/context. Themes are ordered by business impact.
+
+        ## 1. The board wants a small number of defensible bets, not a systems inventory
+
+        Frank was explicit that the deck should open with what breaks if
+        Acme does nothing and what it costs to fix — not a technology
+        narrative:
+
+        > "We can't hand the board twelve initiatives. Give us three or
+        > four that matter and tell us what happens if we don't do them."
+        > — CEO
+
+        This should shape the deck's structure directly, not just its tone.
+
+        ## 2. Urgency vs. sequencing is the sharpest disagreement in the interviews (contradiction)
+
+        The CEO wants visible roadmap progress within twelve months and is
+        willing to start ERP work in parallel with the plants' normal
+        calendar:
+
+        > "I'd rather move too fast and adjust than sit here for a year
+        > while they renegotiate without us." — CEO
+        > "The OEM doesn't care about our harvest season." — CEO
+
+        The COO and CIO both want a phased, sequenced approach — but for
+        different reasons. The COO's is operational risk during the
+        seasonal peak:
+
+        > "If the ERP so much as hiccups during peak, we miss OEM ship
+        > dates, and that's worse than anything a slow strategy costs
+        > us." — COO
+        > "Big bang across three plants at once is how the last one went
+        > sideways." — COO
+
+        The CIO's is avoiding a repeat of the prior failed replacement
+        attempt, independent of the seasonal argument, though she noted the
+        two concerns "point the same direction anyway":
+
+        > "I'd rather spend the first year proving we can run something
+        > standard well than spend it customizing a new system into the
+        > same corner." — CIO
+
+        This is a real tension for the roadmap to resolve explicitly, not
+        average away: the CEO's timeline pressure and the COO/CIO's
+        sequencing caution both have legitimate grounds.
+
+        ## 3. Fourteen years of local customization is the root cause behind the ERP, MES and GL gaps
+
+        The CIO frames the ERP itself as a symptom rather than the
+        disease:
+
+        > "The ERP isn't the disease, it's a symptom — everyone kept
+        > solving local problems ... with a customization, and fourteen
+        > years of that is what we have now." — CIO
+
+        This connects directly to two other findings: the CFO's monthly
+        reconciliation burden (GL and ERP share no common customer or part
+        master, costing her team roughly a week per close) and the
+        institutional-knowledge risk Dev Anand named directly:
+
+        > "There are customizations in that ERP that only make sense if
+        > you know which plant manager asked for them in 2014, and some of
+        > those people are gone." — Dev Anand, via CIO interview
+
+        ## 4. The plant spreadsheet workarounds are a functional requirement, not shadow IT to shut down
+
+        The COO pushed back hard on treating the Dayton spreadsheet as a
+        problem to eliminate:
+
+        > "Whatever you put in that deck, the plants cannot be the ones
+        > absorbing the risk of getting it done fast." — COO
+
+        She wants it read as evidence of a real gap the official system
+        currently fails to meet. Owen Butler (Dayton plant manager, not
+        interviewed) should be consulted directly before any scheduling or
+        inventory tooling changes are finalized, per the COO.
+
+        ## 5. Cloud appetite is real but split by workload, and financially under-explored
+
+        The CEO and CIO are both cautiously positive on cloud for the ERP
+        core, for different reasons (capital outlay for the CEO; resisting
+        quiet customization creep for the CIO). The COO is specifically
+        skeptical for shop-floor systems, citing a multi-hour WAN outage,
+        while more open on back-office cloud:
+
+        > "Ask me again after peak season and I'll tell you cloud is fine
+        > for finance. Ask me about the shop floor and my answer's
+        > different." — COO
+
+        The CFO only touched cloud in passing and did not commit either
+        way. This theme is directional, not a decision: the roadmap should
+        treat cloud-for-core-ERP and cloud-for-shop-floor as separate
+        questions.
+
+        ## 6. The fourth product line's financial case cannot be built cleanly on the current systems
+
+        The CFO named this as the most financially consequential item on
+        the board's agenda, but flagged that costing data would have to be
+        bolted onto existing customizations:
+
+        > "That's exactly the kind of thing that always costs more than
+        > the estimate." — CFO
+
+        This links the fourth-product-line decision to the ERP
+        modernization question rather than treating them as independent
+        initiatives, echoing the CEO's framing that the two may be
+        inseparable.
+
+        ## 7. Budget appetite for the program itself is an open gap, not a finding
+
+        The CFO interview was cut short before reaching how she'd want a
+        program like this funded or staged, capital vs. operating mix, or
+        what number would make her uncomfortable. This is flagged as a
+        genuine gap in the source material, not something inferred from
+        the rest of the interview — a follow-up conversation is needed
+        before the roadmap can size initiatives with confidence.
+
+        ## 8. Whatever replaces the GL integration needs a clean, auditable trail from day one
+
+        The CFO was clear that a faster system must not come at the cost
+        of auditability:
+
+        > "I'm not against spending on this. I'm against being asked to
+        > sign off on a number nobody can defend eighteen months later."
+        > — CFO
+  - publish:
+      slot: themes
+      sourcePath: themes.md
+      kind: material
+      note: Initial synthesis of 8 cross-cutting themes from all four interviews, with the urgency/sequencing contradiction called out explicitly.
+  - worklog: >-
+      Synthesized 8 themes from the CEO/CFO/COO/CIO interviews plus
+      ENG/context. Every theme cites at least two interviews except #4
+      (COO-specific, plant workarounds) and #8 (CFO-specific, audit
+      trail) — both kept because they are materially important even
+      though single-sourced; noted as an open issue. The urgency-vs-
+      sequencing disagreement (CEO vs. COO/CIO) is called out explicitly
+      as a contradiction rather than averaged into a soft statement, per
+      the brief. The CFO interview's budget-appetite gap is carried
+      forward as theme 7 rather than silently dropped.
+  - suggest:
+      summary: >-
+        Budget appetite was never discussed with the CFO: her interview was
+        cut short before covering how she'd want a program like this funded
+        or staged (capital vs. operating, what number would make her
+        uncomfortable). Suggesting a short follow-up interview to close that
+        gap before the roadmap needs to size initiatives with confidence.
+      suggestedOps:
+        - op: add_item
+          def:
+            id: WI-003e
+            title: CFO follow-up interview
+            parent: PH-1
+            order: 3
+            executor: human
+            inputs:
+              - slot: ENG/stakeholders
+                required: true
+            outputs:
+              - slot: notes-cfo-followup
+                format: md
+                scope: project
+                description: Notes from a short CFO follow-up on budget appetite and program funding/staging
+                required: true
+            gate: []
+            autostart: true
+            acceptance:
+              - Covers how the CFO would want a program like this funded or staged (capital vs. operating mix, what number would make her uncomfortable)
+            brief: |
+              A short follow-up conversation with Grace Whitfield (CFO), to
+              close the budget-appetite gap flagged in WI-004's themes: her
+              first interview was cut short before reaching how she'd want a
+              program like this funded or staged. Publish notes as
+              notes-cfo-followup, same format as the other interview notes.
+  - submit:
+      summary: >-
+        Published 8 cross-cutting themes (v1.0) from the four CxO
+        interviews and ENG/context, ordered by business impact, each with
+        at least one direct quote and its source. The urgency-vs-
+        sequencing tension between the CEO and the COO/CIO is called out
+        explicitly as a contradiction. The CFO's unexplored budget
+        appetite is carried forward as an explicit theme/gap rather than
+        silently dropped.
+      selfCheck:
+        - criterion: Every theme is backed by at least two interviews
+          met: partial
+          note: 6 of 8 themes cite 2+ interviews; themes 4 and 8 are single-sourced (COO, CFO respectively) but kept as materially important — flagged as an open issue.
+        - criterion: Contradictions between executives are called out explicitly
+          met: "yes"
+          note: Theme 2 states the CEO vs. COO/CIO urgency-vs-sequencing disagreement explicitly rather than averaging it.
+        - criterion: Each theme is illustrated with at least one direct quote and its source interview
+          met: "yes"
+          note: Every theme has at least one attributed quote.
+        - criterion: Themes are prioritised by business impact, not by the order the interviews happened in
+          met: "yes"
+          note: Ordered by board-relevance (framing, then the sharpest tension, then root cause, etc.), not by CEO->CFO->COO->CIO interview order.
+      openIssues:
+        - Themes 4 and 8 are each backed by only one interview (COO and CFO respectively); worth a light cross-check against the CIO/Dev Anand material if time allows.
+        - Theme 7 (budget appetite) is a gap carried forward from the CFO interview, not a finding — the roadmap cannot size initiatives with confidence until it is closed.
+
+# changes-requested: revise per reviewer feedback, publish, submit again.
+changes-requested:
+  - text: Revising the themes document per the reviewer's comments.
+  - write:
+      path: themes.md
+      content: |
+        # Acme IT Strategy — Cross-Cutting Themes (revised)
+
+        (Themes revised per the reviewer's comments — see the worklog
+        entry for what changed. Structure and sourcing otherwise as v1.0.)
+  - publish:
+      slot: themes
+      sourcePath: themes.md
+      kind: minor
+      note: Revised per the reviewer's requested changes.
+  - worklog: Addressed the reviewer's comments and republished.
+  - submit:
+      summary: Revised the themes document per the requested changes and republished.
+      selfCheck:
+        - criterion: Reviewer comments addressed
+          met: "yes"
+          note: See worklog for the specific changes made.
+      openIssues: []

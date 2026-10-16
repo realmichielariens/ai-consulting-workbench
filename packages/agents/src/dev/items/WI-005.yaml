@@ -1,0 +1,29 @@
+# The item the Approach Agent proposes when asked for a benchmark
+# (fake-scripts/approach/conversation.yaml), for running it on its own:
+#   pnpm agents:try acme-discovery WI-005 --add-item packages/agents/src/dev/items/WI-005.yaml --answer approve
+id: WI-005
+title: Short benchmarking scan
+parent: PH-2
+order: 2
+executor: agent
+inputs:
+  - slot: ENG/context
+    required: true
+outputs:
+  - slot: benchmark
+    format: md
+    scope: project
+    description: A short scan of how comparable manufacturers approached similar IT modernization
+    required: true
+skills: [desk-research]
+sources:
+  - id: open-web
+    purpose: Find public case studies of comparable manufacturers to corroborate the panel figures
+  - id: mfg-it-benchmarks
+    purpose: Peer benchmarks on ERP phasing, durations and OEM-visibility responses (fixed edition 2026.1)
+gate: []
+autostart: true
+acceptance:
+  - Cites at least two comparable organizations or credible sources
+brief: |
+  A short scan (not a full study) of how comparable mid-size manufacturers have approached ERP/MES modernization, fourth-product-line expansion or similar IT strategy decisions, to ground the roadmap's recommendations against outside precedent.

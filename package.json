@@ -1,0 +1,31 @@
+{
+  "name": "ai-project",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.5.1",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,green \"pnpm --filter @workbench/server run dev\" \"pnpm --filter @workbench/web run dev\"",
+    "dev:fake": "cross-env WORKBENCH_RUNTIME=fake pnpm run dev",
+    "agents:try": "pnpm --filter @workbench/agents run agents:try --",
+    "agents:try-approach": "pnpm --filter @workbench/agents run agents:try-approach --",
+    "demo:headless": "pnpm --filter @workbench/server run demo:headless --",
+    "typecheck": "pnpm -r run typecheck",
+    "core:transitions": "pnpm --filter @workbench/core run print-transitions",
+    "seed:try": "pnpm --filter @workbench/store run seed:try",
+    "test": "vitest run",
+    "e2e": "playwright test --config=e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.2",
+    "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
+  }
+}

@@ -1,0 +1,128 @@
+/* Exhibit design tokens v1.0 (the canonical source; see ux/EXHIBIT.md).
+   Adopted 2026-09-25 from the playground defaults: light + dark, cobalt accent,
+   "Exhibit" type pairing, comfortable density, sharp corners.
+   Components use these variables only: no hex values or font names in component CSS.
+   The playground (ux/playground/index.html) must keep its defaults equal to this file. */
+
+:root {
+  color-scheme: light;
+
+  /* paper & ink */
+  --paper: #F6F7F9;          /* page background */
+  --surface: #FFFFFF;        /* cards, panels, stage */
+  --sunken: #EDF0F4;         /* wells, tab strips, group rows */
+  --ink: #0E1B2E;            /* text, heavy rules, formal buttons */
+  --ink-2: #3B4859;          /* secondary text */
+  --ink-3: #5F6A7A;          /* meta, captions, labels (AA on every surface) */
+  --rule: #DDE2E9;           /* hairlines */
+  --rule-strong: #B8C0CB;    /* inputs, outlines, secondary buttons */
+
+  /* accent: interaction, selection, "in progress" */
+  --accent: #1F4FD8;
+  --accent-ink: #FFFFFF;     /* text on --accent */
+  --accent-weak: #E7EDFC;    /* selection, hypothesis background */
+  --accent-strong: #163DA8;  /* hover, text on --accent-weak */
+
+  /* semantic: always paired with a glyph and a label */
+  --positive: #1D7A4C;  --positive-weak: #E4F2EA;   /* done, added, criteria met */
+  --caution: #956009;   --caution-weak: #FBF0DC;    /* stale, partial, implicit read */
+  --critical: #BF3328;  --critical-weak: #FBE7E5;   /* blocked, run issue, reject */
+  --gate: #5B3FD6;      --gate-weak: #ECE8FC;       /* at gate, review, endorsement */
+
+  /* engine status → colour (ItemStatus in packages/core/src/domain.ts) */
+  --status-draft: var(--ink-3);
+  --status-waiting: var(--ink-3);
+  --status-ready: var(--accent);
+  --status-in_progress: var(--accent);
+  --status-blocked: var(--critical);
+  --status-at_gate: var(--gate);
+  --status-done: var(--positive);
+  --status-stale: var(--caution);
+  --status-cancelled: var(--ink-3);
+
+  /* type: sans to operate the tool, serif to read the work, mono for identifiers */
+  --font-ui: "IBM Plex Sans", system-ui, sans-serif;
+  --font-read: "Source Serif 4", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-title: var(--font-ui);
+  --title-weight: 600;
+
+  --fs-xs: 11px;     /* labels (caps), kickers, meta */
+  --fs-sm: 12.5px;   /* dense UI: tables, buttons, streams */
+  --fs-base: 14px;   /* UI body */
+  --fs-md: 16px;     /* card titles, hypothesis */
+  --fs-lg: 20px;     /* headings inside a page */
+  --fs-xl: 26px;     /* page action title */
+  --fs-xxl: 36px;    /* display (rare) */
+  --fs-read: 16.5px; /* document body */
+  --lh-ui: 1.5;
+  --lh-read: 1.62;
+
+  /* space: a 4px grid, scaled by --d (density) */
+  --d: 1;
+  --sp-1: calc(var(--d) * 4px);
+  --sp-2: calc(var(--d) * 8px);
+  --sp-3: calc(var(--d) * 12px);
+  --sp-4: calc(var(--d) * 16px);
+  --sp-5: calc(var(--d) * 20px);
+  --sp-6: calc(var(--d) * 24px);
+  --sp-8: calc(var(--d) * 32px);
+  --sp-10: calc(var(--d) * 40px);
+
+  /* shape */
+  --r: 2px;        /* controls, tags */
+  --r-lg: 4px;     /* cards, panels, nodes */
+  --rule-w: 1px;   /* hairline */
+  --rule-heavy: 2px; /* under section and table headers */
+
+  /* elevation: only for things that float (popovers, dialogs, overlay rail) */
+  --shadow-float: 0 1px 2px rgba(14, 27, 46, .06), 0 8px 24px rgba(14, 27, 46, .10);
+
+  /* shell */
+  --nav-w: 56px;
+  --topbar-h: 52px;
+  --tabstrip-h: 38px;
+  --rail-w: 360px;
+  --measure: 68ch;  /* max line length for reading text */
+}
+
+/* Dark: explicit choice, or the system preference unless light is forced. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0B111A;
+  --surface: #111925;
+  --sunken: #080D14;
+  --ink: #E6EBF2;
+  --ink-2: #B0BAC8;
+  --ink-3: #7D8899;
+  --rule: #222D3C;
+  --rule-strong: #364459;
+  --accent: #7C9BFF; --accent-ink: #0B111A; --accent-weak: #16213F; --accent-strong: #A9BDFF;
+  --positive: #4CC08A;  --positive-weak: #11291E;
+  --caution: #E3A63B;   --caution-weak: #2D2210;
+  --critical: #F07167;  --critical-weak: #321614;
+  --gate: #A18CFF;      --gate-weak: #1F1A3A;
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #0B111A;
+    --surface: #111925;
+    --sunken: #080D14;
+    --ink: #E6EBF2;
+    --ink-2: #B0BAC8;
+    --ink-3: #7D8899;
+    --rule: #222D3C;
+    --rule-strong: #364459;
+    --accent: #7C9BFF; --accent-ink: #0B111A; --accent-weak: #16213F; --accent-strong: #A9BDFF;
+    --positive: #4CC08A;  --positive-weak: #11291E;
+    --caution: #E3A63B;   --caution-weak: #2D2210;
+    --critical: #F07167;  --critical-weak: #321614;
+    --gate: #A18CFF;      --gate-weak: #1F1A3A;
+    --shadow-float: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .45);
+  }
+}
+
+/* Compact density: for the tracker and long queues, never for reading. */
+:root[data-density="compact"] { --d: .78; --fs-base: 13px; --fs-sm: 12px; }

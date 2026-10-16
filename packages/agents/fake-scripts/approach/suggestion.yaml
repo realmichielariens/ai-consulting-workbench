@@ -1,0 +1,11 @@
+# Fake script for a "suggestion" task session (I2-PLAN §4.1, propose_plan_change).
+# createFakeApproachRuntime appends the actual propose_ops/decline_suggestion
+# call itself, using the request's own suggestedOps — these are just the
+# lead-in remarks: `propose` steps run when suggestedOps is non-empty,
+# `decline` steps when it's empty.
+
+propose:
+  - text: This looks like a real, concrete gap. Proposing it as a plan change.
+
+decline:
+  - text: Not enough here to turn into a plan change right now.
