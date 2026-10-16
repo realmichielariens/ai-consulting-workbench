@@ -44,7 +44,7 @@ function view(overrides: Partial<ProposalView["actions"]> = {}): ProposalView {
       basePlanVersion: 1,
       rationale: "Split Discovery into two work items so the CFO interview can start before the others are drafted.",
       ops: [
-        { op: "add_item", def: { id: "WI-005", title: "CFO interview", parent: "PH-1", order: 5, executor: "human", inputs: [], sequencing: [], outputs: [], skills: [], gate: [], autostart: true, acceptance: [], brief: "Conduct the CFO interview." } },
+        { op: "add_item", def: { id: "WI-005", title: "CFO interview", parent: "PH-1", order: 5, executor: "human", inputs: [], sequencing: [], outputs: [], skills: [], sources: [], gate: [], autostart: true, acceptance: [], brief: "Conduct the CFO interview." } },
       ],
       createdAt: "2026-09-25T00:00:00.000Z",
       resolvedAt: null,

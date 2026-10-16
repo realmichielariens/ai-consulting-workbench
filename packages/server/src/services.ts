@@ -10,6 +10,7 @@ import fs from "node:fs";
 import {
   applyItemEvent,
   computeItemActions,
+  EFFORT_LEVELS,
   MODEL_CHOICES,
   nextVersion,
   resolveGateVerdict,
@@ -48,10 +49,12 @@ import { emitEvent, openEngagement, reloadMeta, type EngagementContext, type Ser
 import {
   activeProfileName,
   baseModelProfile,
+  currentEffort,
   currentModelProfile,
   listProfileNames,
   modelOverrides,
   setActiveProfile,
+  setEffort,
   setModelOverrides,
 } from "./profileService.js";
 import { resolveQuestionAnswer } from "./questionAnswering.js";
@@ -230,8 +233,14 @@ export async function resolveRunIssue(ctx: EngagementContext, requestId: Request
     emitEvent(ctx, { type: "ItemStatusChanged", actor: "human", payload: { itemId, from: row.status, to: t.to } });
   }
 
-  if (action === "retry" && row.lastSessionId) {
-    await launchRun(ctx, itemId, "resume", { reason: "resume", note: "Retried after a run issue." }, row.lastSessionId, "human");
+  if (action === "retry") {
+    // A run that failed before the agent opened a session leaves nothing to
+    // resume; retrying it means starting afresh.
+    if (row.lastSessionId) {
+      await launchRun(ctx, itemId, "resume", { reason: "resume", note: "Retried after a run issue." }, row.lastSessionId, "human");
+    } else {
+      await launchRun(ctx, itemId, "start", { reason: "start" }, null, "human");
+    }
   }
 
   await checkpointCommit(ctx, { message: `Run issue for ${itemId}: ${action}`, actor: "human" });
@@ -431,12 +440,15 @@ export function getProfile(server: ServerContext): ProfileView {
     profileModels: { approach: base.approach, work: base.work },
     overrides: modelOverrides(server),
     choices: MODEL_CHOICES.map((m) => ({ id: m.id, label: m.label })),
+    effort: currentEffort(server),
+    effortChoices: [...EFFORT_LEVELS],
   };
 }
 
 export function patchProfile(server: ServerContext, body: PatchProfileBody): ProfileView {
   if (body.profile !== undefined) setActiveProfile(server, body.profile);
   if (body.models !== undefined) setModelOverrides(server, body.models);
+  if (body.effort !== undefined) setEffort(server, body.effort);
   return getProfile(server);
 }
 

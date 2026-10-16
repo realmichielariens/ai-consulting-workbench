@@ -18,7 +18,10 @@ import { sdkEnv, type WorkspacePaths } from "@workbench/core/node";
 import { ActivityBuilder } from "./activity.js";
 import { forWorkAgent, type GuardScope } from "./guards.js";
 import { promptHash, renderRunPrompt, renderSystemPrompt, resolvePlacement } from "./prompts.js";
-import { runOnce, WORK_AGENT_ALLOWED_TOOLS, WORK_AGENT_TOOLS, type RunOnceArgs, type RunOnceResult } from "./sdk.js";
+import { describeModel, runOnce, workAgentToolset, type RunOnceArgs, type RunOnceResult } from "./sdk.js";
+import { loadSkillCatalog, unknownSkills } from "./skillCatalog.js";
+import { loadSourceCatalog } from "./sourceCatalog.js";
+import { resolveSources } from "./sourceResolver.js";
 import { createWorkToolset } from "./workToolset.js";
 
 /** Injectable so runtime.test.ts can drive the nudge/termination loop with a scripted query(), with no SDK calls. */
@@ -29,8 +32,12 @@ export interface RuntimeConfig {
   promptsDir: string;
   /** Absolute path to the workbench-skills plugin dir (config.resolved.skillsPlugin). */
   skillsPluginPath: string;
+  /** Absolute path to the Source Catalog folder (config.resolved.sourcesCatalog). */
+  sourcesCatalogDir: string;
   /** Repo root, for sdkEnv()'s API-key resolution (env.ts). */
   repoRoot: string;
+  /** false on a hosted server (docs/DEPLOY-FLY.md): stdio sources are left out of every run. Default true. */
+  allowStdioSources?: boolean;
 }
 
 function summaryOf(item: Pick<ItemDef, "id" | "title">): { id: string; title: string } {
@@ -57,22 +64,29 @@ async function executeRun(
   interruptState: { interrupted: boolean },
   deps: RuntimeDeps,
 ): Promise<RunResult> {
-  const { item, paths, workPort, observer, model, maxTurns } = req;
+  const { item, paths, workPort, observer, model, effort, maxTurns } = req;
   const workDir = paths.itemWork(item.id);
 
-  const activity = new ActivityBuilder({ itemId: item.id, engagementRoot: paths.root, workDir });
+  const skillCatalog = loadSkillCatalog(config.skillsPluginPath);
+  const catalog = loadSourceCatalog({ catalogDir: config.sourcesCatalogDir, userDir: workspace.userSourcesDir });
+  const sources = resolveSources(catalog, item.sources, { repoRoot: config.repoRoot, allowStdio: config.allowStdioSources ?? true });
+  const toolset = workAgentToolset(sources);
+  const activity = new ActivityBuilder({ itemId: item.id, engagementRoot: paths.root, workDir, sources: sources.toolMap });
   const scope: GuardScope = {
     itemId: item.id,
     workDir,
     engagementRoot: paths.root,
     skillsPluginDir: config.skillsPluginPath,
+    sources: sources.toolMap,
   };
   const guards = forWorkAgent(scope, { onRead: (absPath, agentId) => observer.onRead(absPath, agentId) });
   const { server: workServer, tracker } = createWorkToolset(workPort);
 
   const placement = resolvePlacement();
   const brief = await workPort.getBrief();
-  const systemPrompt = renderSystemPrompt(config.promptsDir, summaryOf(item), brief, paths.root, placement);
+  const basePrompt = renderSystemPrompt(config.promptsDir, summaryOf(item), brief, paths.root, placement);
+  // In the system prompt, not the run prompt: the attached sources are part of what this session can do, on resume too.
+  const systemPrompt = sources.promptSection ? `${basePrompt}\n\n${sources.promptSection}` : basePrompt;
 
   const briefForStart = req.input.reason === "start" ? brief : null;
   const runPrompt = renderRunPrompt(config.promptsDir, summaryOf(item), briefForStart, paths.root, req.input);
@@ -95,8 +109,26 @@ async function executeRun(
 
   const resumeNote = req.reason === "resume" && req.input.reason === "resume" ? req.input.note : null;
   observer.onActivity(
-    activity.system(resumeNote ? `Resumed (${resumeNote}, ${model})` : `Started (${req.reason}, ${model})`),
+    activity.system(
+      resumeNote
+        ? `Resumed (${resumeNote}, ${describeModel(model, effort)})`
+        : `Started (${req.reason}, ${describeModel(model, effort)})`,
+    ),
   );
+  if (item.skills.length > 0) observer.onActivity(activity.system(`Skills: ${item.skills.join(", ")}`));
+  if (sources.attached.length > 0) {
+    observer.onActivity(activity.system(`Sources: ${sources.attached.map((a) => a.source.title).join(", ")}`));
+  }
+  const missingSkills = unknownSkills(skillCatalog, item.skills);
+  if (missingSkills.length > 0) {
+    observer.onActivity(activity.system(`Unknown skill${missingSkills.length === 1 ? "" : "s"} ignored: ${missingSkills.join(", ")}`));
+  }
+  if (sources.unknown.length > 0) {
+    observer.onActivity(activity.system(`Source${sources.unknown.length === 1 ? "" : "s"} not in the catalog, ignored: ${sources.unknown.join(", ")}`));
+  }
+  for (const u of sources.unavailable) {
+    observer.onActivity(activity.system(`Source ${u.id} unavailable, left out of this run: ${u.reason}`));
+  }
 
   try {
     for (;;) {
@@ -106,14 +138,15 @@ async function executeRun(
         prompt: currentPrompt,
         resume: resumeThisCall ? (sessionId ?? undefined) : undefined,
         model,
+        effort,
         cwd: workDir,
         additionalDirectories: [paths.root],
         systemPrompt,
-        tools: WORK_AGENT_TOOLS,
-        allowedTools: WORK_AGENT_ALLOWED_TOOLS,
+        tools: toolset.tools,
+        allowedTools: toolset.allowedTools,
         skillsPluginPath: config.skillsPluginPath,
         skills,
-        mcpServers: { work: workServer },
+        mcpServers: { ...sources.mcpServers, work: workServer },
         hooks: guards.hooks,
         maxTurns,
         env: deps.buildEnv(),

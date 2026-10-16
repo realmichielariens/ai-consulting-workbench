@@ -3,6 +3,8 @@
 // createSdkRuntime()'s injectable deps, including that the second call
 // resumes the SAME session with NUDGE_MESSAGE.
 import { describe, expect, test, vi } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { NUDGE_MESSAGE, type ActivityItem, type ItemDef, type RunObserver, type StartRunRequest, type WorkPort } from "@workbench/core";
 import { engagementPaths, workspacePaths } from "@workbench/core/node";
@@ -22,6 +24,7 @@ function makeItem(): ItemDef {
     sequencing: [],
     outputs: [{ slot: "interview-guide", format: "md", scope: "project", description: "The guide", required: true }],
     skills: ["interview-guide-design"],
+    sources: [],
     gate: [{ type: "human-review" }],
     autostart: true,
     acceptance: ["A distinct set of questions per stakeholder"],
@@ -107,6 +110,7 @@ describe("runtime nudge/termination loop", () => {
     const config: RuntimeConfig = {
       promptsDir,
       skillsPluginPath: "C:/fake/skills",
+      sourcesCatalogDir: "C:/fake/sources",
       repoRoot: "C:/fake/repo",
     };
     const runtime = createSdkRuntime(config, workspace, { runOnce, buildEnv: () => ({}) });
@@ -150,11 +154,46 @@ describe("runtime nudge/termination loop", () => {
       return { sessionId: "sess-original", subtype: "success", isError: false, costUsd: 0.01, turns: 2, lastMessageText: "", retries: 0 };
     });
 
-    const config: RuntimeConfig = { promptsDir, skillsPluginPath: "C:/fake/skills", repoRoot: "C:/fake/repo" };
+    const config: RuntimeConfig = { promptsDir, skillsPluginPath: "C:/fake/skills", sourcesCatalogDir: "C:/fake/sources", repoRoot: "C:/fake/repo" };
     const runtime = createSdkRuntime(config, workspace, { runOnce, buildEnv: () => ({}) });
     // submitOutputs never called by this workPort -> ends as no_submit after one nudge, same as above;
     // the point of this test is only the resume wiring, asserted inside the mock.
     await runtime.startRun(req).done;
     expect(runOnce).toHaveBeenCalled();
+  });
+  test("a user source resolves into mcpServers; one with a missing ${env:NAME} is reported unavailable, not fatal", async () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "runtime-user-sources-"));
+    try {
+      const workspace = workspacePaths(home);
+      fs.mkdirSync(workspace.userSourcesDir, { recursive: true });
+      const listing = (id: string, env: Record<string, string>) =>
+        JSON.stringify({ id, title: id, publisher: "You", kind: "mcp", summary: "s", freshness: "live", offer: { tier: "free", label: "Your own source" }, connection: { type: "stdio", command: process.execPath, args: ["x.mjs"], env } });
+      fs.writeFileSync(path.join(workspace.userSourcesDir, "ok.yaml"), listing("mine-ok", { MODE: "demo" }));
+      fs.writeFileSync(path.join(workspace.userSourcesDir, "bad.yaml"), listing("mine-bad", { API_KEY: "${env:WORKBENCH_TEST_DEFINITELY_UNSET}" }));
+
+      const paths = engagementPaths(path.join("C:/fake/engagements", "acme-1"));
+      const activityLog: ActivityItem[] = [];
+      const observer: RunObserver = { onActivity: (item) => activityLog.push(item), onSession: () => {}, onPid: () => {}, onRead: () => {} };
+      const base = makeReq(paths, workspace);
+      const req: StartRunRequest = {
+        ...base,
+        observer,
+        item: { ...base.item, sources: [{ id: "mine-ok", purpose: "p" }, { id: "mine-bad", purpose: "p" }] },
+      };
+      let seen: RunOnceArgs | undefined;
+      const runOnce = vi.fn(async (args: RunOnceArgs): Promise<RunOnceResult> => {
+        seen ??= args;
+        return { sessionId: "s", subtype: "success", isError: false, costUsd: 0, turns: 1, lastMessageText: "", retries: 0 };
+      });
+      const config: RuntimeConfig = { promptsDir, skillsPluginPath: "C:/fake/skills", sourcesCatalogDir: "C:/fake/sources", repoRoot: home };
+      await createSdkRuntime(config, workspace, { runOnce, buildEnv: () => ({}) }).startRun(req).done;
+
+      expect(Object.keys(seen!.mcpServers).sort()).toEqual(["source_mine_ok", "work"]);
+      expect(seen!.allowedTools).toContain("mcp__source_mine_ok__*");
+      expect(seen!.allowedTools).not.toContain("mcp__source_mine_bad__*");
+      expect(activityLog.map((a) => a.summary)).toContain("Source mine-bad unavailable, left out of this run: missing ${env:WORKBENCH_TEST_DEFINITELY_UNSET}");
+    } finally {
+      fs.rmSync(home, { recursive: true, force: true });
+    }
   });
 });

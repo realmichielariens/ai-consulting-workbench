@@ -1,16 +1,19 @@
 #!/usr/bin/env node
-// pnpm agents:try <seed> <itemId> [--fake] [--answer approve|"text"] [--save]
+// pnpm agents:try <seed> <itemId> [--fake] [--answer approve|"text"] [--save] [--add-item <item.yaml>]
 // (I1-PLAN §6 W1). Runs one item from a seed against a throwaway,
 // self-contained engagement (seed-fixture.ts) and an in-memory WorkPort, with
 // the real or fake runtime, printing the activity stream readably. At most
 // two real queries (+ a nudge) per invocation: the initial run, and — only if
 // it ends "blocked" and --answer was given — one resume-answer run.
+// --add-item adds an item that the seed lacks (e.g. one the Approach Agent
+// would propose, such as dev/items/WI-005.yaml) before running it.
 
 import fs from "node:fs";
 import path from "node:path";
 import type { ActivityItem, ItemDef, RunId, RunObserver, StartRunRequest } from "@workbench/core";
-import { activeProfile, Settings } from "@workbench/core";
-import { loadConfig, repoRoot } from "@workbench/core/node";
+import { activeProfile, ItemDef as ItemDefSchema, Settings } from "@workbench/core";
+import { parse as parseYaml } from "yaml";
+import { describeAuth, loadConfig, repoRoot, workspacePaths } from "@workbench/core/node";
 import { createSdkRuntime } from "../runtime.js";
 import { createFakeRuntime } from "../fake/index.js";
 import { InMemoryWorkPort } from "./in-memory-engagement.js";
@@ -22,6 +25,7 @@ interface Args {
   fake: boolean;
   answer: string | null;
   save: boolean;
+  addItem: string | null;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -29,19 +33,21 @@ function parseArgs(argv: string[]): Args {
   let fake = false;
   let answer: string | null = null;
   let save = false;
+  let addItem: string | null = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]!;
     if (a === "--") continue; // an args-separator artifact from `pnpm run ... -- <args>` chains, not a real argument
     if (a === "--fake") fake = true;
     else if (a === "--save") save = true;
     else if (a === "--answer") answer = argv[++i] ?? null;
+    else if (a === "--add-item") addItem = argv[++i] ?? null;
     else positional.push(a);
   }
   const [seed, itemId] = positional;
   if (!seed || !itemId) {
     throw new Error('Usage: pnpm agents:try <seed> <itemId> [--fake] [--answer approve|"text"] [--save]');
   }
-  return { seed, itemId, fake, answer, save };
+  return { seed, itemId, fake, answer, save, addItem };
 }
 
 function makeRunId(n: number): RunId {
@@ -69,6 +75,7 @@ class ConsoleObserver implements RunObserver {
     if ((item.kind === "denial" || item.kind === "error") && item.detail && item.detail !== item.summary) {
       this.out.print(`           ${item.detail}`);
     }
+    for (const link of item.links ?? []) this.out.print(`           -> ${link.url}${link.title ? `  (${link.title})` : ""}`);
   }
   onSession(sessionId: string): void {
     this.out.print(`  (session: ${sessionId})`);
@@ -101,6 +108,7 @@ function buildRuntimeConfig(root: string) {
   return {
     promptsDir: config.resolved.promptsDir,
     skillsPluginPath: config.resolved.skillsPlugin,
+    sourcesCatalogDir: config.resolved.sourcesCatalog,
     repoRoot: root,
   };
 }
@@ -109,6 +117,13 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const out = new Printer();
   const fixture = buildSeedFixture(args.seed);
+  if (args.addItem) {
+    // pnpm runs this from the package dir; INIT_CWD is where the user typed the command.
+    const extra = ItemDefSchema.parse(parseYaml(fs.readFileSync(path.resolve(process.env.INIT_CWD ?? process.cwd(), args.addItem), "utf8")));
+    fixture.eng.items.set(extra.id, extra);
+    fs.mkdirSync(fixture.eng.paths.itemWork(extra.id), { recursive: true });
+    fs.mkdirSync(fixture.eng.paths.itemAssets(extra.id), { recursive: true });
+  }
   const item: ItemDef | undefined = fixture.eng.items.get(args.itemId);
   if (!item) {
     throw new Error(`Seed "${args.seed}" has no item "${args.itemId}". Known items: ${[...fixture.eng.items.keys()].join(", ")}`);
@@ -118,14 +133,18 @@ async function main(): Promise<void> {
   }
 
   const root = repoRoot();
-  const runtime = args.fake ? createFakeRuntime() : createSdkRuntime(buildRuntimeConfig(root), fixture.workspace);
+  // The fixture's workspace is throwaway; the user's own source listings live in the real one.
+  const userSourcesDir = workspacePaths(loadConfig(root).resolved.home).userSourcesDir;
+  const runtime = args.fake
+    ? createFakeRuntime({ userSourcesDir })
+    : createSdkRuntime(buildRuntimeConfig(root), { ...fixture.workspace, userSourcesDir });
   const profile = args.fake ? null : activeProfile(loadConfig(root));
   const model = args.fake ? "fake" : profile!.models.work;
   const maxTurns = args.fake ? 40 : profile!.limits.maxTurnsPerRun;
 
   out.print(`Engagement: ${fixture.engagementId} (${fixture.eng.paths.root})`);
   out.print(`Item: ${args.itemId} — ${item.title}`);
-  out.print(`Runtime: ${runtime.kind}${args.fake ? "" : ` (model: ${model})`}\n`);
+  out.print(`Runtime: ${runtime.kind}${args.fake ? "" : ` (model: ${model}, auth: ${describeAuth(root)})`}\n`);
 
   const observer = new ConsoleObserver(out);
   const workPort1 = new InMemoryWorkPort(fixture.eng, item.id, makeRunId(1));

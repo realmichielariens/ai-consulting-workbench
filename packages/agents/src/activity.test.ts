@@ -9,7 +9,12 @@ const engagementRoot = "C:/ws/engagements/acme-1";
 const workDir = "C:/ws/engagements/acme-1/items/WI-002/work";
 
 function newBuilder() {
-  return new ActivityBuilder({ itemId: "WI-002", engagementRoot, workDir });
+  return new ActivityBuilder({
+    itemId: "WI-002",
+    engagementRoot,
+    workDir,
+    sources: { web: { id: "open-web", title: "Open Web" }, servers: { source_mfg_it_benchmarks: { id: "mfg-it-benchmarks", title: "Manufacturing IT Benchmarks" } } },
+  });
 }
 
 function assistantText(text: string) {
@@ -131,5 +136,55 @@ describe("ActivityBuilder", () => {
     expect(n).toMatchObject({ idx: 1, kind: "nudge" });
     expect(r).toMatchObject({ idx: 2, kind: "result", costUsd: 0.0123 });
     expect(r.summary).toContain("submitted");
+  });
+});
+
+describe("ActivityBuilder: web tools", () => {
+  test("WebSearch lists the result links as sources", () => {
+    const b = newBuilder();
+    b.fromSdkMessage(assistantToolUse("w1", "WebSearch", { query: "phased ERP replacement" }), new Map());
+    const result =
+      'Web search results for query: "phased ERP replacement"\n\nLinks: [{"title":"Case A","url":"https://a.example/x"},{"title":"Case B","url":"https://b.example/y"}]\n\nSome summary.';
+    const [item] = b.fromSdkMessage(userToolResult("w1", result), new Map());
+    expect(item).toMatchObject({
+      kind: "tool",
+      sourceId: "open-web",
+      summary: 'Searched the web: "phased ERP replacement" — 2 results',
+      links: [
+        { url: "https://a.example/x", title: "Case A" },
+        { url: "https://b.example/y", title: "Case B" },
+      ],
+    });
+  });
+
+  test("WebSearch falls back to bare URLs when the Links JSON is absent", () => {
+    const b = newBuilder();
+    b.fromSdkMessage(assistantToolUse("w2", "WebSearch", { query: "q" }), new Map());
+    const [item] = b.fromSdkMessage(userToolResult("w2", "See https://c.example/z and https://c.example/z again."), new Map());
+    expect(item!.links).toEqual([{ url: "https://c.example/z" }]);
+  });
+
+  test("WebFetch names the page and links it", () => {
+    const b = newBuilder();
+    b.fromSdkMessage(assistantToolUse("w3", "WebFetch", { url: "https://www.example.org/insights/oem", prompt: "p" }), new Map());
+    const [item] = b.fromSdkMessage(userToolResult("w3", "The page says…"), new Map());
+    expect(item).toMatchObject({
+      summary: "Read web page: example.org/insights/oem",
+      detail: "The page says…",
+      links: [{ url: "https://www.example.org/insights/oem" }],
+    });
+  });
+});
+
+describe("ActivityBuilder: attached source tools", () => {
+  test("a source MCP call is named after the source and tagged with its id", () => {
+    const b = newBuilder();
+    b.fromSdkMessage(assistantToolUse("s1", "mcp__source_mfg_it_benchmarks__search", { query: "erp" }), new Map());
+    const [item] = b.fromSdkMessage(userToolResult("s1", "1 record in Manufacturing IT Benchmarks:\n- MB-104: ERP replacement duration by approach (2026-03) https://example.com/x"), new Map());
+    expect(item).toMatchObject({
+      sourceId: "mfg-it-benchmarks",
+      summary: 'Searched Manufacturing IT Benchmarks: "erp" — 1 record',
+      links: [{ url: "https://example.com/x", title: "MB-104: ERP replacement duration by approach" }],
+    });
   });
 });

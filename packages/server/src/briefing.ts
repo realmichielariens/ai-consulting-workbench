@@ -13,6 +13,7 @@ import {
   type WorkbenchEvent,
 } from "@workbench/core";
 import { eventsRepo, proposalsRepo, requestsRepo } from "@workbench/db";
+import { readItemMd } from "@workbench/store";
 import { buildPlanView } from "./checkpoint.js";
 import type { EngagementContext } from "./engagementContext.js";
 
@@ -27,7 +28,7 @@ function versionLabel(view: PlanView, ref: string): string {
   return slot?.latest ? `v${slot.latest.version}` : "not yet published";
 }
 
-function renderPlanAtDepth(view: PlanView): string[] {
+function renderPlanAtDepth(ctx: EngagementContext, view: PlanView): string[] {
   const lines: string[] = [];
   const walk = (item: ItemNode, depth: number) => {
     const indent = "  ".repeat(depth);
@@ -38,6 +39,11 @@ function renderPlanAtDepth(view: PlanView): string[] {
         lines.push(`${indent}  outputs: ${item.outputs.map((ref) => `${ref} (${versionLabel(view, ref)})`).join(", ")}`);
       }
       if (item.gate.length > 0) lines.push(`${indent}  gate: ${item.gate.map((g) => g.type).join(", ")}`);
+      if (item.executor === "agent") {
+        const def = readItemMd(ctx.paths.itemMd(item.id));
+        if (def.skills.length > 0) lines.push(`${indent}  skills: ${def.skills.join(", ")}`);
+        if (def.sources.length > 0) lines.push(`${indent}  sources: ${def.sources.map((s) => s.id).join(", ")}`);
+      }
     } else {
       const rollup = item.rollup;
       const summary = rollup && rollup.total > 0 ? ` (${rollup.done}/${rollup.total} done)` : "";
@@ -73,7 +79,7 @@ export function buildBriefing(ctx: EngagementContext): string {
   lines.push("");
 
   lines.push("## Plan");
-  lines.push(...renderPlanAtDepth(view));
+  lines.push(...renderPlanAtDepth(ctx, view));
   lines.push("");
 
   const openRequests = requestsRepo.listOpenByRecipient(ctx.dbCtx, "human").concat(requestsRepo.listOpenByRecipient(ctx.dbCtx, "approach"));

@@ -11,6 +11,7 @@ import {
   openConversation,
   openDoc,
   openDocuments,
+  openSources,
   openHome,
   openItem,
   openJournal,
@@ -32,6 +33,7 @@ import { PlanPage } from "../pages/plan/PlanPage.js";
 import { ItemPage } from "../pages/item/ItemPage.js";
 import { DocumentPage } from "../pages/doc/DocumentPage.js";
 import { DocumentsPage } from "../pages/documents/DocumentsPage.js";
+import { SourcesPage } from "../pages/sources/SourcesPage.js";
 import { BriefPage } from "../pages/brief/BriefPage.js";
 import { KickoffPage } from "../pages/kickoff/KickoffPage.js";
 import { JournalPage } from "../pages/journal/JournalPage.js";
@@ -150,6 +152,9 @@ export function AppShell({ eid }: { eid: EngagementId }) {
         <button type="button" data-testid="nav-documents" title="Documents" aria-current={route.page === "documents"} onClick={() => openDocuments(eid)}>
           <DocumentsIcon />
         </button>
+        <button type="button" data-testid="nav-sources" title="Source Catalog" aria-current={route.page === "sources"} onClick={() => openSources(eid)}>
+          <SourcesIcon />
+        </button>
         <span className="nav-spacer" />
         <button type="button" data-testid="open-settings" title="Settings" onClick={openSettings}>
           <SettingsIcon />
@@ -225,6 +230,7 @@ export function AppShell({ eid }: { eid: EngagementId }) {
           {route.page === "home" && (isKickoff ? <KickoffPage eid={eid} /> : <BriefPage eid={eid} />)}
           {route.page === "plan" && <PlanPage eid={eid} sel={route.sel} view={route.view} preview={route.preview} />}
           {route.page === "documents" && <DocumentsPage eid={eid} />}
+          {route.page === "sources" && <SourcesPage eid={eid} />}
           {route.page === "item" && <ItemPage eid={eid} itemId={route.itemId} tab={route.tab} run={route.run} />}
           {route.page === "doc" && <DocumentPage eid={eid} itemId={route.itemId} slot={route.slot} version={route.version} />}
           {route.page === "journal" && <JournalPage eid={eid} />}
@@ -366,6 +372,14 @@ function DocumentsIcon() {
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M4 2h7l3 3v11H4z" />
       <path d="M11 2v3h3M6.5 9h5M6.5 12h5" />
+    </svg>
+  );
+}
+function SourcesIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="9" cy="9" r="6.5" />
+      <path d="M2.5 9h13M9 2.5c-2 2-2.8 4.2-2.8 6.5s.8 4.5 2.8 6.5M9 2.5c2 2 2.8 4.2 2.8 6.5s-.8 4.5-2.8 6.5" />
     </svg>
   );
 }

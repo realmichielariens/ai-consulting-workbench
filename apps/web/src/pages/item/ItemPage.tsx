@@ -7,9 +7,9 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { EngagementId, ItemId, Run } from "@workbench/core";
+import type { EngagementId, ItemId, Run, SourceBinding } from "@workbench/core";
 import { api, qk } from "../../api/index.js";
-import { openDoc, openItem, type ItemTab } from "../../shell/nav.js";
+import { openDoc, openItem, openSources, type ItemTab } from "../../shell/nav.js";
 import { ActionButton } from "../../components/item/ActionButton.js";
 import { ActivityStream } from "../../components/item/ActivityStream.js";
 import { ExecGlyph, GateGlyph, SourceChip, Status, Version } from "../../ui/index.js";
@@ -205,6 +205,21 @@ export function ItemPage({
               </div>
             </div>
           )}
+
+          {def.sources.length > 0 && <ItemSources eid={eid} sources={def.sources} />}
+
+          {def.skills.length > 0 && (
+            <div className="item-page-side-block" data-testid="item-skills">
+              <span className="label">Skills</span>
+              <div className="row-wrap">
+                {def.skills.map((s) => (
+                  <span key={s} className="tag tag-outline">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
       </div>
 
@@ -272,6 +287,31 @@ function describeBlocker(b: { kind: string; slot?: string; item?: string; produc
   if (b.kind === "sequencing") return `waiting for ${b.item}`;
   if (b.kind === "input_not_approved") return `${b.slot} not yet approved`;
   return "no executor";
+}
+
+/** The task's attached Sources, named from the catalog; each links to the Source Catalog. */
+function ItemSources({ eid, sources }: { eid: EngagementId; sources: SourceBinding[] }) {
+  const catalog = useQuery({ queryKey: qk.sources(eid), queryFn: () => api.listSources(eid) });
+  const byId = new Map((catalog.data ?? []).map((s) => [s.id, s]));
+  return (
+    <div className="item-page-side-block" data-testid="item-sources">
+      <span className="label">Sources</span>
+      <ul className="item-sources-list">
+        {sources.map((b) => {
+          const s = byId.get(b.id);
+          return (
+            <li key={b.id}>
+              <button type="button" className="link" onClick={() => openSources(eid)}>
+                {s?.title ?? b.id}
+              </button>
+              {s && <span className="muted"> · {s.freshness === "live" ? "live" : `edition ${s.edition ?? ""}`.trim()}</span>}
+              <div className="helper-text">{b.purpose}</div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
 
 function Worklog({ eid, itemId }: { eid: EngagementId; itemId: ItemId }) {

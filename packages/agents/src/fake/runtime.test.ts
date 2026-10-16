@@ -132,6 +132,7 @@ describe("fake runtime end-to-end", () => {
       sequencing: [],
       outputs: [{ slot: "summary", format: "md", scope: "project", description: "A summary", required: true }],
       skills: [],
+      sources: [],
       gate: [],
       autostart: true,
       acceptance: ["Something reasonable"],

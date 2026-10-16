@@ -150,6 +150,17 @@ export const OutputSlot = z.object({
 });
 export type OutputSlot = z.infer<typeof OutputSlot>;
 
+/** A Source Catalog listing id (sources.ts), e.g. "open-web". */
+export const SourceId = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "lowercase letters, digits and hyphens");
+export type SourceId = z.infer<typeof SourceId>;
+
+/**
+ * A Source attached to a task: live or external context next to its inputs.
+ * `purpose` tells the Work Agent what this source is for on this task.
+ */
+export const SourceBinding = z.object({ id: SourceId, purpose: z.string().min(1) });
+export type SourceBinding = z.infer<typeof SourceBinding>;
+
 /**
  * item.md front-matter. Status is deliberately NOT here: state lives in the DB
  * (ARCHITECTURE.md §5.3); plan.md is the readable projection.
@@ -165,6 +176,8 @@ export const ItemFrontMatter = z.object({
   sequencing: z.array(ItemId).default([]),
   outputs: z.array(OutputSlot).default([]),
   skills: z.array(z.string()).default([]),
+  /** Sources from the Source Catalog, attached by the Approach Agent's plan (or by hand in item.md). */
+  sources: z.array(SourceBinding).default([]),
   gate: GateChain.default([]),
   autostart: z.boolean().default(true),
   acceptance: z.array(z.string()).default([]),
@@ -230,6 +243,8 @@ export const PlanOp = z.discriminatedUnion("op", [
   z.object({ op: z.literal("remove_slot"), itemId: ItemId, slot: SlotName }),
   /** I2: [] or [{type: "human-review"}]. */
   z.object({ op: z.literal("set_gate"), itemId: ItemId, gate: z.array(GateStep) }),
+  /** Replaces a leaf's attached sources. Only while waiting or ready; every id must be in the Source Catalog. */
+  z.object({ op: z.literal("set_sources"), itemId: ItemId, sources: z.array(SourceBinding) }),
   /** Only while waiting or ready, and not while another (non-cancelled) item consumes its outputs. */
   z.object({ op: z.literal("cancel_item"), itemId: ItemId, reason: z.string().min(1) }),
 ]);

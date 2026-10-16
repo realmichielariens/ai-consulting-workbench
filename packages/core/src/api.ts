@@ -43,9 +43,12 @@ import {
   Proposal,
   ProposalId,
   ThreadId,
+  SourceId,
 } from "./domain.js";
+import { SourceCatalogEntry, SourceTestResult, UserSourceConnection, UserSourceInput, UserSourceView } from "./sources.js";
+
 import { WorkbenchEvent } from "./events.js";
-import { ModelChoiceId } from "./config.js";
+import { EffortLevel, ModelChoiceId } from "./config.js";
 
 // ---------------------------------------------------------------------------
 // Views
@@ -242,6 +245,9 @@ export const ProfileView = z.object({
   /** Per-role overrides of the profile (null = use the profile's model). */
   overrides: z.object({ approach: z.string().nullable(), work: z.string().nullable() }),
   choices: z.array(z.object({ id: z.string(), label: z.string() })),
+  /** Reasoning effort new runs use (workspace-wide; default "high"). */
+  effort: EffortLevel,
+  effortChoices: z.array(EffortLevel),
 });
 export type ProfileView = z.infer<typeof ProfileView>;
 
@@ -252,8 +258,9 @@ export const PatchProfileBody = z
     models: z
       .object({ approach: ModelChoiceId.nullable().optional(), work: ModelChoiceId.nullable().optional() })
       .optional(),
+    effort: EffortLevel.optional(),
   })
-  .refine((b) => b.profile !== undefined || b.models !== undefined, { message: "nothing to change" });
+  .refine((b) => b.profile !== undefined || b.models !== undefined || b.effort !== undefined, { message: "nothing to change" });
 export type PatchProfileBody = z.infer<typeof PatchProfileBody>;
 
 export const JournalView = z.object({ markdown: z.string() });
@@ -370,7 +377,7 @@ const ER = E.extend({ rid: RequestId });
 const Ok = z.object({ ok: z.literal(true) });
 
 export const routes = {
-  health: { method: "GET", path: "/api/health", response: z.object({ ok: z.literal(true), runtime: z.enum(["real", "fake"]) }) },
+  health: { method: "GET", path: "/api/health", response: z.object({ ok: z.literal(true), runtime: z.enum(["real", "fake"]), hosted: z.boolean().default(false) }) },
 
   // J1.1
   listSeeds: { method: "GET", path: "/api/seeds", response: z.array(SeedSummary) },
@@ -532,6 +539,16 @@ export const routes = {
 
   // I2 — D4: the approach journal (ENG/work/approach-journal.md), read-only
   getJournal: { method: "GET", path: "/api/engagements/:eid/journal", params: E, response: JournalView },
+
+  // Sources: the Source Catalog (content marketplace), with which tasks here use each listing
+  listSources: { method: "GET", path: "/api/engagements/:eid/sources", params: E, response: z.array(SourceCatalogEntry) },
+  // User-defined MCP sources (docs/USER-MCP-SOURCES-PLAN.md). Workspace-wide; only origin "user" listings can be read in full, changed or deleted.
+  getSource: { method: "GET", path: "/api/sources/:sid", params: z.object({ sid: SourceId }), response: UserSourceView },
+  createSource: { method: "POST", path: "/api/sources", body: UserSourceInput, response: UserSourceView },
+  updateSource: { method: "PATCH", path: "/api/sources/:sid", params: z.object({ sid: SourceId }), body: UserSourceInput, response: UserSourceView },
+  deleteSource: { method: "DELETE", path: "/api/sources/:sid", params: z.object({ sid: SourceId }), response: Ok },
+  /** Starts the server once and lists its tools; no model call, no cost. */
+  testSource: { method: "POST", path: "/api/sources/test", body: z.object({ connection: UserSourceConnection }), response: SourceTestResult },
 } as const satisfies Record<string, RouteDef>;
 
 export type RouteName = keyof typeof routes;

@@ -20,6 +20,8 @@ import {
   computeReadiness,
   formatVersion,
   initialStatus,
+  DEFAULT_EFFORT,
+  EFFORT_LEVELS,
   MODEL_CHOICES,
   nextVersionParts,
   rollupFor,
@@ -52,6 +54,7 @@ import {
   type PlanPreviewView,
   type PlanView,
   type PostMessageResult,
+  type EffortLevel,
   type PatchProfileBody,
   type ProfileView,
   type ProposalId,
@@ -74,9 +77,114 @@ import {
   type VersionKind,
   type WorklogView,
   type WsServerMessage,
+  type SourceCatalogEntry,
+  type SourceId,
+  type SourceTestResult,
+  type UserSourceConnection,
+  type UserSourceInput,
+  type UserSourceView,
+  findLiteralSecrets,
+  UserSourceInput as UserSourceInputSchema,
 } from "@workbench/core";
 import { ACME_CONTEXT_MD, ACME_ITEMS, ACME_STAKEHOLDERS_MD, SEED_SUMMARIES } from "./seedData.js";
 import { ApiRequestError, type WsStatus } from "../types.js";
+
+/** A two-listing slice of workbench-sources/, enough for the catalog page and the item Sources block in mock mode. */
+const MOCK_SOURCES: SourceCatalogEntry[] = [
+  {
+    id: "open-web",
+    title: "Open Web",
+    publisher: "Public internet, via Claude web search",
+    kind: "web",
+    summary: "Search the public web and read pages — news, company sites, case studies, public reports.",
+    description: "",
+    freshness: "live",
+    offer: { tier: "free", label: "Free" },
+    usage: "",
+    connectionType: "builtin-web",
+    origin: "catalog",
+    usedBy: [],
+  },
+  {
+    id: "mfg-it-benchmarks",
+    title: "Manufacturing IT Benchmarks",
+    publisher: "Northfield Industry Research (demo)",
+    kind: "mcp",
+    summary: "Curated peer benchmarks for mid-size manufacturers — IT spend, ERP/MES programme durations, phasing outcomes.",
+    description: "",
+    freshness: "snapshot",
+    edition: "2026.1",
+    offer: { tier: "licensed", label: "Licensed — €450 per engagement (demo pricing)" },
+    usage: "",
+    connectionType: "mock",
+    origin: "catalog",
+    usedBy: [],
+  },
+];
+
+/** The user's own MCP listings (origin "user"): workspace-wide, kept in memory like everything else here. */
+const userSources = new Map<SourceId, UserSourceView>();
+const MOCK_TEST_DELAY_MS = 600;
+
+function toUserSourceView(id: SourceId, raw: UserSourceInput): UserSourceView {
+  const parsed = UserSourceInputSchema.safeParse(raw);
+  if (!parsed.success) throw new ApiRequestError("invalid", parsed.error.issues.map((i) => `${i.path.join(".") || "body"}: ${i.message}`).join("; "));
+  const input = parsed.data;
+  // Same rule and wording as the real server: no credential may land in a listing file.
+  const literal = findLiteralSecrets(input.connection);
+  if (literal.length > 0) throw new ApiRequestError("invalid", literal.map((f) => `${f} looks like a secret; use \${env:NAME} instead`).join("; "));
+  return {
+    id,
+    title: input.title,
+    publisher: "You",
+    kind: "mcp",
+    summary: input.summary,
+    description: input.description,
+    freshness: input.freshness,
+    ...(input.freshness === "snapshot" && input.edition ? { edition: input.edition } : {}),
+    offer: { tier: "free", label: "Your own source" },
+    usage: input.usage,
+    connection: input.connection,
+    origin: "user",
+  };
+}
+
+function sourceSlug(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 64);
+}
+
+function findUserSource(sid: SourceId): UserSourceView {
+  const s = userSources.get(sid);
+  if (!s) {
+    if (MOCK_SOURCES.some((c) => c.id === sid)) throw new ApiRequestError("invalid", `"${sid}" is a curated listing; it cannot be changed here.`);
+    throw new ApiRequestError("not_found", `No source "${sid}".`);
+  }
+  return s;
+}
+
+function userSourceEntry(s: UserSourceView): SourceCatalogEntry {
+  const { connection, ...rest } = s;
+  return { ...rest, connectionType: connection.type, usedBy: [] };
+}
+
+/** Test connection without a real server: "fail" anywhere in the command or url makes it fail. */
+async function mockTestSource(connection: UserSourceConnection): Promise<SourceTestResult> {
+  await new Promise((r) => setTimeout(r, MOCK_TEST_DELAY_MS));
+  const target = connection.type === "stdio" ? [connection.command, ...connection.args].join(" ") : connection.url;
+  if (/fail/i.test(target)) {
+    return { status: "failed", error: `MCP server "${target}" exited before it finished the handshake (mock).`, serverInfo: null, tools: [], missingSecrets: [] };
+  }
+  return {
+    status: "connected",
+    error: null,
+    serverInfo: { name: "mock-mcp-server", version: "0.1.0" },
+    tools: [
+      { name: "echo", description: "Returns the text it is given." },
+      { name: "lookup", description: "Looks up a canned record by id." },
+    ],
+    missingSecrets: [],
+  };
+}
 
 // ---------------------------------------------------------------------------
 // small utilities
@@ -90,6 +198,7 @@ const THREAD_ID = "T-0001" as ThreadId;
 let mockProfile = "test";
 const mockOverrides: { approach: string | null; work: string | null } = { approach: null, work: null };
 const MOCK_PROFILE_MODEL = "claude-haiku-4-5";
+let mockEffort: EffortLevel = DEFAULT_EFFORT;
 
 function mockProfileView(): ProfileView {
   return {
@@ -99,6 +208,8 @@ function mockProfileView(): ProfileView {
     profileModels: { approach: MOCK_PROFILE_MODEL, work: MOCK_PROFILE_MODEL },
     overrides: { ...mockOverrides },
     choices: MODEL_CHOICES.map((m) => ({ id: m.id, label: m.label })),
+    effort: mockEffort,
+    effortChoices: [...EFFORT_LEVELS],
   };
 }
 
@@ -1150,11 +1261,13 @@ export const mockBackend = {
   },
 
   getProfile: async (): Promise<ProfileView> => mockProfileView(),
+  getHealth: async () => ({ ok: true as const, runtime: "fake" as const, hosted: import.meta.env?.VITE_MOCK_HOSTED === "1" }),
 
   patchProfile: async (body: PatchProfileBody): Promise<ProfileView> => {
     if (body.profile !== undefined) mockProfile = body.profile;
     if (body.models?.approach !== undefined) mockOverrides.approach = body.models.approach;
     if (body.models?.work !== undefined) mockOverrides.work = body.models.work;
+    if (body.effort !== undefined) mockEffort = body.effort;
     return mockProfileView();
   },
 
@@ -1162,6 +1275,37 @@ export const mockBackend = {
     findEng(eid);
     return { markdown: "_No journal entries yet._" };
   },
+
+  listSources: async (eid: EngagementId): Promise<SourceCatalogEntry[]> => {
+    findEng(eid);
+    return [...MOCK_SOURCES, ...[...userSources.values()].map(userSourceEntry)];
+  },
+
+  getSource: async (sid: SourceId): Promise<UserSourceView> => findUserSource(sid),
+
+  createSource: async (body: UserSourceInput): Promise<UserSourceView> => {
+    const id = (body.id ?? sourceSlug(body.title ?? "")) as SourceId;
+    if (!id) throw new ApiRequestError("invalid", "title: needs at least one letter or digit to make an id");
+    if (userSources.has(id) || MOCK_SOURCES.some((c) => c.id === id)) throw new ApiRequestError("conflict", `A source with id "${id}" already exists.`);
+    const view = toUserSourceView(id, body);
+    userSources.set(id, view);
+    return view;
+  },
+
+  updateSource: async (sid: SourceId, body: UserSourceInput): Promise<UserSourceView> => {
+    findUserSource(sid);
+    const view = toUserSourceView(sid, body);
+    userSources.set(sid, view);
+    return view;
+  },
+
+  deleteSource: async (sid: SourceId): Promise<{ ok: true }> => {
+    findUserSource(sid);
+    userSources.delete(sid);
+    return { ok: true };
+  },
+
+  testSource: async (body: { connection: UserSourceConnection }): Promise<SourceTestResult> => mockTestSource(body.connection),
 
   connectWs: (eid: EngagementId, onMessage: (msg: WsServerMessage) => void, onStatus: (status: WsStatus) => void): (() => void) => {
     onStatus("connecting");
@@ -1184,4 +1328,5 @@ export const mockBackend = {
 /** Test-only: clears all mock engagement state between Vitest cases. */
 export function __resetMockBackend(): void {
   engagements.clear();
+  userSources.clear();
 }

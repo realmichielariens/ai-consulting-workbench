@@ -26,7 +26,7 @@ import { buildBriefing, buildSinceLastTurn } from "./briefing.js";
 import { checkpointCommit } from "./checkpoint.js";
 import { conflict } from "./errors.js";
 import { emitEvent, pushActivity, type EngagementContext } from "./engagementContext.js";
-import { currentModelProfile } from "./profileService.js";
+import { currentEffort, currentModelProfile } from "./profileService.js";
 import { describeStageContext } from "./stageContext.js";
 import { ensureThread } from "./threadService.js";
 
@@ -106,6 +106,7 @@ ${describeStageContext(ctx, context)}` : baseSituation;
     port,
     observer,
     model: profile.models.approach,
+    effort: currentEffort(ctx.server),
     maxTurns: profile.limits.maxTurnsPerRun,
     settings: ctx.meta.settings,
     threadId: thread.id,
@@ -169,6 +170,7 @@ async function launchApproachTask(ctx: EngagementContext, kind: "question" | "su
     port,
     observer,
     model: profile.models.approach,
+    effort: currentEffort(ctx.server),
     maxTurns: profile.limits.maxTurnsPerRun,
     settings: ctx.meta.settings,
     kind,

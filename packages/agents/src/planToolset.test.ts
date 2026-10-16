@@ -148,6 +148,6 @@ describe("SDK schema dry run: PlanOp's nested discriminated union as a tool inpu
     };
     const opsUnion = jsonSchema.properties.ops.items.oneOf ?? jsonSchema.properties.ops.items.anyOf;
     expect(Array.isArray(opsUnion)).toBe(true);
-    expect((opsUnion as unknown[]).length).toBe(7); // the 7 PlanOp variants (domain.ts)
+    expect((opsUnion as unknown[]).length).toBe(8); // the 8 PlanOp variants (domain.ts)
   });
 });

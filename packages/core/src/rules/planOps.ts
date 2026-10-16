@@ -22,6 +22,7 @@ import {
   type OutputSlot,
   type PlanOp,
   type SlotRef,
+  type SourceBinding,
 } from "../domain.js";
 
 export interface PlanOpsSnapshot {
@@ -30,6 +31,21 @@ export interface PlanOpsSnapshot {
   statusById: ReadonlyMap<ItemId, ItemStatus | null>;
   /** Output slots with at least one published version. */
   slotsWithVersions: ReadonlySet<SlotRef>;
+  /** Source Catalog ids. When given, add_item/set_sources may only attach these; omitted = not checked. */
+  knownSourceIds?: ReadonlySet<string>;
+}
+
+function sourceErrors(sources: readonly SourceBinding[], snapshot: PlanOpsSnapshot): string[] {
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  for (const s of sources) {
+    if (seen.has(s.id)) errors.push(`source ${s.id} is attached twice`);
+    seen.add(s.id);
+    if (snapshot.knownSourceIds && !snapshot.knownSourceIds.has(s.id)) {
+      errors.push(`source ${s.id} is not in the Source Catalog (known: ${[...snapshot.knownSourceIds].join(", ")})`);
+    }
+  }
+  return errors;
 }
 
 interface WorkingItem {
@@ -97,6 +113,8 @@ function opLabel(op: PlanOp): string {
       return `remove_slot ${op.itemId}/${op.slot}`;
     case "set_gate":
       return `set_gate ${op.itemId}`;
+    case "set_sources":
+      return `set_sources ${op.itemId}`;
     case "cancel_item":
       return `cancel_item ${op.itemId}`;
   }
@@ -115,6 +133,8 @@ function checkAndApply(map: WorkingMap, op: PlanOp, snapshot: PlanOpsSnapshot): 
         if (!parentItem) errors.push(`parent ${op.def.parent} does not exist`);
         else if (!isComposite(parentItem)) errors.push(`parent ${op.def.parent} is not a composite or ENG`);
       }
+      errors.push(...sourceErrors(op.def.sources, snapshot));
+      if (op.def.sources.length > 0 && op.def.executor !== "agent") errors.push(`sources can only be attached to agent items`);
       if (errors.length > 0) return errors;
       map.set(op.def.id, { def: op.def, status: op.def.executor == null ? null : "waiting" });
       return [];
@@ -181,6 +201,17 @@ function checkAndApply(map: WorkingMap, op: PlanOp, snapshot: PlanOpsSnapshot): 
       const valid = op.gate.length === 0 || (op.gate.length === 1 && op.gate[0]!.type === "human-review");
       if (!valid) return [`gate must be [] or a single human-review step`];
       map.set(op.itemId, { ...item, def: { ...item.def, gate: op.gate } });
+      return [];
+    }
+
+    case "set_sources": {
+      const item = map.get(op.itemId);
+      if (!item) return [`item ${op.itemId} does not exist`];
+      if (item.def.executor !== "agent") return [`${op.itemId} is not an agent item; sources are for Work Agents`];
+      if (!waitingOrReady(item.status)) return [`${op.itemId} is ${item.status ?? "unknown"}, not waiting or ready`];
+      const errors = sourceErrors(op.sources, snapshot);
+      if (errors.length > 0) return errors;
+      map.set(op.itemId, { ...item, def: { ...item.def, sources: op.sources } });
       return [];
     }
 
@@ -273,6 +304,12 @@ export function applyOps(defs: readonly ItemDef[], ops: readonly PlanOp[]): Appl
         markChanged(op.itemId);
         break;
       }
+      case "set_sources": {
+        const item = map.get(op.itemId)!;
+        map.set(op.itemId, { ...item, def: { ...item.def, sources: op.sources } });
+        markChanged(op.itemId);
+        break;
+      }
       case "cancel_item":
         cancelled.push(op.itemId);
         break;
@@ -294,6 +331,10 @@ function outputsLabel(outputs: readonly OutputSlot[]): string {
   return outputs.length === 0 ? "none" : outputs.map((o) => `${o.slot} (${o.format})`).join(", ");
 }
 
+function sourcesLabel(sources: readonly SourceBinding[]): string {
+  return sources.map((s) => `${s.id} (${s.purpose})`).join(", ");
+}
+
 function inputsLabel(inputs: readonly InputRef[]): string {
   return inputs.length === 0 ? "none" : inputs.map((i) => i.slot).join(", ");
 }
@@ -305,7 +346,9 @@ export function describeOp(op: PlanOp, defs: readonly ItemDef[]): string {
     case "add_item":
       return (
         `Add ${op.def.id} ${op.def.title} under ${op.def.parent ?? "top level"} (${executorLabel(op.def.executor)}), ` +
-        `inputs: ${inputsLabel(op.def.inputs)}; output: ${outputsLabel(op.def.outputs)}; gate: ${gateLabel(op.def.gate)}`
+        `inputs: ${inputsLabel(op.def.inputs)}; output: ${outputsLabel(op.def.outputs)}; gate: ${gateLabel(op.def.gate)}` +
+        (op.def.skills.length > 0 ? `; skills: ${op.def.skills.join(", ")}` : "") +
+        (op.def.sources.length > 0 ? `; sources: ${sourcesLabel(op.def.sources)}` : "")
       );
     case "update_brief": {
       const fields = [
@@ -323,6 +366,8 @@ export function describeOp(op: PlanOp, defs: readonly ItemDef[]): string {
       return `Remove output slot ${op.itemId}/${op.slot}`;
     case "set_gate":
       return `Set gate for ${op.itemId}: ${gateLabel(op.gate)}`;
+    case "set_sources":
+      return `Set sources for ${op.itemId} (${byId.get(op.itemId)?.title ?? op.itemId}): ${op.sources.length === 0 ? "none" : sourcesLabel(op.sources)}`;
     case "cancel_item":
       return `Cancel ${op.itemId} ${byId.get(op.itemId)?.title ?? op.itemId}: ${op.reason}`;
   }

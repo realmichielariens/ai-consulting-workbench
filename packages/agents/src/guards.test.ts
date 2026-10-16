@@ -140,3 +140,26 @@ describe("Unknown / passthrough", () => {
     allow(d("SomeOtherTool", {}));
   });
 });
+
+describe("Source tools (WebSearch / WebFetch / mcp__source_*)", () => {
+  const withSources = {
+    ...scope,
+    sources: {
+      web: { id: "open-web", title: "Open Web" },
+      servers: { source_mfg_it_benchmarks: { id: "mfg-it-benchmarks", title: "Manufacturing IT Benchmarks" } },
+    },
+  };
+  test("denied on a task with no sources attached", () => {
+    deny(d("WebSearch", { query: "erp case study" }));
+    deny(d("WebFetch", { url: "https://example.com", prompt: "p" }));
+    deny(d("mcp__source_mfg_it_benchmarks__search", { query: "erp" }));
+  });
+  test("allowed for attached sources, from the main thread and from a subagent", () => {
+    allow(decideForWorkAgent(withSources, "WebSearch", { query: "erp case study" }, false));
+    allow(decideForWorkAgent(withSources, "WebFetch", { url: "https://example.com", prompt: "p" }, true));
+    allow(decideForWorkAgent(withSources, "mcp__source_mfg_it_benchmarks__get", { id: "MB-104" }, true));
+  });
+  test("a source that is not attached stays denied even when others are", () => {
+    deny(decideForWorkAgent(withSources, "mcp__source_analyst_briefs__search", { query: "erp" }, false));
+  });
+});

@@ -1,0 +1,18 @@
+records:
+  - id: PB-ITS-DISCOVERY
+    title: "Playbook: IT strategy discovery in six weeks"
+    tags: [it strategy, discovery, interviews, playbook]
+    body: >-
+      Week 1: context, stakeholder map, interview guide. Weeks 2-3: CxO
+      interviews, notes published per interview. Week 4: thematic synthesis
+      with contradictions surfaced. Week 5: initiatives and a sequenced
+      roadmap. Week 6: board deck and steerco endorsement. Keep one
+      human-review gate on the guide, the themes and the deck.
+  - id: PB-ERP-SEQUENCING
+    title: "Pattern: decouple the urgent ask from the platform decision"
+    tags: [erp, sequencing, roadmap, oem, pattern]
+    body: >-
+      When an external deadline (a customer or regulatory requirement)
+      collides with a multi-year platform replacement, meet the deadline
+      with a thin layer on the current platform and decide the platform on
+      its own timeline. Make the layer's retirement explicit in the roadmap.

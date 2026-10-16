@@ -20,7 +20,7 @@ function newEngagement(): InMemoryEngagement {
     { id: "ENG", title: "New engagement", parent: null, order: 0, executor: null, inputs: [], sequencing: [], outputs: [
       { slot: "context", format: "md", scope: "project", description: "Context", required: true },
       { slot: "stakeholders", format: "md", scope: "project", description: "Stakeholders", required: true },
-    ], skills: [], gate: [], autostart: true, acceptance: [], brief: "Not yet described." },
+    ], skills: [], sources: [], gate: [], autostart: true, acceptance: [], brief: "Not yet described." },
   ]);
   fs.mkdirSync(eng.paths.itemWork("ENG"), { recursive: true });
   return eng;
@@ -144,6 +144,7 @@ describe("fake Approach runtime: task sessions", () => {
       sequencing: [],
       outputs: [],
       skills: [],
+      sources: [],
       gate: [],
       autostart: true,
       acceptance: [],

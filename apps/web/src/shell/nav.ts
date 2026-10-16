@@ -17,6 +17,7 @@ export type StageRoute =
   | { page: "home"; eid: string }
   | { page: "plan"; eid: string; view: PlanViewMode; sel: string | null; preview: string | null }
   | { page: "documents"; eid: string }
+  | { page: "sources"; eid: string }
   | { page: "item"; eid: string; itemId: string; tab: ItemTab; run: string | null }
   | { page: "doc"; eid: string; itemId: string; slot: string; version: string | null }
   | { page: "journal"; eid: string }
@@ -67,6 +68,8 @@ export function parseStageRoute(full: string): StageRoute {
     }
     case "documents":
       return { page: "documents", eid };
+    case "sources":
+      return { page: "sources", eid };
     case "item": {
       if (!rest[1]) return { page: "home", eid };
       const tabParam = params.get("tab");
@@ -107,6 +110,10 @@ export function openPlan(eid: string, opts?: { sel?: string | null; view?: PlanV
 
 export function openDocuments(eid: string): void {
   navigate(`/e/${encodeURIComponent(eid)}/documents`);
+}
+
+export function openSources(eid: string): void {
+  navigate(`/e/${encodeURIComponent(eid)}/sources`);
 }
 
 export function openItem(eid: string, itemId: string, opts?: { tab?: ItemTab; run?: string }): void {

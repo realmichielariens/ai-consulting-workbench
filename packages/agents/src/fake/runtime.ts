@@ -16,6 +16,9 @@ import type {
   RunResult,
   StartRunRequest,
 } from "@workbench/core";
+import { sourceToolActivity, webActivity } from "../activity.js";
+import { loadSourceCatalog, loadSourceDataset } from "../sourceCatalog.js";
+import { getResultText, searchResultText } from "../sourceServer.js";
 import { FakeItemScript, loadFakeScript, type FakeStep } from "./scripts.js";
 
 export interface FakeRuntimeOptions {
@@ -25,6 +28,15 @@ export interface FakeRuntimeOptions {
   delayMs?: number;
   /** Defaults to WORKBENCH_FAKE_VARIANT. "no-submit" forces R3; "denial" prepends a demo guard denial (R4). */
   variant?: string;
+  /** The Source Catalog folder; sourceSearch/sourceGet steps query its real mock datasets. Defaults to the repo's workbench-sources/. */
+  sourcesCatalogDir?: string;
+  /** The user's own listings (WorkspacePaths.userSourcesDir); a fake run can't query them, but must still see them as listed. */
+  userSourcesDir?: string;
+}
+
+interface SourceDirs {
+  catalogDir: string;
+  userDir?: string;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -48,6 +60,41 @@ function resolveDelay(opts: FakeRuntimeOptions): number {
 
 export function defaultFakeScriptsDir(): string {
   return path.resolve(import.meta.dirname, "../../fake-scripts");
+}
+
+function defaultSourcesCatalogDir(): string {
+  return path.resolve(import.meta.dirname, "../../../../workbench-sources");
+}
+
+/**
+ * Runs a sourceSearch/sourceGet step against the listing's real mock dataset,
+ * producing the same text the in-process MCP server would. A step naming a
+ * source that is not attached to the item shows as a denial, like the guard.
+ */
+function fakeSourceCall(
+  dirs: SourceDirs,
+  item: StartRunRequest["item"],
+  sourceId: string,
+  tool: "search" | "get",
+  arg: string,
+): Omit<ActivityItem, "idx" | "at"> {
+  const toolName = `mcp__source_${sourceId.replace(/-/g, "_")}__${tool}`;
+  const input = tool === "search" ? { query: arg } : { id: arg };
+  const source = loadSourceCatalog(dirs).sources.find((s) => s.id === sourceId);
+  if (!source || !item.sources.some((b) => b.id === sourceId)) {
+    const reason = `${toolName} belongs to a source that is not attached to this task.`;
+    return { kind: "denial", summary: reason, detail: reason, tool: { name: toolName, input, isError: true } };
+  }
+  if (source.connection.type !== "mock") {
+    return { kind: "error", summary: `Fake runs can only query mock sources; ${source.title} is ${source.connection.type}.` };
+  }
+  const records = loadSourceDataset(dirs.catalogDir, source.connection.dataset);
+  const result = tool === "search" ? { text: searchResultText(source, records, arg), isError: false } : getResultText(source, records, arg);
+  return {
+    ...sourceToolActivity(source.title, tool, input, result.isError, result.text),
+    sourceId,
+    tool: { name: toolName, input, isError: result.isError },
+  };
 }
 
 /** Any agent item without a dedicated fake-scripts/<id>.yaml: publish a short placeholder per required output, then submit. */
@@ -111,7 +158,7 @@ export function createFakeRuntime(opts: FakeRuntimeOptions = {}): AgentRuntime {
     kind: "fake",
     startRun(req: StartRunRequest): RunHandle {
       const state = { interrupted: false };
-      const done = runFakeScript(req, scriptsDir, delayMs, variant, state);
+      const done = runFakeScript(req, scriptsDir, { catalogDir: opts.sourcesCatalogDir ?? defaultSourcesCatalogDir(), userDir: opts.userSourcesDir }, delayMs, variant, state);
       return {
         runId: req.runId,
         interrupt: async () => {
@@ -126,6 +173,7 @@ export function createFakeRuntime(opts: FakeRuntimeOptions = {}): AgentRuntime {
 async function runFakeScript(
   req: StartRunRequest,
   scriptsDir: string,
+  sourceDirs: SourceDirs,
   delayMs: number,
   variant: string | undefined,
   state: { interrupted: boolean },
@@ -214,6 +262,22 @@ async function runFakeScript(
           detail: result.instruction,
           tool: { name: "mcp__work__submit_outputs", input: step.submit },
         });
+      } else if ("webSearch" in step) {
+        // Same result shape as the CLI's WebSearch, so the shared mapper extracts the links.
+        const resultText = `Web search results for query: "${step.webSearch.query}"\n\nLinks: ${JSON.stringify(step.webSearch.results)}`;
+        const input = { query: step.webSearch.query };
+        push({ ...webActivity("WebSearch", input, false, resultText), sourceId: "open-web", tool: { name: "WebSearch", input } });
+      } else if ("webFetch" in step) {
+        const input = { url: step.webFetch.url, prompt: "(scripted)" };
+        push({ ...webActivity("WebFetch", input, false, step.webFetch.answer), sourceId: "open-web", tool: { name: "WebFetch", input } });
+      } else if ("sourceSearch" in step) {
+        const a = fakeSourceCall(sourceDirs, item, step.sourceSearch.source, "search", step.sourceSearch.query);
+        if (a.kind === "denial") denials++;
+        push(a);
+      } else if ("sourceGet" in step) {
+        const a = fakeSourceCall(sourceDirs, item, step.sourceGet.source, "get", step.sourceGet.id);
+        if (a.kind === "denial") denials++;
+        push(a);
       } else if ("deny" in step) {
         denials++;
         push({ kind: "denial", summary: step.deny.reason, detail: step.deny.reason, tool: { name: step.deny.tool, input: {}, isError: true } });

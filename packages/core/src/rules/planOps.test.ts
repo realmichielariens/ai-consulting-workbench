@@ -9,6 +9,7 @@ function def(partial: Partial<ItemDef> & Pick<ItemDef, "id" | "title" | "parent"
     sequencing: [],
     outputs: [],
     skills: [],
+    sources: [],
     gate: [],
     autostart: true,
     acceptance: [],
@@ -252,6 +253,50 @@ describe("applyOps", () => {
   });
 });
 
+describe("validateOps: sources", () => {
+  const known = (defs: ItemDef[], statuses: Record<string, ItemStatus | null>) => ({
+    ...snapshot(defs, statuses),
+    knownSourceIds: new Set(["open-web", "mfg-it-benchmarks"]),
+  });
+  const web = { id: "open-web", purpose: "find public case studies" };
+
+  it("set_sources replaces a waiting agent item's sources", () => {
+    const op: PlanOp = { op: "set_sources", itemId: "WI-002", sources: [web] };
+    expect(validateOps(known([ENG, PH1, WI002], { "WI-002": "waiting" }), [op])).toEqual([]);
+    const result = applyOps([ENG, PH1, WI002], [op]);
+    expect(result.defs.find((d) => d.id === "WI-002")!.sources).toEqual([web]);
+    expect(result.changed).toEqual(["WI-002"]);
+  });
+
+  it("set_sources rejects an unknown source, a duplicate, a human item and a running item", () => {
+    const unknown = validateOps(known([ENG, PH1, WI002], { "WI-002": "ready" }), [
+      { op: "set_sources", itemId: "WI-002", sources: [{ id: "dark-web", purpose: "x" }, web, web] },
+    ]);
+    expect(unknown).toEqual([
+      expect.stringContaining("source dark-web is not in the Source Catalog"),
+      "op 1 (set_sources WI-002): source open-web is attached twice",
+    ]);
+    expect(validateOps(known([ENG, PH1, WI003], { "WI-003": "ready" }), [{ op: "set_sources", itemId: "WI-003", sources: [web] }])).toEqual([
+      "op 1 (set_sources WI-003): WI-003 is not an agent item; sources are for Work Agents",
+    ]);
+    expect(validateOps(known([ENG, PH1, WI002], { "WI-002": "in_progress" }), [{ op: "set_sources", itemId: "WI-002", sources: [] }])).toEqual([
+      "op 1 (set_sources WI-002): WI-002 is in_progress, not waiting or ready",
+    ]);
+  });
+
+  it("add_item checks its sources against the catalog", () => {
+    const errors = validateOps(known([ENG, PH1], { "PH-1": null }), [
+      { op: "add_item", def: def({ id: "WI-009", title: "Scan", parent: "PH-1", executor: "agent", sources: [{ id: "nope", purpose: "x" }] }) },
+    ]);
+    expect(errors).toEqual([expect.stringContaining("source nope is not in the Source Catalog")]);
+  });
+
+  it("without a catalog in the snapshot, source ids are not checked", () => {
+    const op: PlanOp = { op: "set_sources", itemId: "WI-002", sources: [{ id: "anything", purpose: "x" }] };
+    expect(validateOps(snapshot([ENG, PH1, WI002], { "WI-002": "waiting" }), [op])).toEqual([]);
+  });
+});
+
 describe("describeOp", () => {
   it("describes add_item readably", () => {
     const op: PlanOp = {
@@ -270,6 +315,19 @@ describe("describeOp", () => {
     expect(line).toBe(
       "Add WI-004 Consolidate themes under PH-2 (agent), inputs: WI-003/notes-cxo; output: themes (md); gate: human review",
     );
+  });
+
+  it("lists an add_item's skills when it has any", () => {
+    const op: PlanOp = {
+      op: "add_item",
+      def: def({ id: "WI-005", title: "Benchmark scan", parent: "PH-2", executor: "agent", skills: ["desk-research"] }),
+    };
+    expect(describeOp(op, [ENG])).toMatch(/; skills: desk-research$/);
+  });
+
+  it("describes set_sources with ids and purposes", () => {
+    const op: PlanOp = { op: "set_sources", itemId: "WI-002", sources: [{ id: "open-web", purpose: "peer cases" }] };
+    expect(describeOp(op, [WI002])).toBe("Set sources for WI-002 (Prepare interview guide): open-web (peer cases)");
   });
 
   it("describes cancel_item with the item's title and reason", () => {

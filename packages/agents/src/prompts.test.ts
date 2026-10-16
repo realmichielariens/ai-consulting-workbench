@@ -162,10 +162,17 @@ test("resolvePlacement defaults to A and reads WORKBENCH_PROMPT_PLACEMENT", () =
 
 describe("Approach Agent prompts (I2)", () => {
   test("renderApproachSystemPrompt renders approach-conversation.md with the engagement id", () => {
-    const text = renderApproachSystemPrompt(promptsDir, "acme-discovery-1");
+    const text = renderApproachSystemPrompt(promptsDir, "acme-discovery-1", {
+      skillCatalog: "- `desk-research`: test catalog line",
+      sourceCatalog: "- `open-web` **Open Web**: test source line",
+    });
     assertNoLeftoverTokens(text);
     expect(text).toContain("acme-discovery-1");
     expect(text).toContain("plan` toolset");
+    expect(text).toContain("test catalog line");
+    expect(text).toContain("test source line");
+    expect(text).toMatch(/Research tasks/);
+    expect(text).toMatch(/Analysis tasks/);
   });
 
   test("renderApproachTurnPrompt: non-empty situation is prefixed, with the human-says separator", () => {

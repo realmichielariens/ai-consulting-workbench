@@ -7,6 +7,9 @@ export const AGENTS_PACKAGE = "@workbench/agents";
 export { createSdkRuntime, type RuntimeConfig, type RuntimeDeps } from "./runtime.js";
 export {
   runOnce,
+  probeMcpServer,
+  type ProbeMcpServerArgs,
+  type ProbeMcpServerResult,
   WORK_AGENT_TOOLS,
   WORK_AGENT_ALLOWED_TOOLS,
   APPROACH_AGENT_TOOLS,
@@ -30,6 +33,25 @@ export {
 export { createWorkToolset, type WorkToolset, type WorkToolsetTracker } from "./workToolset.js";
 export { createPlanToolset, type PlanToolset, type PlanToolsetTracker } from "./planToolset.js";
 export { ActivityBuilder, type ActivityContext } from "./activity.js";
+export {
+  loadSourceCatalog,
+  loadSourceDataset,
+  renderSourceCatalog,
+  writeSourceListing,
+  type CatalogSource,
+  type LoadSourceCatalogOptions,
+  type SourceCatalog,
+} from "./sourceCatalog.js";
+export {
+  externalServerConfig,
+  resolveSources,
+  wrapStdioCommand,
+  type ResolvedSources,
+  type ResolveSourcesOptions,
+  type SourceToolMap,
+} from "./sourceResolver.js";
+export { testSourceConnection, type ProbeFn, type TestSourceConnectionFn, type TestSourceConnectionOptions } from "./sourceTest.js";
+export { loadSkillCatalog, type SkillInfo } from "./skillCatalog.js";
 export {
   commonVars,
   promptHash,

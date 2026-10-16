@@ -189,9 +189,18 @@ export const RUN_REASON_TEMPLATE: Record<Exclude<RunReason, "stale-rerun" | "aa-
 // user prompt is just the situation plus the human's message, built directly
 // by the caller (approachRuntime.ts), not templated.
 
-/** approach-conversation.md, the system prompt for every Approach Agent run. */
-export function renderApproachSystemPrompt(promptsDir: string, engagementId: string): string {
-  return render("approach-conversation.md", readTemplate(promptsDir, "approach-conversation.md"), { engagementId });
+/**
+ * approach-conversation.md, the system prompt for every Approach Agent run.
+ * `skillCatalog` and `sourceCatalog` are the rendered catalogs (skillCatalog.ts,
+ * sourceCatalog.ts), so the agent assigns skills and sources that exist
+ * instead of guessing names.
+ */
+export function renderApproachSystemPrompt(
+  promptsDir: string,
+  engagementId: string,
+  catalogs: { skillCatalog: string; sourceCatalog: string },
+): string {
+  return render("approach-conversation.md", readTemplate(promptsDir, "approach-conversation.md"), { engagementId, ...catalogs });
 }
 
 /** The user prompt for a conversation turn: the situation (if any) plus the human's message, verbatim. */

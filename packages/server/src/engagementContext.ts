@@ -22,7 +22,14 @@ import {
   type WorkbenchEvent,
   type WsServerMessage,
 } from "@workbench/core";
-import { createFakeApproachRuntime, createFakeRuntime, createSdkApproachRuntime, createSdkRuntime } from "@workbench/agents";
+import {
+  createFakeApproachRuntime,
+  createFakeRuntime,
+  createSdkApproachRuntime,
+  createSdkRuntime,
+  testSourceConnection,
+  type TestSourceConnectionFn,
+} from "@workbench/agents";
 import {
   engagementPaths,
   loadConfig,
@@ -58,7 +65,11 @@ export interface ServerContext {
   config: ResolvedWorkbenchConfig;
   workspace: WorkspacePaths;
   runtimeKind: RuntimeKind;
+  /** WORKBENCH_HOSTED=1: a shared deploy (docs/DEPLOY-FLY.md). stdio sources are refused, since they run commands on the host. */
+  hosted?: boolean;
   engagements: Map<EngagementId, EngagementContext>;
+  /** Source "Test connection" (sourceService.ts). Defaults to the real CLI probe; tests inject a stand-in so they never spawn it. */
+  testSource?: TestSourceConnectionFn;
 }
 
 /** One engagement's live state: DB, files, event bus, runtime and active runs. */
@@ -110,17 +121,21 @@ export function createServerContext(runtimeKind: RuntimeKind): ServerContext {
     config,
     workspace: workspacePaths(config.resolved.home),
     runtimeKind,
+    hosted: process.env.WORKBENCH_HOSTED === "1",
     engagements: new Map(),
+    testSource: testSourceConnection,
   };
 }
 
 function buildRuntime(server: ServerContext): AgentRuntime {
-  if (server.runtimeKind === "fake") return createFakeRuntime({});
+  if (server.runtimeKind === "fake") return createFakeRuntime({ sourcesCatalogDir: server.config.resolved.sourcesCatalog, userSourcesDir: server.workspace.userSourcesDir });
   return createSdkRuntime(
     {
       promptsDir: server.config.resolved.promptsDir,
       skillsPluginPath: server.config.resolved.skillsPlugin,
+      sourcesCatalogDir: server.config.resolved.sourcesCatalog,
       repoRoot: server.repoRoot,
+      allowStdioSources: !server.hosted,
     },
     server.workspace,
   );
@@ -132,6 +147,7 @@ function buildApproachRuntime(server: ServerContext): ApproachRuntime {
     {
       promptsDir: server.config.resolved.promptsDir,
       skillsPluginPath: server.config.resolved.skillsPlugin,
+      sourcesCatalogDir: server.config.resolved.sourcesCatalog,
       repoRoot: server.repoRoot,
     },
     server.workspace,

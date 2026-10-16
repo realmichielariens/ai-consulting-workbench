@@ -28,6 +28,15 @@ export const MODEL_CHOICES = [
 export const ModelChoiceId = z.enum(MODEL_CHOICES.map((m) => m.id) as [string, ...string[]]);
 export type ModelChoiceId = z.infer<typeof ModelChoiceId>;
 
+/**
+ * Reasoning effort for every agent run (the SDK's `effort` option). Workspace-wide,
+ * set in Settings. The CLI silently downgrades a level the selected model does not support.
+ */
+export const EFFORT_LEVELS = ["low", "medium", "high", "xhigh", "max"] as const;
+export const EffortLevel = z.enum(EFFORT_LEVELS);
+export type EffortLevel = z.infer<typeof EffortLevel>;
+export const DEFAULT_EFFORT: EffortLevel = "high";
+
 export const WorkbenchConfig = z
   .object({
     /** Workbench home, relative to the repo root or absolute. Git-ignored by default. */
@@ -37,6 +46,8 @@ export const WorkbenchConfig = z
     profiles: z.record(z.string(), ModelProfile),
     /** The workbench-skills plugin folder (ARCHITECTURE.md §8.7). */
     skillsPlugin: z.string().default("./workbench-skills"),
+    /** The Source Catalog folder: one listing per *.yaml, mock datasets under data/ (sources.ts). */
+    sourcesCatalog: z.string().default("./workbench-sources"),
     /** Versioned prompt files (ARCHITECTURE.md §8.8). */
     promptsDir: z.string().default("./packages/agents/prompts"),
     server: z
@@ -61,6 +72,7 @@ profiles:
     models: { approach: claude-opus-5-5, work: claude-opus-5-5, assist: claude-opus-5-5 }
     limits: { maxTurnsPerRun: 80, maxConcurrentRuns: 3 }
 skillsPlugin: ./workbench-skills
+sourcesCatalog: ./workbench-sources
 promptsDir: ./packages/agents/prompts
 server: { port: 4317, webPort: 5317 }
 `;

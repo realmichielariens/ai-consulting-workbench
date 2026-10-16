@@ -36,6 +36,7 @@ import {
   type RunReason,
   type Settings,
 } from "./domain.js";
+import type { EffortLevel } from "./config.js";
 import type { EngagementPaths, WorkspacePaths } from "./layout.js";
 
 // ---------------------------------------------------------------------------
@@ -295,6 +296,8 @@ export interface StartRunRequest {
   observer: RunObserver;
   model: string;
   maxTurns: number;
+  /** The SDK's reasoning effort; omitted = the SDK's default for the model (fake runtimes ignore it). */
+  effort?: EffortLevel;
   settings: Settings;
 }
 
@@ -344,6 +347,8 @@ interface ApproachRunBase {
   observer: RunObserver;
   model: string;
   maxTurns: number;
+  /** The SDK's reasoning effort; omitted = the SDK's default for the model (fake runtimes ignore it). */
+  effort?: EffortLevel;
   settings: Settings;
 }
 

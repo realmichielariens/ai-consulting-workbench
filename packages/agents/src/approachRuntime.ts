@@ -12,6 +12,7 @@ import {
   type ApproachRuntime,
   type ApproachTaskRequest,
   type ApproachTurnRequest,
+  type EffortLevel,
   type RunHandle,
   type RunId,
   type RunObserver,
@@ -29,8 +30,10 @@ import {
   renderApproachTurnPrompt,
 } from "./prompts.js";
 import { createPlanToolset } from "./planToolset.js";
+import { loadSkillCatalog, renderSkillCatalog } from "./skillCatalog.js";
+import { loadSourceCatalog, renderSourceCatalog } from "./sourceCatalog.js";
 import type { RuntimeConfig, RuntimeDeps } from "./runtime.js";
-import { APPROACH_AGENT_ALLOWED_TOOLS, APPROACH_AGENT_TOOLS, runOnce, type RunOnceResult } from "./sdk.js";
+import { APPROACH_AGENT_ALLOWED_TOOLS, APPROACH_AGENT_TOOLS, describeModel, runOnce, type RunOnceResult } from "./sdk.js";
 
 interface ApproachSessionArgs {
   runId: RunId;
@@ -38,6 +41,7 @@ interface ApproachSessionArgs {
   port: ApproachPort;
   observer: RunObserver;
   model: string;
+  effort: EffortLevel | undefined;
   maxTurns: number;
   systemPrompt: string;
   userPrompt: string;
@@ -62,7 +66,7 @@ async function executeApproachSession(
   interruptState: { interrupted: boolean },
   deps: RuntimeDeps,
 ): Promise<RunResult> {
-  const { paths, port, observer, model, maxTurns, systemPrompt, userPrompt, resume } = args;
+  const { paths, port, observer, model, effort, maxTurns, systemPrompt, userPrompt, resume } = args;
   const workDir = paths.itemWork("ENG");
 
   const activity = new ActivityBuilder({ itemId: "ENG", engagementRoot: paths.root, workDir });
@@ -84,6 +88,7 @@ async function executeApproachSession(
       prompt: userPrompt,
       resume,
       model,
+      effort,
       cwd: workDir,
       additionalDirectories: [paths.root],
       systemPrompt,
@@ -166,6 +171,14 @@ function buildTaskPrompt(config: RuntimeConfig, req: ApproachTaskRequest): strin
   });
 }
 
+/** Read fresh per session, so a skill or listing added to a catalog shows up in the next turn. */
+function approachCatalogs(config: RuntimeConfig, workspace: WorkspacePaths): { skillCatalog: string; sourceCatalog: string } {
+  return {
+    skillCatalog: renderSkillCatalog(loadSkillCatalog(config.skillsPluginPath)),
+    sourceCatalog: renderSourceCatalog(loadSourceCatalog({ catalogDir: config.sourcesCatalogDir, userDir: workspace.userSourcesDir }).sources),
+  };
+}
+
 /** `deps` defaults to the real sdk.ts#runOnce and sdkEnv(), same shape as createSdkRuntime. */
 export function createSdkApproachRuntime(
   config: RuntimeConfig,
@@ -196,7 +209,7 @@ export function createSdkApproachRuntime(
   return {
     kind: "real",
     startTurn(req: ApproachTurnRequest): RunHandle {
-      const systemPrompt = renderApproachSystemPrompt(config.promptsDir, req.engagementId);
+      const systemPrompt = renderApproachSystemPrompt(config.promptsDir, req.engagementId, approachCatalogs(config, workspace));
       const userPrompt = renderApproachTurnPrompt(req.situation, req.message);
       return run({
         runId: req.runId,
@@ -204,15 +217,16 @@ export function createSdkApproachRuntime(
         port: req.port,
         observer: req.observer,
         model: req.model,
+        effort: req.effort,
         maxTurns: req.maxTurns,
         systemPrompt,
         userPrompt,
         resume: req.resumeSessionId ?? undefined,
-        startedSummary: req.resumeSessionId ? `Resumed (aa-turn, ${req.model})` : `Started (aa-turn, ${req.model})`,
+        startedSummary: `${req.resumeSessionId ? "Resumed" : "Started"} (aa-turn, ${describeModel(req.model, req.effort)})`,
       });
     },
     startTask(req: ApproachTaskRequest): RunHandle {
-      const systemPrompt = renderApproachSystemPrompt(config.promptsDir, req.engagementId);
+      const systemPrompt = renderApproachSystemPrompt(config.promptsDir, req.engagementId, approachCatalogs(config, workspace));
       const userPrompt = buildTaskPrompt(config, req);
       const reason = req.kind === "question" ? "aa-question" : "aa-suggestion";
       return run({
@@ -221,11 +235,12 @@ export function createSdkApproachRuntime(
         port: req.port,
         observer: req.observer,
         model: req.model,
+        effort: req.effort,
         maxTurns: req.maxTurns,
         systemPrompt,
         userPrompt,
         resume: undefined, // startTask: always a fresh session
-        startedSummary: `Started (${reason}, ${req.model})`,
+        startedSummary: `Started (${reason}, ${describeModel(req.model, req.effort)})`,
       });
     },
   };

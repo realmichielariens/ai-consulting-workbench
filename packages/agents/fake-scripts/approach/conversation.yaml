@@ -316,7 +316,15 @@ matches:
   - match: benchmark
     steps:
       - propose:
-          rationale: A short benchmarking scan would ground the roadmap's recommendations against how comparable manufacturers have approached similar ERP/MES modernization, without holding up Synthesis.
+          rationale: >-
+            A short benchmarking scan would ground the roadmap's recommendations
+            against how comparable manufacturers have approached similar ERP/MES
+            modernization, without holding up Synthesis. It is a research task,
+            so it gets the desk-research skill and two sources — Open Web (free)
+            and Manufacturing IT Benchmarks (licensed, €450 per engagement, demo
+            pricing), whose fixed-edition peer panel is the most direct evidence
+            for phasing and OEM-visibility questions. Themes and the roadmap stay
+            on engagement inputs only.
           ops:
             - op: add_item
               def:
@@ -334,6 +342,12 @@ matches:
                     scope: project
                     description: A short scan of how comparable manufacturers approached similar IT modernization
                     required: true
+                skills: [desk-research]
+                sources:
+                  - id: open-web
+                    purpose: Find public case studies of comparable manufacturers to corroborate the panel figures
+                  - id: mfg-it-benchmarks
+                    purpose: Peer benchmarks on ERP phasing, durations and OEM-visibility responses (fixed edition 2026.1)
                 gate: []
                 autostart: true
                 acceptance:

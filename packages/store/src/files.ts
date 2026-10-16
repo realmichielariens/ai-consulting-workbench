@@ -42,6 +42,7 @@ function frontMatterOf(def: ItemDef) {
     sequencing: def.sequencing,
     outputs: def.outputs,
     skills: def.skills,
+    sources: def.sources,
     gate: def.gate,
     autostart: def.autostart,
     acceptance: def.acceptance,

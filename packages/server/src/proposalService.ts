@@ -31,6 +31,7 @@ import { checkpointCommit } from "./checkpoint.js";
 import { conflict, notFound } from "./errors.js";
 import { emitEvent, reloadMeta, type EngagementContext } from "./engagementContext.js";
 import { syncPlanState } from "./scheduler.js";
+import { knownSourceIds } from "./sourceService.js";
 
 function requireProposal(ctx: EngagementContext, id: ProposalId): Proposal {
   const proposal = proposalsRepo.getProposal(ctx.dbCtx, id);
@@ -110,7 +111,7 @@ export async function approveProposal(ctx: EngagementContext, id: ProposalId): P
   const defs = rows.map((r) => readItemMd(ctx.paths.itemMd(r.id)));
   const statusById = new Map<ItemId, ItemStatus | null>(rows.map((r) => [r.id, r.status]));
   const slotsWithVersions = assetVersionsRepo.publishedSlots(ctx.dbCtx);
-  const errors = validateOps({ defs, statusById, slotsWithVersions }, proposal.ops);
+  const errors = validateOps({ defs, statusById, slotsWithVersions, knownSourceIds: knownSourceIds(ctx) }, proposal.ops);
   if (errors.length > 0) {
     // propose_ops already validated this; a failure here means the plan moved
     // in a way basePlanVersion didn't catch (e.g. a status change with no

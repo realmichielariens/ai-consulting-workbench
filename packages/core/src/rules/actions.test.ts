@@ -41,6 +41,10 @@ describe("computeItemActions: start (agent)", () => {
   it("refused when not ready", () => {
     expect(computeItemActions({ ...base, status: "waiting" }).start.allowed).toBe(false);
   });
+
+  it("allowed when in progress with no active run (a run that never got going)", () => {
+    expect(computeItemActions({ ...base, status: "in_progress" }).start).toEqual({ allowed: true, reason: null });
+  });
 });
 
 describe("computeItemActions: stop", () => {

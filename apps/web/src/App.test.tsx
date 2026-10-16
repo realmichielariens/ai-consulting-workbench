@@ -36,6 +36,8 @@ vi.mock("./api/index.js", () => ({
       profileModels: { approach: "claude-haiku-4-5", work: "claude-haiku-4-5" },
       overrides: { approach: null, work: null },
       choices: [{ id: "claude-haiku-4-5", label: "Haiku 4.5" }],
+      effort: "high",
+      effortChoices: ["low", "medium", "high", "xhigh", "max"],
     }),
     connectWs: vi.fn().mockReturnValue(() => {}),
   },

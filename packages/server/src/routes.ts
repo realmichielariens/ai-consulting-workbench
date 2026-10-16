@@ -13,6 +13,14 @@ import { reconcileEngagement } from "./startup.js";
 import { approveProposal, getProposalView, listProposalViews, previewProposal, rejectProposal } from "./proposalService.js";
 import { ApiHttpError, HTTP_STATUS_FOR, invalid, notFound } from "./errors.js";
 import * as services from "./services.js";
+import {
+  createUserSource,
+  deleteUserSource,
+  getUserSource,
+  listSourcesView,
+  testUserSource,
+  updateUserSource,
+} from "./sourceService.js";
 import * as views from "./views.js";
 
 /** Opens (creating the context + reconciling once, lazily) the engagement named in the URL, or 404s. */
@@ -26,7 +34,7 @@ function ctxFor(server: ServerContext, eid: EngagementId) {
 }
 
 export function registerRoutes(app: FastifyInstance, server: ServerContext): void {
-  app.get(routes.health.path, async () => routes.health.response.parse({ ok: true, runtime: server.runtimeKind }));
+  app.get(routes.health.path, async () => routes.health.response.parse({ ok: true, runtime: server.runtimeKind, hosted: server.hosted ?? false }));
 
   app.get(routes.listSeeds.path, async () => listSeeds(path.join(server.repoRoot, "demo", "seeds")));
 
@@ -248,6 +256,36 @@ export function registerRoutes(app: FastifyInstance, server: ServerContext): voi
   app.get(routes.getJournal.path, async (req) => {
     const { eid } = routes.getJournal.params.parse(req.params);
     return views.getJournalView(ctxFor(server, eid));
+  });
+
+  app.get(routes.listSources.path, async (req) => {
+    const { eid } = routes.listSources.params.parse(req.params);
+    return listSourcesView(ctxFor(server, eid));
+  });
+
+  // User-defined MCP sources (workspace-wide). /api/sources/test is registered before /:sid so "test" is never read as an id.
+  app.post(routes.testSource.path, async (req) => testUserSource(server, routes.testSource.body.parse(req.body)));
+
+  app.post(routes.createSource.path, async (req, reply) => {
+    const created = createUserSource(server, routes.createSource.body.parse(req.body));
+    reply.code(201);
+    return created;
+  });
+
+  app.get(routes.getSource.path, async (req) => {
+    const { sid } = routes.getSource.params.parse(req.params);
+    return getUserSource(server, sid);
+  });
+
+  app.patch(routes.updateSource.path, async (req) => {
+    const { sid } = routes.updateSource.params.parse(req.params);
+    return updateUserSource(server, sid, routes.updateSource.body.parse(req.body));
+  });
+
+  app.delete(routes.deleteSource.path, async (req) => {
+    const { sid } = routes.deleteSource.params.parse(req.params);
+    deleteUserSource(server, sid);
+    return { ok: true as const };
   });
 
   // WebSocket: hello (with lastSeq) then live events + activity.

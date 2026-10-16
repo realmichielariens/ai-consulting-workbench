@@ -24,6 +24,7 @@ export interface ResolvedWorkbenchConfig extends WorkbenchConfigType {
   resolved: {
     home: string;
     skillsPlugin: string;
+    sourcesCatalog: string;
     promptsDir: string;
   };
 }
@@ -41,8 +42,10 @@ export function loadConfig(root: string = repoRoot()): ResolvedWorkbenchConfig {
   return {
     ...config,
     resolved: {
-      home: path.resolve(root, config.home),
+      // WORKBENCH_HOME lets a hosted deploy put the workspace on a mounted volume (docs/DEPLOY-FLY.md).
+      home: path.resolve(root, process.env.WORKBENCH_HOME || config.home),
       skillsPlugin: path.resolve(root, config.skillsPlugin),
+      sourcesCatalog: path.resolve(root, config.sourcesCatalog),
       promptsDir: path.resolve(root, config.promptsDir),
     },
   };

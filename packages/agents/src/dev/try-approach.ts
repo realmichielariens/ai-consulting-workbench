@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import type { ActivityItem, ApproachTurnRequest, RunObserver, ThreadId } from "@workbench/core";
 import { activeProfile, Settings } from "@workbench/core";
-import { loadConfig, repoRoot } from "@workbench/core/node";
+import { describeAuth, loadConfig, repoRoot, workspacePaths } from "@workbench/core/node";
 import { createSdkApproachRuntime } from "../approachRuntime.js";
 import { createFakeApproachRuntime } from "../fake/index.js";
 import { InMemoryApproachPort } from "./in-memory-engagement.js";
@@ -71,6 +71,7 @@ function buildRuntimeConfig(root: string) {
   return {
     promptsDir: config.resolved.promptsDir,
     skillsPluginPath: config.resolved.skillsPlugin,
+    sourcesCatalogDir: config.resolved.sourcesCatalog,
     repoRoot: root,
   };
 }
@@ -81,13 +82,17 @@ async function main(): Promise<void> {
   const fixture = buildSeedFixture("blank");
 
   const root = repoRoot();
-  const runtime = args.fake ? createFakeApproachRuntime() : createSdkApproachRuntime(buildRuntimeConfig(root), fixture.workspace);
+  // The fixture's workspace is throwaway; the user's own source listings live in the real one.
+  const userSourcesDir = workspacePaths(loadConfig(root).resolved.home).userSourcesDir;
+  const runtime = args.fake
+    ? createFakeApproachRuntime()
+    : createSdkApproachRuntime(buildRuntimeConfig(root), { ...fixture.workspace, userSourcesDir });
   const profile = args.fake ? null : activeProfile(loadConfig(root));
   const model = args.fake ? "fake" : profile!.models.work;
   const maxTurns = args.fake ? 40 : profile!.limits.maxTurnsPerRun;
 
   out.print(`Engagement: ${fixture.engagementId} (${fixture.eng.paths.root})`);
-  out.print(`Runtime: ${runtime.kind}${args.fake ? "" : ` (model: ${model})`}`);
+  out.print(`Runtime: ${runtime.kind}${args.fake ? "" : ` (model: ${model}, auth: ${describeAuth(root)})`}`);
   out.print(`Message: ${args.message}\n`);
 
   const observer = new ConsoleObserver(out);

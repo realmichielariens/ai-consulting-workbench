@@ -3,7 +3,7 @@
 // density, dev strip) that are never sent to the server.
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { EngagementId, EngagementView, PatchProfileBody, ProfileView } from "@workbench/core";
+import type { EffortLevel, EngagementId, EngagementView, PatchProfileBody, ProfileView } from "@workbench/core";
 import { api, qk } from "../api/index.js";
 import { useUiStore } from "../state/ui.js";
 import { usePreferencesStore, type Density, type Theme } from "../state/preferences.js";
@@ -141,9 +141,24 @@ export function SettingsPanel({ eid, engagement }: { eid: EngagementId; engageme
               <>
                 <ModelSelect role="approach" label="Approach Agent model" view={profile.data} disabled={patchProfile.isPending} onChange={(models) => patchProfile.mutate({ models })} />
                 <ModelSelect role="work" label="Work agent model" view={profile.data} disabled={patchProfile.isPending} onChange={(models) => patchProfile.mutate({ models })} />
+                <label className="settings-field">
+                  Reasoning effort
+                  <select
+                    data-testid="setting-effort"
+                    value={profile.data.effort}
+                    disabled={patchProfile.isPending}
+                    onChange={(e) => patchProfile.mutate({ effort: e.target.value as EffortLevel })}
+                  >
+                    {profile.data.effortChoices.map((level) => (
+                      <option key={level} value={level}>
+                        {EFFORT_LABELS[level]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </>
             )}
-            <p className="muted settings-helper">Applies to new sessions — the current run keeps its model.</p>
+            <p className="muted settings-helper">Applies to new sessions — the current run keeps its model and effort. Models without effort support ignore it.</p>
           </section>
 
           {(patch.isError || patchProfile.isError) && (
@@ -158,6 +173,14 @@ export function SettingsPanel({ eid, engagement }: { eid: EngagementId; engageme
 }
 
 const PROFILE_DEFAULT = "";
+
+const EFFORT_LABELS: Record<EffortLevel, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High (default)",
+  xhigh: "Extra high",
+  max: "Max",
+};
 
 function ModelSelect({
   role,

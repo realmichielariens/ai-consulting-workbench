@@ -1,0 +1,32 @@
+# Illustrative demo data (fictional publisher). Not real research.
+records:
+  - id: MAN-2026-031
+    title: Mid-market ERP vendors push composable add-ons for MES gaps
+    url: https://example.com/meridian/briefs/MAN-2026-031
+    date: "2026-08-12"
+    tags: [erp, vendors, mes, composable, market]
+    body: >-
+      Meridian notes that mid-market ERP vendors are bundling light MES and
+      shop-floor connectors to win replacement deals, but that buyers with
+      complex multi-plant scheduling still end up running a separate MES.
+      Expect vendor proposals to understate integration effort.
+  - id: MAN-2026-044
+    title: OEMs tighten supplier visibility clauses
+    url: https://example.com/meridian/briefs/MAN-2026-044
+    date: "2026-09-02"
+    tags: [oem, supplier, visibility, contracts]
+    body: >-
+      Meridian sees agricultural and construction-equipment OEMs moving from
+      weekly EDI status to near-real-time production visibility in supplier
+      renewals, typically with a 12–18 month phase-in. Suppliers that can
+      show a credible plan early tend to get the longer phase-in.
+  - id: MAN-2026-047
+    title: Spreadsheet-to-app conversions in plants
+    url: https://example.com/meridian/briefs/MAN-2026-047
+    date: "2026-09-16"
+    tags: [workarounds, spreadsheets, low-code, plants]
+    body: >-
+      Meridian notes a rise in plants converting scheduling spreadsheets into
+      governed low-code apps as a bridge to ERP replacement. It warns that
+      such bridges become permanent unless they are given an explicit
+      retirement date in the roadmap.

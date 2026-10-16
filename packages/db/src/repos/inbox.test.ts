@@ -17,6 +17,7 @@ const wi003: ItemDef = {
   sequencing: [],
   outputs: [],
   skills: [],
+  sources: [],
   gate: [],
   autostart: true,
   acceptance: [],

@@ -1,0 +1,16 @@
+id: analyst-briefs
+title: Analyst Briefs — Industrial Tech
+publisher: Meridian Analyst Network (demo)
+kind: mcp
+summary: Short analyst notes on industrial software markets, vendors and adoption trends, updated weekly.
+description: >-
+  Opinionated, current market commentary. Useful for vendor landscape and
+  trend questions; the notes are analyst views, not measurements, and they
+  are revised as the market moves.
+freshness: live
+offer: { tier: licensed, label: "Licensed — pay per brief read (demo pricing)" }
+usage: >-
+  Use `search`, then `get` the briefs you will cite. Attribute views to the
+  analyst network ("Meridian notes that…"), not as fact. Cite the brief id
+  and its date.
+connection: { type: mock, dataset: analyst-briefs.yaml }

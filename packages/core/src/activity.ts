@@ -40,6 +40,10 @@ export const ActivityItem = z.object({
       isError: z.boolean().optional(),
     })
     .optional(),
+  /** The attached Source (sources.ts) this call went to, e.g. "open-web". */
+  sourceId: z.string().optional(),
+  /** Web sources a WebSearch found or a WebFetch read, so the UI can show where evidence came from. */
+  links: z.array(z.object({ url: z.string(), title: z.string().optional() })).optional(),
   /** Set when a subagent made the call (hook input agent_id, M0 S3). */
   agentId: z.string().optional(),
   /** On "result": total cost of the run so far. */

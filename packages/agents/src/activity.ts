@@ -17,6 +17,7 @@ import type { ItemId } from "@workbench/core";
 import { isInside, normalize } from "@workbench/core/node";
 import type { ActivityItem, ActivityKind } from "@workbench/core";
 import type { GuardDecisionLog } from "./guards.js";
+import type { SourceToolMap } from "./sourceResolver.js";
 
 export interface ActivityContext {
   itemId: ItemId;
@@ -24,7 +25,11 @@ export interface ActivityContext {
   engagementRoot: string;
   /** Absolute path of this item's own work/ (EngagementPaths.itemWork(itemId)). */
   workDir: string;
+  /** Which attached Source owns which tool, so source calls are tagged and named (sourceResolver.ts). */
+  sources?: SourceToolMap;
 }
+
+const SOURCE_SERVER_RE = /^mcp__(source_[a-z0-9_]+)__(.+)$/;
 
 function truncate(text: string, max: number): string {
   const t = text.trim();
@@ -41,6 +46,95 @@ function extractResultText(content: unknown): string {
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export type WebLink = NonNullable<ActivityItem["links"]>[number];
+
+/**
+ * The sources in a WebSearch result. The CLI returns text with one or more
+ * `Links: [{"title":…,"url":…}]` JSON arrays; a bare-URL scan is the fallback
+ * in case that format changes. Deduplicated by URL, in order.
+ */
+export function extractWebLinks(resultText: string): WebLink[] {
+  const links: WebLink[] = [];
+  for (const m of resultText.matchAll(/Links:\s*(\[[^\n]*\])/g)) {
+    try {
+      const arr = JSON.parse(m[1]!) as Array<{ title?: unknown; url?: unknown }>;
+      for (const l of arr) {
+        if (typeof l?.url === "string") links.push({ url: l.url, title: typeof l.title === "string" ? l.title : undefined });
+      }
+    } catch {
+      // not JSON after all; the fallback below still finds the URLs
+    }
+  }
+  if (links.length === 0) {
+    for (const m of resultText.matchAll(/https?:\/\/[^\s"'<>)\]]+/g)) links.push({ url: m[0] });
+  }
+  const seen = new Set<string>();
+  return links.filter((l) => (seen.has(l.url) ? false : (seen.add(l.url), true)));
+}
+
+/** "example.org/path" — enough to recognise a source in one activity line. */
+function shortUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    return truncate(`${u.hostname.replace(/^www\./, "")}${u.pathname === "/" ? "" : u.pathname}`, 90);
+  } catch {
+    return truncate(url, 90);
+  }
+}
+
+/**
+ * The activity line for a WebSearch or WebFetch call. Shared with the fake
+ * runtime so scripted runs read exactly like real ones.
+ */
+export function webActivity(
+  name: "WebSearch" | "WebFetch",
+  input: Record<string, unknown>,
+  isError: boolean,
+  resultText: string,
+): Pick<ActivityItem, "kind" | "summary" | "detail" | "links"> {
+  if (name === "WebSearch") {
+    const query = String(input.query ?? "");
+    if (isError) return { kind: "tool", summary: `Web search failed: ${truncate(query, 120)}`, detail: resultText || undefined };
+    const links = extractWebLinks(resultText);
+    const count = links.length === 1 ? "1 result" : `${links.length} results`;
+    return { kind: "tool", summary: `Searched the web: "${truncate(query, 120)}" — ${count}`, detail: resultText || undefined, links };
+  }
+  const url = String(input.url ?? "");
+  if (isError) return { kind: "tool", summary: `Fetch failed: ${shortUrl(url)}`, detail: resultText || undefined };
+  return { kind: "tool", summary: `Read web page: ${shortUrl(url)}`, detail: resultText || undefined, links: url ? [{ url }] : undefined };
+}
+
+/**
+ * The activity line for a call to an attached Source's MCP tool. `search` and
+ * `get` are the mock servers' tools (sourceServer.ts) and get readable lines
+ * with links; any other tool (a real provider's) gets a generic line.
+ */
+export function sourceToolActivity(
+  sourceTitle: string,
+  tool: string,
+  input: Record<string, unknown>,
+  isError: boolean,
+  resultText: string,
+): Pick<ActivityItem, "kind" | "summary" | "detail" | "links"> {
+  const detail = resultText || undefined;
+  if (isError) return { kind: "tool", summary: `${sourceTitle}: ${tool} failed — ${truncate(resultText, 120)}`, detail };
+  if (tool === "search") {
+    const links: WebLink[] = [];
+    for (const m of resultText.matchAll(/^- ([^:\n]+): (.+?)(?: \([^)\n]*\))?(?: (https?:\/\/\S+))?$/gm)) {
+      if (m[3]) links.push({ url: m[3], title: `${m[1]}: ${m[2]}` });
+    }
+    const count = (resultText.match(/^- /gm) ?? []).length;
+    const query = truncate(String(input.query ?? ""), 100);
+    return { kind: "tool", summary: `Searched ${sourceTitle}: "${query}" — ${count === 1 ? "1 record" : `${count} records`}`, detail, links };
+  }
+  if (tool === "get") {
+    const head = /^# (.+)$/m.exec(resultText)?.[1] ?? String(input.id ?? "");
+    const url = /^Cite as: .* — (https?:\/\/\S+)$/m.exec(resultText)?.[1];
+    return { kind: "tool", summary: `Read from ${sourceTitle}: ${truncate(head, 120)}`, detail, links: url ? [{ url, title: head }] : undefined };
+  }
+  return { kind: "tool", summary: `Called ${sourceTitle}: ${tool}`, detail };
 }
 
 type PendingToolUse = { name: string; input: unknown };
@@ -183,6 +277,13 @@ export class ActivityBuilder {
   ): ActivityItem {
     const i = (input ?? {}) as Record<string, unknown>;
 
+    const sourceCall = SOURCE_SERVER_RE.exec(name);
+    if (sourceCall) {
+      const owner = this.ctx.sources?.servers[sourceCall[1]!];
+      const title = owner?.title ?? sourceCall[1]!;
+      return this.push({ ...sourceToolActivity(title, sourceCall[2]!, i, isError, resultText), sourceId: owner?.id, tool, agentId });
+    }
+
     if (name.startsWith(WORK_TOOL_PREFIX)) {
       const workTool = name.slice(WORK_TOOL_PREFIX.length);
       switch (workTool) {
@@ -282,6 +383,9 @@ export class ActivityBuilder {
         return this.push({ kind: "tool", summary: `Invoked skill: ${String(i.skill ?? "")}`, tool, agentId });
       case "Task":
         return this.push({ kind: "tool", summary: `Delegated to a subagent${i.description ? `: ${truncate(String(i.description), 100)}` : ""}`, tool, agentId });
+      case "WebSearch":
+      case "WebFetch":
+        return this.push({ ...webActivity(name, i, isError, resultText), sourceId: this.ctx.sources?.web?.id, tool, agentId });
       default:
         return this.push({
           kind: "tool",

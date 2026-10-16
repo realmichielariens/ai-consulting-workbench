@@ -36,6 +36,9 @@ export function computeItemActions(state: ItemActionState): ItemActions {
   if (!isAgent) start = no("Only agent items are started; human items begin with an upload.");
   else if (state.hasActiveRun) start = no("This item is already running.");
   else if (state.resumable) start = no("This item has an interrupted run. Use Resume to continue it.");
+  // In progress with nothing running means the run behind it never got going
+  // (e.g. it failed before the agent opened a session); Start is the way out.
+  else if (status === "in_progress") start = YES;
   else if (status !== "ready") start = no(`Starting is only possible once the item is ready (it is ${humanStatus(status)}).`);
   else start = YES;
 

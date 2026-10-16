@@ -94,6 +94,11 @@ describe("Bash / PowerShell / Task (never enabled for the Approach Agent, denied
   test("Task is denied outright (the Approach Agent never delegates)", () => {
     deny(d("Task", { description: "spawn a subagent" }));
   });
+  test("source tools are denied outright (using a source belongs in a task it is attached to)", () => {
+    deny(d("WebSearch", { query: "acme manufacturing" }));
+    deny(d("WebFetch", { url: "https://example.com", prompt: "p" }));
+    deny(d("mcp__source_mfg_it_benchmarks__search", { query: "erp" }));
+  });
 });
 
 describe("Subagent plan-toolset denial", () => {

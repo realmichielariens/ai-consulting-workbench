@@ -11,6 +11,8 @@ import { createServerContext, openEngagement, type RuntimeKind } from "./engagem
 import { reconcileEngagement } from "./startup.js";
 import { listEngagementIds } from "./services.js";
 import { registerRoutes } from "./routes.js";
+import { describeAuth } from "@workbench/core/node";
+import { registerPasswordGate, registerWebApp } from "./hosting.js";
 
 const runtimeKind: RuntimeKind = process.env.WORKBENCH_RUNTIME === "fake" ? "fake" : "real";
 const server = createServerContext(runtimeKind);
@@ -22,14 +24,28 @@ for (const id of listEngagementIds(server)) {
   reconcileEngagement(openEngagement(server, id));
 }
 
+// Hosted deploys (docs/DEPLOY-FLY.md) set these; locally none is set and the server stays on 127.0.0.1.
+const host = process.env.WORKBENCH_HOST || "127.0.0.1";
+const port = process.env.PORT ? Number(process.env.PORT) : server.config.server.port;
+const password = process.env.WORKBENCH_PASSWORD;
+const webDist = process.env.WORKBENCH_WEB_DIST;
+if (host !== "127.0.0.1" && host !== "localhost" && !password) {
+  throw new Error(`refusing to listen on ${host} without WORKBENCH_PASSWORD: the workbench has no other access control`);
+}
+
 const app = Fastify({ logger: true });
 await app.register(websocket);
 await app.register(multipart);
+if (password) registerPasswordGate(app, password, server.hosted ?? false);
 registerRoutes(app, server);
+if (webDist) registerWebApp(app, webDist);
 
-const address = await app.listen({ port: server.config.server.port, host: "127.0.0.1" });
-app.log.info(`workbench server (runtime=${runtimeKind}) listening on ${address}`);
+const address = await app.listen({ port, host });
+app.log.info(`workbench server (runtime=${runtimeKind}${server.hosted ? ", hosted" : ""}) listening on ${address}`);
 app.log.info(`workspace home: ${server.workspace.home}`);
+if (password) app.log.info("password gate: on");
+if (webDist) app.log.info(`serving web app from ${webDist}`);
+if (runtimeKind === "real") app.log.info(`agent auth: ${describeAuth(server.repoRoot)}`);
 
 async function shutdown(): Promise<void> {
   app.log.info("shutting down: interrupting active runs");

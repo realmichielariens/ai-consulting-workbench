@@ -1,10 +1,11 @@
 // One place for React Query keys, so the WS cache-patching logic (useEngagementSocket.ts)
 // and the components that fetch data agree on the same shapes.
 
-import type { EngagementId, ItemId, ProposalId, RunId, SlotName, ThreadId } from "@workbench/core";
+import type { EngagementId, ItemId, ProposalId, RunId, SlotName, SourceId, ThreadId } from "@workbench/core";
 
 export const qk = {
   seeds: () => ["seeds"] as const,
+  health: () => ["health"] as const,
   engagements: () => ["engagements"] as const,
   engagement: (eid: EngagementId) => ["engagement", eid] as const,
   plan: (eid: EngagementId) => ["plan", eid] as const,
@@ -25,4 +26,8 @@ export const qk = {
   notifications: (eid: EngagementId) => ["notifications", eid] as const,
   profile: () => ["profile"] as const,
   journal: (eid: EngagementId) => ["journal", eid] as const,
+  sources: (eid: EngagementId) => ["sources", eid] as const,
+  /** Prefix of every engagement's catalog: user listings are workspace-wide, so a mutation invalidates them all. */
+  allSources: () => ["sources"] as const,
+  source: (sid: SourceId) => ["source", sid] as const,
 };

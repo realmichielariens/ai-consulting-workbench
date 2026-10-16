@@ -60,7 +60,7 @@ describe("PlanTracker grouping", () => {
 function itemDetail(overrides: Partial<ItemDetailView> = {}): ItemDetailView {
   return {
     node: { id: "WI-004", title: "Consolidate themes", kind: "task", parent: "PH-2", order: 1, executor: "agent", status: "at_gate", rollup: null, gate: [{ type: "human-review" }], inputs: [], outputs: [], notReadyBecause: [], activeRunId: null, resumable: false },
-    def: { id: "WI-004", title: "Consolidate themes", parent: "PH-2", order: 1, executor: "agent", inputs: [], sequencing: [], outputs: [], skills: [], gate: [{ type: "human-review" }], autostart: true, acceptance: [], brief: "Synthesize the four interviews into the major themes." },
+    def: { id: "WI-004", title: "Consolidate themes", parent: "PH-2", order: 1, executor: "agent", inputs: [], sequencing: [], outputs: [], skills: [], sources: [], gate: [{ type: "human-review" }], autostart: true, acceptance: [], brief: "Synthesize the four interviews into the major themes." },
     inputs: [],
     outputs: [],
     runs: [],

@@ -4,13 +4,15 @@
 // profile it started with (its model/maxTurns were already baked into the
 // Run row and the runtime process); only a *new* run reads this.
 //
+// Reasoning effort is stored here too: one level for every agent, default "high".
+//
 // Settings can also override the profile's model per role (approach, work).
 // The override is kept apart from the profile name so switching profiles
 // keeps the chosen model, and clearing it falls back to the profile's.
 
 import fs from "node:fs";
 import path from "node:path";
-import { activeProfile, ModelChoiceId, type ModelProfile } from "@workbench/core";
+import { activeProfile, DEFAULT_EFFORT, EffortLevel, ModelChoiceId, type ModelProfile } from "@workbench/core";
 import type { ServerContext } from "./engagementContext.js";
 
 export type ModelRole = "approach" | "work";
@@ -19,6 +21,7 @@ export type ModelOverrides = Record<ModelRole, string | null>;
 interface StoredProfileSettings {
   profile?: string;
   models?: Partial<Record<ModelRole, string>>;
+  effort?: string;
 }
 
 function settingsFile(server: ServerContext): string {
@@ -85,4 +88,14 @@ export function setModelOverrides(server: ServerContext, changes: Partial<ModelO
     else models[role] = ModelChoiceId.parse(value);
   }
   writeStored(server, { ...stored, models });
+}
+
+/** Read by every *new* run at launch. A hand-edited, unknown level falls back to the default. */
+export function currentEffort(server: ServerContext): EffortLevel {
+  const parsed = EffortLevel.safeParse(readStored(server).effort);
+  return parsed.success ? parsed.data : DEFAULT_EFFORT;
+}
+
+export function setEffort(server: ServerContext, effort: EffortLevel): void {
+  writeStored(server, { ...readStored(server), effort: EffortLevel.parse(effort) });
 }

@@ -71,6 +71,7 @@ describe("item.md round trip", () => {
       "sequencing",
       "outputs",
       "skills",
+      "sources",
       "gate",
       "autostart",
       "acceptance",

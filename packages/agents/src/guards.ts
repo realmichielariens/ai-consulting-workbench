@@ -16,6 +16,7 @@
 
 import path from "node:path";
 import { normalize, isInside, hasTraversal } from "@workbench/core/node";
+import type { SourceToolMap } from "./sourceResolver.js";
 import type {
   HookCallbackMatcher,
   HookEvent,
@@ -34,6 +35,41 @@ export interface GuardScope {
   engagementRoot: string;
   /** Absolute path to the workbench-skills plugin dir. Read-only; SKILL.md bodies carry no secrets (A§8.7). */
   skillsPluginDir: string;
+  /** The attached Sources' tools on this run (sourceResolver.ts). Omitted = no sources attached. */
+  sources?: SourceToolMap;
+}
+
+const WEB_TOOL_NAMES = new Set(["WebSearch", "WebFetch"]);
+const SOURCE_TOOL_RE = /^mcp__(source_[a-z0-9_]+)__/;
+
+/**
+ * WebSearch/WebFetch are allowed only for tasks with a web source attached,
+ * and a source's MCP tools only while that source is attached. Neither touches
+ * an engagement path, so there is nothing else to scope in the POC.
+ * SECURITY (rollout) — what this deliberately does not do yet:
+ *   - egress: restrict WebFetch to URLs that a WebSearch in this run returned
+ *     (collect them in a PostToolUse hook), the brief/inputs, or an allowlist,
+ *     so a prompt-injected page cannot make the agent exfiltrate input text
+ *     through a URL;
+ *   - workspace domain policy: inject `blocked_domains` into WebSearch input via
+ *     the PreToolUse `updatedInput` output;
+ *   - a per-run search cap (cost and runaway loops);
+ *   - prompt injection: fetched text is untrusted, yet the agent still holds its
+ *     work tools afterwards. The write scope bounds the damage today; a rollout
+ *     may want web research in a subagent with no work tools.
+ */
+function decideSourceTool(scope: Pick<GuardScope, "sources">, toolName: string): GuardDecision | null {
+  if (WEB_TOOL_NAMES.has(toolName)) {
+    if (scope.sources?.web) return { decision: "allow" };
+    return {
+      decision: "deny",
+      reason: `${toolName} is not available on this task: no web source is attached. Sources are attached by the Approach Agent's plan.`,
+    };
+  }
+  const m = SOURCE_TOOL_RE.exec(toolName);
+  if (!m) return null;
+  if (scope.sources?.servers[m[1]!]) return { decision: "allow" };
+  return { decision: "deny", reason: `${toolName} belongs to a source that is not attached to this task.` };
 }
 
 export interface GuardDecision {
@@ -119,6 +155,9 @@ export function decideForWorkAgent(scope: GuardScope, toolName: string, input: u
   const workbenchDir = normalize(path.join(scope.engagementRoot, ".workbench"));
   const gitDir = normalize(path.join(scope.engagementRoot, ".git"));
   const skillsDir = normalize(scope.skillsPluginDir);
+
+  const sourceDecision = decideSourceTool(scope, toolName);
+  if (sourceDecision) return sourceDecision;
 
   if (toolName === "Bash" || toolName === "PowerShell") {
     // I1 never puts these in `tools` (CLAUDE.md rule 4); deny outright as defense in depth.
@@ -355,8 +394,9 @@ export function decideForApproachAgent(scope: ApproachGuardScope, toolName: stri
   const workbenchDir = normalize(path.join(scope.engagementRoot, ".workbench"));
   const gitDir = normalize(path.join(scope.engagementRoot, ".git"));
 
-  if (toolName === "Bash" || toolName === "PowerShell" || toolName === "Task") {
+  if (toolName === "Bash" || toolName === "PowerShell" || toolName === "Task" || WEB_TOOL_NAMES.has(toolName) || SOURCE_TOOL_RE.test(toolName)) {
     // None of these are ever in the Approach Agent's `tools` (sdk.ts APPROACH_AGENT_TOOLS); deny outright as defense in depth.
+    // Using a source is substantive work, which belongs in a task the source is attached to.
     return { decision: "deny", reason: `${toolName} is not enabled for the Approach Agent.` };
   }
 

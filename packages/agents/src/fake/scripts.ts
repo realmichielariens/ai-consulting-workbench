@@ -21,6 +21,20 @@ export const FakeStep = z.union([
   z.object({ submit: SubmitOutputsInput }).strict(),
   /** propose_plan_change (J2.5): non-blocking, the script keeps going after it. */
   z.object({ suggest: ProposePlanChangeInput }).strict(),
+  /** Emits a WebSearch activity with these results as its sources. No network call. */
+  z
+    .object({
+      webSearch: z
+        .object({ query: z.string().min(1), results: z.array(z.object({ title: z.string(), url: z.string() }).strict()).default([]) })
+        .strict(),
+    })
+    .strict(),
+  /** Emits a WebFetch activity for `url`, with `answer` as what the page said. No network call. */
+  z.object({ webFetch: z.object({ url: z.string().min(1), answer: z.string().default("") }).strict() }).strict(),
+  /** Searches an attached mock Source's real dataset (workbench-sources/data), like its MCP `search` tool. */
+  z.object({ sourceSearch: z.object({ source: z.string().min(1), query: z.string().min(1) }).strict() }).strict(),
+  /** Reads one record from an attached mock Source, like its MCP `get` tool. */
+  z.object({ sourceGet: z.object({ source: z.string().min(1), id: z.string().min(1) }).strict() }).strict(),
   /** Emits a denial activity for a demo (R4); does not call any real guard. */
   z.object({ deny: z.object({ tool: z.string(), reason: z.string() }).strict() }).strict(),
   /** Forces the run's outcome and stops the script there (R3 demos). */

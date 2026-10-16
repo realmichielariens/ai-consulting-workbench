@@ -15,6 +15,9 @@ import type {
   ItemDetailView,
   ItemId,
   JournalView,
+  SourceCatalogEntry,
+  SourceTestResult,
+  UserSourceView,
   Notification,
   NotificationId,
   PlanPreviewView,
@@ -223,9 +226,16 @@ export const httpApi: WorkbenchApi = {
 
   patchSettings: (eid, body) => call("patchSettings", { params: { eid }, body }) as Promise<EngagementView>,
   getProfile: () => call("getProfile") as Promise<ProfileView>,
+  getHealth: () => call("health") as Promise<{ ok: true; runtime: "real" | "fake"; hosted: boolean }>,
   patchProfile: (body) => call("patchProfile", { body }) as Promise<ProfileView>,
 
   getJournal: (eid) => call("getJournal", { params: { eid } }) as Promise<JournalView>,
+  listSources: (eid) => call("listSources", { params: { eid } }) as Promise<SourceCatalogEntry[]>,
+  getSource: (sid) => call("getSource", { params: { sid } }) as Promise<UserSourceView>,
+  createSource: (body) => call("createSource", { body }) as Promise<UserSourceView>,
+  updateSource: (sid, body) => call("updateSource", { params: { sid }, body }) as Promise<UserSourceView>,
+  deleteSource: (sid) => call("deleteSource", { params: { sid } }) as Promise<{ ok: true }>,
+  testSource: (body) => call("testSource", { body }) as Promise<SourceTestResult>,
 
   connectWs,
 };

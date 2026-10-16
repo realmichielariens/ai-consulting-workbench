@@ -36,7 +36,7 @@ import { readItemMd } from "@workbench/store";
 import { checkpointCommit } from "./checkpoint.js";
 import { conflict } from "./errors.js";
 import { emitEvent, pushActivity, type EngagementContext } from "./engagementContext.js";
-import { currentModelProfile } from "./profileService.js";
+import { currentEffort, currentModelProfile } from "./profileService.js";
 import { syncPlanState } from "./scheduler.js";
 import { createWorkPortImpl } from "./workPort.js";
 
@@ -137,6 +137,7 @@ export async function launchRun(
     workPort,
     observer,
     model: profile.models.work,
+    effort: currentEffort(ctx.server),
     maxTurns: profile.limits.maxTurnsPerRun,
     settings: ctx.meta.settings,
   });

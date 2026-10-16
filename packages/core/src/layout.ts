@@ -17,6 +17,8 @@ export interface WorkspacePaths {
   feedbackLog: string;
   /** Deleted engagement folders are moved here first, then removed (services.ts deleteEngagement). */
   trashDir: string;
+  /** The user's own Source Catalog listings (sources.ts), one *.yaml each; editable from the UI. */
+  userSourcesDir: string;
 }
 
 export function workspacePaths(home: string): WorkspacePaths {
@@ -29,6 +31,7 @@ export function workspacePaths(home: string): WorkspacePaths {
     claudeConfigDir: path.join(h, ".workbench", "claude-config"),
     feedbackLog: path.join(h, "feedback.jsonl"),
     trashDir: path.join(h, ".workbench", "trash"),
+    userSourcesDir: path.join(h, "sources"),
   };
 }
 

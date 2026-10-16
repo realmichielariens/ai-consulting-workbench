@@ -22,7 +22,8 @@ function dotKind(item: ActivityItem): DotKind {
     case "progress":
       return "read";
     case "tool":
-      return /read/i.test(item.tool?.name ?? "") ? "read" : "write";
+      // Web search and fetch take information in, like Read.
+      return /read|^Web/i.test(item.tool?.name ?? "") ? "read" : "write";
     case "publish":
     case "submit":
       return "positive";
@@ -77,8 +78,24 @@ export function ActivityRow({ item }: { item: ActivityItem }) {
       <div className="activity-body">
         <div className="activity-summary">
           {item.summary}
+          {item.sourceId && (
+            <span className="tag tag-src" data-testid="activity-source">
+              {item.sourceId}
+            </span>
+          )}
           {item.agentId && <span className="tag">subagent: {item.agentId}</span>}
         </div>
+        {item.links && item.links.length > 0 && (
+          <ul className="activity-links" data-testid="activity-links">
+            {item.links.map((l) => (
+              <li key={l.url}>
+                <a href={l.url} target="_blank" rel="noreferrer noopener" title={l.url}>
+                  {l.title ?? l.url}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
         {hasRaw && (
           <>
             <button type="button" className="link" data-testid="activity-raw-toggle" onClick={() => setOpen((v) => !v)}>

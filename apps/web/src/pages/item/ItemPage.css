@@ -189,3 +189,14 @@
   color: var(--critical);
   font-size: var(--fs-sm);
 }
+
+/* Attached Sources: name, freshness, and the one-line purpose underneath. */
+.item-sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}

@@ -4,7 +4,15 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ModelProfile } from "@workbench/core";
 import type { ServerContext } from "./engagementContext.js";
-import { activeProfileName, currentModelProfile, modelOverrides, setActiveProfile, setModelOverrides } from "./profileService.js";
+import {
+  activeProfileName,
+  currentEffort,
+  currentModelProfile,
+  modelOverrides,
+  setActiveProfile,
+  setEffort,
+  setModelOverrides,
+} from "./profileService.js";
 
 const profile = (model: string): ModelProfile => ({
   models: { approach: model, work: model, assist: model },
@@ -49,5 +57,25 @@ describe("profileService model overrides", () => {
     fs.mkdirSync(path.join(home, ".workbench"), { recursive: true });
     fs.writeFileSync(path.join(home, ".workbench", "settings.json"), JSON.stringify({ models: { work: "claude-2" } }));
     expect(currentModelProfile(server).models.work).toBe("claude-haiku-4-5");
+  });
+});
+
+describe("profileService reasoning effort", () => {
+  it("defaults to high", () => {
+    expect(currentEffort(server)).toBe("high");
+  });
+
+  it("stores a level without touching the model overrides", () => {
+    setModelOverrides(server, { work: "claude-sonnet-5" });
+    setEffort(server, "max");
+    expect(currentEffort(server)).toBe("max");
+    expect(modelOverrides(server).work).toBe("claude-sonnet-5");
+  });
+
+  it("rejects an unknown level and falls back to high for a hand-edited one", () => {
+    expect(() => setEffort(server, "extreme" as never)).toThrow();
+    fs.mkdirSync(path.join(home, ".workbench"), { recursive: true });
+    fs.writeFileSync(path.join(home, ".workbench", "settings.json"), JSON.stringify({ effort: "turbo" }));
+    expect(currentEffort(server)).toBe("high");
   });
 });

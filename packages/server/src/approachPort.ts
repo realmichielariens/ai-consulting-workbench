@@ -41,6 +41,7 @@ import { checkpointCommit } from "./checkpoint.js";
 import { emitEvent, type EngagementContext } from "./engagementContext.js";
 import { resolveQuestionAnswer } from "./questionAnswering.js";
 import { syncPlanState } from "./scheduler.js";
+import { knownSourceIds } from "./sourceService.js";
 import { ensureThread } from "./threadService.js";
 
 /** Live holder for the run's session id: set by the RunObserver.onSession callback, read here for attribution ("approach:<sessionId or runId>"). */
@@ -122,7 +123,7 @@ export function createApproachPortImpl(
       const defs = rows.map((r) => readItemMd(ctx.paths.itemMd(r.id)));
       const statusById = new Map<ItemId, ItemStatus | null>(rows.map((r) => [r.id, r.status]));
       const slotsWithVersions = assetVersionsRepo.publishedSlots(ctx.dbCtx);
-      const errors = validateOps({ defs, statusById, slotsWithVersions }, input.ops);
+      const errors = validateOps({ defs, statusById, slotsWithVersions, knownSourceIds: knownSourceIds(ctx) }, input.ops);
       if (errors.length > 0) {
         return { ok: false, proposalId: null, superseded: null, errors, instruction: "Fix the errors above and call propose_ops again." };
       }
