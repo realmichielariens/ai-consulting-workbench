@@ -60,3 +60,7 @@ pnpm e2e        # Playwright, against a `dev:fake` server it starts and stops it
 ```
 
 Stop `pnpm dev`/`pnpm dev:fake` with Ctrl-C; it shuts the server down cleanly. Nothing is left running by the quick checks in `iterations/I1/reports/`.
+
+## License
+
+[MIT](LICENSE) © 2026 Michiel Ariens
